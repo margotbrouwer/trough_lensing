@@ -19,10 +19,10 @@ from matplotlib import gridspec
 from matplotlib import rc, rcParams
 
 # Import and mask all used data from the sources in this KiDS field
-def import_kidscat(path_kidscats, kidscatname):
+def import_kidscat(path_kidscat, kidscatname):
     
     # Full directory & name of the corresponding KiDS catalogue
-    kidscatfile = '%s/%s'%(path_kidscats, kidscatname)
+    kidscatfile = '%s/%s'%(path_kidscat, kidscatname)
     kidscat = pyfits.open(kidscatfile, memmap=True)[1].data
     
     # List of the observables of all sources in the KiDS catalogue
@@ -78,8 +78,22 @@ def import_kidscat(path_kidscats, kidscatname):
     return srcRA, srcDEC, srcZB, srcTB, mag_auto, ODDS, umag, gmag, rmag, imag
 
 
+def import_gamacat(path_gamacat, gamacatname):
+    
+    # Full directory & name of the corresponding KiDS catalogue
+    gamacatfile = '%s/%s'%(path_gamacat, gamacatname)
+    gamacat = pyfits.open(gamacatfile, memmap=True)[1].data
+    
+    # List of the observables of all sources in the KiDS catalogue
+    galRA = gamacat['RA']
+    galDEC = gamacat['DEC']
+    galZ = gamacat['Z_1']
+    
+    return galRA, galDEC, galZ
+    
+
 # Define grid points for trough selection
-def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, thetamax):
+def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
 
     ## Grid
     
@@ -98,10 +112,19 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, thetamax):
     # Distances of grind points to the nearest source
     idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
     
+    # Find grid points that are outside the field
+    outmask = (d2dsrc > gridmax*u.deg) # Points that lie outside the source field
+    outcoords = gridcoords[outmask]
+    
+    # Remove points that lie close to the edge of the galaxy field
+    idx, d2dout, d3d = gridcoords.match_to_catalog_sky(outcoords)
+    inmask = (d2dout > 2.*gridmax*u.deg)
+    
+    
     # Remove grid points that are in masked areas or outside the field
-    starmask = (d2dsrc < gridspace*u.deg)
+    starmask = (d2dsrc < gridmax*u.deg)
     Nmaskedgrid = np.sum(starmask)    
-    gridmask = starmask
+    gridmask = starmask*inmask
 
     # Define new grid coordinates
     gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
@@ -213,4 +236,40 @@ def write_catalog(filename, galIDlist, outputnames, output):
     print()
 
     tbhdu.writeto(filename)
+
+
+# Importing the ESD profiles
+def read_esdfiles(esdfiles):
     
+    data = np.loadtxt(esdfiles[0]).T
+    data_x = data[0]
+
+    data_x = []
+    data_y = []
+    error_h = []
+    error_l = []
+    
+    print('Imported ESD profiles: %i'%len(esdfiles))
+    
+    for f in range(len(esdfiles)):
+        # Load the text file containing the stacked profile
+        data = np.loadtxt(esdfiles[f]).T
+    
+        bias = data[4]
+        bias[bias==-999] = 1
+    
+        datax = data[0]
+        datay = data[1]/bias
+        datay[datay==-999] = np.nan
+    
+        errorh = (data[3])/bias # covariance error
+        errorl = (data[3])/bias # covariance error
+        errorh[errorh==-999] = np.nan
+        errorl[errorl==-999] = np.nan
+        
+        data_x.append(datax)     
+        data_y.append(datay) 
+        error_h.append(errorh) 
+        error_l.append(errorl) 
+    
+    return data_x, data_y, error_h, error_l

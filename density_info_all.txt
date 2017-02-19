@@ -1,0 +1,5 @@
+# G9      G12      G15      G23      GS      Average
+58002    62235    60723    60320
+256525    256570    256276    256457
+0.226107    0.242565    0.236944    0.235205
+# 1: Area after masking (arcmin^2), 2: Number of red galaxies, 3: Galaxy density (arcmin^-2)

@@ -25,7 +25,7 @@ import trough_modules_all as utils
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-thetalist = np.array([5.])/60.
+thetalist = np.array([5., 10.])/60.
 Ntheta = len(thetalist)
 
 print('Theta:', thetalist*60., 'arcmin')
@@ -33,9 +33,6 @@ print()
 
 
 
-### 1) Defining the galaxy sample:
-
-## 1a) Importing the galaxy catalogue.
 
 # Names of the KiDS fields
 kidsfields = ['G9', 'G12', 'G15', 'G23', 'GS']
@@ -48,13 +45,35 @@ coordsG23 = np.array([[328.0,361.0], [-35.0,-28.0]])
 coordsGS = np.array([[31.0,54.0], [-35.0,-29.0]])
 kidsboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
 
-# Path to the KiDS fields
-path_kidscat = '/data2/brouwer/KidsCatalogues'
-kidscatname = 'KiDS.DR3.zpbpzLess0.6.fits'
 
-# Importing the KiDS coordinates
-galRA, galDEC, galZB, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
-utils.import_kidscat(path_kidscat, kidscatname)
+
+### 1) Defining the galaxy sample:
+
+## 1a) Importing the galaxy catalogue.
+
+# Select the galaxy catalogue for trough selection (kids/gama)
+cat = 'gama'
+
+if cat == 'kids':
+    
+    # Path to the KiDS fieldsc
+    path_kidscat = '/data2/brouwer/KidsCatalogues'
+    kidscatname = 'KiDS.DR3.zpbpzLess0.6.fits'
+    
+    # Importing the KiDS coordinates
+    galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
+    utils.import_kidscat(path_kidscat, kidscatname)
+    gridmax = 1./60.
+
+if cat == 'gama':
+    
+    # Path to the KiDS fields
+    path_gamacat = '/data2/brouwer/MergedCatalogues/'
+    gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
+    
+    # Importing the GAMA coordinates
+    galRA, galDEC, galZ = utils.import_gamacat(path_gamacat, gamacatname)
+    gridmax = 20./60.
 
 ## 1b) Select the galaxy sample to define the troughs
 
@@ -62,12 +81,14 @@ utils.import_kidscat(path_kidscat, kidscatname)
 selection = 'all'
 #selection = 'redseq4'
 
-# Redshift cut
-zmin = 0.1
-zmax = 0.4
+# Defining the mask for the KiDS galaxy sample
+if cat=='kids':
 
-# Defining the mask for the galaxy sample
-galmask = utils.define_galsamp(selection, zmin, zmax, galZB, galTB, gmag, rmag, mag_auto)
+    # Redshift cut
+    zmin = 0.1
+    zmax = 0.4
+
+    galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
 
 
 # These lists will contain the full trough catalog (for all fields)
@@ -94,72 +115,76 @@ for field in range(len(kidsfields)):
     
     # Selecting the galaxies lying within this field
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
-    fieldmask = galmask*fieldmask
+    
+    if np.sum(fieldmask) > 0:
+        # Applying the galaxy mask to the KiDS sample
+        if cat=='kids':
+            fieldmask = galmask*fieldmask
 
-    # Coordinates of the galaxies
-    galRA_field = galRA[fieldmask]
-    galDEC_field = galDEC[fieldmask]
-    galcoords = SkyCoord(ra=galRA_field*u.deg, dec=galDEC_field*u.deg)
+        # Coordinates of the galaxies
+        galRA_field = galRA[fieldmask]
+        galDEC_field = galDEC[fieldmask]
+        galcoords = SkyCoord(ra=galRA_field*u.deg, dec=galDEC_field*u.deg)
+            
+        print('Selected: %g galaxies'%np.sum(fieldmask))
+        field_galaxies = np.append(field_galaxies, np.sum(fieldmask))
+
+        ### 2) Creating the grid:
         
-    print('Selected: %g galaxies'%np.sum(fieldmask))
-    field_galaxies = np.append(field_galaxies, np.sum(fieldmask))
-
-    ### 2) Creating the grid:
-    
-    ## 2a) Creating a cartesian grid of narrowly spaced (1 arcmin) points.
-    
-    # Spacing of the grid (in deg)
-    gridspace = 1./60. # One arcmin
-    
-    ## 2b) We remove all points that lie within 1 arcmin of masked areas or the edge of the field.
-    
-    # Define the masked grid coordinates in this field
-    gridRA, gridDEC, gridcoords, Nmaskedgrid = utils.define_gridpoints(fieldRAs, fieldDECs, galcoords, gridspace, 20./60.)
-    Ngrid = len(gridcoords)
-    gridID = np.arange(Ngrid)
-
-    # Field area information for printing to text file
-    field_area = np.append(field_area, Nmaskedgrid)
-    
-    ### 3) Measuring galaxy density:
-    
-    # These lists will contain the galaxy/grid point density around each grid point (for this field)
-    Nstheta = np.zeros([Ntheta, Ngrid])
-    Ngtheta = np.zeros([Ntheta, Ngrid])
-   
-    # Creating smaller grid point samples (of 10.000 points) to avoid memory overload
-    sampindex = np.array(np.append(np.arange(0., Ngrid, 1e4), Ngrid), dtype=int)
-    
-    # Looping over different circle radius sizes (theta)
-    for theta in range(Ntheta):
-    #for theta in range(1):
-        print('Theta =', thetalist[theta]*60., 'arcmin')
-
-        # Looping over the smaller samples of grid points (to avoid memory overload)
-        for s in range(len(sampindex)-1):
-            
-            print(kidsfields[field], ', Theta=' , thetalist[theta]*60., ', Grid sample: %i of %i'%(s+1, len(sampindex)-1))
-            
-            # Defining the smaller grid point sample
-            gridsamp = gridcoords[sampindex[s]:sampindex[s+1]]
+        ## 2a) Creating a cartesian grid of narrowly spaced (1 arcmin) points.
         
-            # 3a) For each grid point, we count the number of sample galaxies within a circle of chosen radius \theta.
-            galxgrid, idxcatalog, d2d, d3d = galcoords.search_around_sky(gridsamp, thetalist[theta]*u.deg)
+        # Spacing of the grid (in deg)
+        gridspace = 1./60. # One arcmin
+        
+        ## 2b) We remove all points that lie within 1 arcmin of masked areas or the edge of the field.
+        
+        # Define the masked grid coordinates in this field
+        gridRA, gridDEC, gridcoords, Nmaskedgrid = utils.define_gridpoints(fieldRAs, fieldDECs, galcoords, gridspace, gridmax)
+        Ngrid = len(gridcoords)
+        gridID = np.arange(Ngrid)
+
+        # Field area information for printing to text file
+        field_area = np.append(field_area, Nmaskedgrid)
+        
+        ### 3) Measuring galaxy density:
+        
+        # These lists will contain the galaxy/grid point density around each grid point (for this field)
+        Nstheta = np.zeros([Ntheta, Ngrid])
+        Ngtheta = np.zeros([Ntheta, Ngrid])
+       
+        # Creating smaller grid point samples (of 10.000 points) to avoid memory overload
+        sampindex = np.array(np.append(np.arange(0., Ngrid, 1e4), Ngrid), dtype=int)
+        
+        # Looping over different circle radius sizes (theta)
+        for theta in range(Ntheta):
+        #for theta in range(1):
+            print('Theta =', thetalist[theta]*60., 'arcmin')
+
+            # Looping over the smaller samples of grid points (to avoid memory overload)
+            for s in range(len(sampindex)-1):
+                
+                print(kidsfields[field], ', Theta=' , thetalist[theta]*60., ', Grid sample: %i of %i'%(s+1, len(sampindex)-1))
+                
+                # Defining the smaller grid point sample
+                gridsamp = gridcoords[sampindex[s]:sampindex[s+1]]
             
-            # 3b) For each grid point, we count the number of other grid points to estimate the effective area.
-            gridxgrid, idxcatalog, d2d, d3d = gridcoords.search_around_sky(gridsamp, thetalist[theta]*u.deg)
-            galcountlist = np.array(list(Counter(galxgrid).items())).T
-            gridcountlist = np.array(list(Counter(gridxgrid).items())).T
-            
-            # Add the sample information to the full list for this field
-            (Nstheta[theta, sampindex[s]:sampindex[s+1]])[galcountlist[0]] = galcountlist[1]
-            (Ngtheta[theta, sampindex[s]:sampindex[s+1]])[gridcountlist[0]] = gridcountlist[1]
-    
-    # Combine the field information into one final catalog
-    gridRA_tot = np.append(gridRA_tot, gridRA)
-    gridDEC_tot = np.append(gridDEC_tot, gridDEC)
-    Nstheta_tot = np.hstack([Nstheta_tot, Nstheta])
-    Ngtheta_tot = np.hstack([Ngtheta_tot, Ngtheta])
+                # 3a) For each grid point, we count the number of sample galaxies within a circle of chosen radius \theta.
+                galxgrid, idxcatalog, d2d, d3d = galcoords.search_around_sky(gridsamp, thetalist[theta]*u.deg)
+                
+                # 3b) For each grid point, we count the number of other grid points to estimate the effective area.
+                gridxgrid, idxcatalog, d2d, d3d = gridcoords.search_around_sky(gridsamp, thetalist[theta]*u.deg)
+                galcountlist = np.array(list(Counter(galxgrid).items())).T
+                gridcountlist = np.array(list(Counter(gridxgrid).items())).T
+                
+                # Add the sample information to the full list for this field
+                (Nstheta[theta, sampindex[s]:sampindex[s+1]])[galcountlist[0]] = galcountlist[1]
+                (Ngtheta[theta, sampindex[s]:sampindex[s+1]])[gridcountlist[0]] = gridcountlist[1]
+        
+        # Combine the field information into one final catalog
+        gridRA_tot = np.append(gridRA_tot, gridRA)
+        gridDEC_tot = np.append(gridDEC_tot, gridDEC)
+        Nstheta_tot = np.hstack([Nstheta_tot, Nstheta])
+        Ngtheta_tot = np.hstack([Ngtheta_tot, Ngtheta])
     
 # Define the total grid (of all fields)
 Ngrid_tot = len(gridRA_tot)
@@ -170,9 +195,13 @@ gridcoords_tot = SkyCoord(ra=gridRA_tot*u.deg, dec=gridDEC_tot*u.deg)
 #  3c) For each grid point, the galaxy density is defined as the galaxy count within the circle, divided by the effective area of the circle.
 
 # Density
-rhotheta_tot = Nstheta_tot/Ngtheta_tot
+rhotheta_tot = np.array([Nstheta_tot[t]/(np.pi*(thetalist[t]*60.)**2.) for t in range(len(thetalist))])#/Ngtheta_tot
 rho_mean = np.mean(rhotheta_tot, 1)
 print('Mean density', rho_mean)
+
+print(rhotheta_tot)
+print(Nstheta_tot)
+print(np.pi*(thetalist*60.)**2.)
 
 
 ### 4) Flagging overlapping circles
@@ -258,7 +287,7 @@ for theta in range(Ntheta):
 # - The non-overlapping sample, by taking only unflagged troughs (not flagged = 1, flagged = 0).
 
 # Writing the combined columns to a fits file
-filename = '/data2/brouwer/MergedCatalogues/trough_catalog_test_%s.fits'%(selection)
+filename = '/data2/brouwer/MergedCatalogues/trough_catalog_%s_%s.fits'%(cat, selection)
 
 # For each grid point/circle, we save the following information to the catalog:
 # the location (RA/DEC), number count (Nstheta), effective area in arcmin (grid count Ngtheta), galaxy density (rhotheta), 
