@@ -25,7 +25,7 @@ import trough_modules_all as utils
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-thetalist = np.array([5., 10.])/60.
+thetalist = np.array([5.])/60.
 Ntheta = len(thetalist)
 
 print('Theta:', thetalist*60., 'arcmin')
@@ -72,13 +72,13 @@ if cat == 'gama':
     gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
     
     # Importing the GAMA coordinates
-    galRA, galDEC, galZ = utils.import_gamacat(path_gamacat, gamacatname)
+    galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
     gridmax = 20./60.
 
 ## 1b) Select the galaxy sample to define the troughs
 
 # Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
-selection = 'all'
+selection = 'absmag'
 #selection = 'redseq4'
 
 # Defining the mask for the KiDS galaxy sample
@@ -90,6 +90,13 @@ if cat=='kids':
 
     galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
 
+if cat=='gama':
+    if selection == 'absmag':
+        galmask = (rmag_abs < -19.7)
+    if selection == 'all':
+        galmask = (galZ>=0.)
+    
+print( 'Selected: %i/%i galaxies = %g percent'%(np.sum(galmask), len(galmask), float(np.sum(galmask))/float(len(galmask))*100.) )
 
 # These lists will contain the full trough catalog (for all fields)
 gridRA_tot = []
@@ -104,9 +111,6 @@ field_galaxies = [] # Will contain the number of selected LRGs
 # Looping over each KiDS field
 for field in range(len(kidsfields)):
 #for field in np.arange(1):
-    
-    print()
-    print('KiDS field %s:'%kidsfields[field])
 
     # Boundaries of the current KiDS field
     fieldRAs = kidsboundaries[field,0]
@@ -117,9 +121,12 @@ for field in range(len(kidsfields)):
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
     
     if np.sum(fieldmask) > 0:
+
+        print()
+        print('KiDS field %s:'%kidsfields[field])
+
         # Applying the galaxy mask to the KiDS sample
-        if cat=='kids':
-            fieldmask = galmask*fieldmask
+        fieldmask = galmask*fieldmask
 
         # Coordinates of the galaxies
         galRA_field = galRA[fieldmask]
@@ -196,12 +203,9 @@ gridcoords_tot = SkyCoord(ra=gridRA_tot*u.deg, dec=gridDEC_tot*u.deg)
 
 # Density
 rhotheta_tot = np.array([Nstheta_tot[t]/(np.pi*(thetalist[t]*60.)**2.) for t in range(len(thetalist))])#/Ngtheta_tot
+rhotheta_tot = Nstheta_tot/Ngtheta_tot
 rho_mean = np.mean(rhotheta_tot, 1)
 print('Mean density', rho_mean)
-
-print(rhotheta_tot)
-print(Nstheta_tot)
-print(np.pi*(thetalist*60.)**2.)
 
 
 ### 4) Flagging overlapping circles

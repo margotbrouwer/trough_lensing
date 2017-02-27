@@ -57,17 +57,27 @@ Nrows = 1
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
-path_lenssel = ['No_bins_gama_all/Ptheta5_0_0p2', 'No_bins_gama_old/Ptheta5_0_0p2']
-#path_lenssel = ['No_bins/Ptheta5_0_0p2-Stheta5_1', 'No_bins/Ptheta10_0_0p2-Stheta10_1']
+#"""
+path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_0p2']
 
-path_cosmo = ['ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance',\
-              'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance']
+path_cosmo = ['ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance']
+"""
+path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_0p2-Stheta5_1', \
+                'No_bins_gama_absmag/Ptheta5_0p8_1-Stheta5_1']
+
+path_cosmo = ['ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins15_1_300_arcmin/shearcovariance', \
+              'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins15_1_300_arcmin/shearcovariance']
+
+"""
+
+datalabels = [r'Troughs, $\theta=5$ arcmin, $M_r<-19.7$']
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_profile_absmag'
+
 path_filename = 'No_bins_%s.txt'%(blind)
 
-datalabels = [r'$\theta=5$, All', r'$\theta=5$, Selected']
-#datalabels = [r'$\theta=5$, Ellipticals', r'$\theta=10$, Ellipticals']
-
-esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo[i], path_filename)) for i in range(len(path_lenssel))])
+esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo[i], path_filename)) \
+           for i in range(len(path_lenssel))])
 
 lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt').replace('randomsub_','') for e in esdfiles])
 
@@ -85,7 +95,7 @@ ylabel = r'Shear $\gamma$'
 Ncolumns = int(Nbins/Nrows)
 
 # Plotting the ueber matrix
-fig = plt.figure(figsize=(5,3.5))
+fig = plt.figure(figsize=(8,6))
 canvas = FigureCanvas(fig)
 
 gs_full = gridspec.GridSpec(1,1)
@@ -106,9 +116,14 @@ for N1 in range(Nrows):
             
             # Plot the data and title
             title = r'Bin %i'%(N+1)
-            ax_sub.errorbar(data_x[i]*(1+0.1*i), data_y[i], yerr=[error_l[i], error_h[i]], ls='', marker='.', color=colors[i,N1], label=datalabels[i])
+            
+            data_x_plot = data_x[i]*(1+0.1*i)
+            ax_sub.errorbar(data_x_plot, data_y[i], yerr=[error_l[i], error_h[i]], \
+            ls='', marker='.', label=datalabels[i])
         
-            ax_sub.axvline(x=[5.,10][i], color=colors[i,N1])
+            ax_sub.axvline(x=[5.])
+        
+        ax_sub.axhline(y=0., ls=':')
 
         # Plot the models
         
@@ -116,14 +131,14 @@ for N1 in range(Nrows):
         ax_sub.xaxis.set_label_position('top')
         ax_sub.yaxis.set_label_position('right')
 
-        ax.tick_params(labelleft='off', labelbottom='off',                        top='off', bottom='off', left='off', right='off')
+        ax.tick_params(labelleft='off', labelbottom='off', top='off', bottom='off', left='off', right='off')
                 
         if N2 != 0:
             ax_sub.tick_params(axis='y', labelleft='off')
         
         plt.autoscale(enable=False, axis='both', tight=None)
-        plt.axis([1e0,3e2,-3e-3,3e-3])
-        plt.ylim(-3e-3,3e-3)
+        plt.axis([1e0,3.5e2,-1.5e-3,1.5e-3])
+        plt.ylim(-1.5e-3,1.5e-3)
 #        plt.ylim(0,1e2)
 
         plt.xscale('log')
@@ -149,7 +164,6 @@ ax.yaxis.set_label_coords(-0.07, 0.5)
 plt.tight_layout()
 
 # Save plot
-plotfilename = 'trough_test_all'
 plotname = '%s.png'%plotfilename
 
 plt.savefig(plotname, format='png', bbox_inches='tight')

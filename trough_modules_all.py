@@ -89,7 +89,17 @@ def import_gamacat(path_gamacat, gamacatname):
     galDEC = gamacat['DEC']
     galZ = gamacat['Z_1']
     
-    return galRA, galDEC, galZ
+    rmag = gamacat['Rpetro']
+    rmag_abs = gamacat['absmag_r']
+    
+    nQ = gamacat['nQ']
+    
+    gamamask = (nQ>=3)
+    
+    galRA, galDEC, galZ, rmag, rmag_abs = \
+    galRA[gamamask], galDEC[gamamask], galZ[gamamask], rmag[gamamask], rmag_abs[gamamask]
+    
+    return galRA, galDEC, galZ, rmag, rmag_abs
     
 
 # Define grid points for trough selection
@@ -118,7 +128,7 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
     
     # Remove points that lie close to the edge of the galaxy field
     idx, d2dout, d3d = gridcoords.match_to_catalog_sky(outcoords)
-    inmask = (d2dout > 2.*gridmax*u.deg)
+    inmask = (d2dout > 1.*gridmax*u.deg)
     
     
     # Remove grid points that are in masked areas or outside the field
