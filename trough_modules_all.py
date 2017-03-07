@@ -110,7 +110,10 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
     # Creating a grid to measure the galaxy density
     gridRAlist = np.arange(fieldRAs[0], fieldRAs[1], gridspace)
     gridDEClist = np.arange(fieldDECs[0], fieldDECs[1], gridspace)
-    gridlist = np.vstack([np.array([np.array([RA, DEC]) for RA in gridRAlist]) for DEC in gridDEClist])
+    gridmatrix = np.array([np.array([np.array([RA, DEC]) for RA in gridRAlist]) for DEC in gridDEClist])
+    print('Grid shape:', np.shape(gridmatrix))
+    
+    gridlist = np.vstack(gridmatrix)
     
     gridRA, gridDEC = gridlist[:,0], gridlist[:,1]
     gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg) # All grid coordinates    
@@ -118,29 +121,27 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
     print('Number of grid coordinates:', len(gridRAlist), 'x', len(gridDEClist), '=', len(gridcoords))
 
     ## Masking grid points
-    
-    # Distances of grind points to the nearest source
-    idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
-    
-    # Find grid points that are outside the field
-    outmask = (d2dsrc > gridmax*u.deg) # Points that lie outside the source field
-    outcoords = gridcoords[outmask]
-    
-    # Remove points that lie close to the edge of the galaxy field
-    idx, d2dout, d3d = gridcoords.match_to_catalog_sky(outcoords)
-    inmask = (d2dout > 1.*gridmax*u.deg)
-    
-    
-    # Remove grid points that are in masked areas or outside the field
-    starmask = (d2dsrc < gridmax*u.deg)
-    Nmaskedgrid = np.sum(starmask)    
-    gridmask = starmask*inmask
-
+    if gridmax > 0.:
+        # Distances of grind points to the nearest source
+        idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
+        
+        # Find grid points that are outside the field
+        outmask = (d2dsrc > gridmax*u.deg) # Points that lie outside the source field
+        outcoords = gridcoords[outmask]
+        
+        # Remove points that lie close to the edge of the galaxy field
+        idx, d2dout, d3d = gridcoords.match_to_catalog_sky(outcoords)
+        inmask = (d2dout > 1.*gridmax*u.deg)
+            
+        # Remove grid points that are in masked areas or outside the field
+        starmask = (d2dsrc < gridmax*u.deg)
+        gridmask = starmask*inmask
+        
     # Define new grid coordinates
-    gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
+    gridRA, gridDEC, gridcoords = gridRA, gridDEC, gridcoords
     print('New gridcoords:', len(gridcoords))
     
-    return gridRA, gridDEC, gridcoords, Nmaskedgrid
+    return gridRA, gridDEC, gridcoords
 
 
 # Defining the mask for the galaxy sample
@@ -283,3 +284,54 @@ def read_esdfiles(esdfiles):
         error_l.append(errorl) 
     
     return data_x, data_y, error_h, error_l
+    
+
+def calc_chi2(data, model, covariance, nbins):
+    
+    # Turning the data and the model into matrices
+    data, model = [np.reshape(x, [len(data)*nbins, 1]) for x in [data, model]]
+    data, model = np.matrix(data), np.matrix(model)
+    
+    # Sorting the covariance [Rbin1, Obsbin1, Rbin2, Obsbin2] and turning it into a matrix
+    ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
+    covariance = np.reshape(covariance[4][ind], [len(data)*nbins, len(data)*nbins])
+    covariance = np.matrix(covariance)
+
+    # Calculating chi2 from the matrices
+    chi2_cov = np.dot((model-data).T, np.linalg.inv(covariance))
+    chi2_tot = np.dot(chi2_cov, (model-data))[0,0]
+    
+    return chi2_tot
+    
+    
+# Import GAMA masks for completeness calculation
+def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
+    
+    gamamasks = np.array([pyfits.open(path_gamamask, memmap=True)['PRIMARY'].data for path_gamamask in path_gamamasks])
+    gamamasks[gamamasks < 0.] = 0.
+
+    # Creating the RA and DEC coordinates of each GAMA field
+    print('Importing GAMAmask:')
+    print('Old size:', np.shape(gamamasks))
+    gapsize = gridspace_mask/0.001
+
+    gamaRAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])+gapsize/2), int(gapsize))
+    gamaDECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])+gapsize/2), int(gapsize))
+    #print gamaRAnums
+    #print gamaDECnums
+
+    gamamasks_small = np.zeros([len(fieldboundaries), len(gamaRAnums), len(gamaDECnums)])
+    
+    for f in range(len(fieldboundaries)):
+        for i in range(len(gamaRAnums)):
+            gamaRAnum = gamaRAnums[i]
+            gamamasks_small[f, i, :] = gamamasks[f, gamaRAnum, :][gamaDECnums]
+    
+    print('New size:', np.shape(gamamasks_small))
+
+    gamamasks = gamamasks_small
+    gamamasks = np.reshape(gamamasks, [len(fieldboundaries), np.size(gamamasks[0])])
+
+    print('Final shape:', np.shape(gamamasks))
+    
+    return gamamasks

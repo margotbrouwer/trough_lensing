@@ -28,18 +28,6 @@ rc('text',usetex=True)
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
 
-
-centering = 'BCG'
-purpose = 'shearcatalog'
-Ncat = 1
-Runit = 'kpc'
-lens_weights = {'None': ''}
-
-O_matter = 0.315
-O_lambda = 1.-O_matter
-Ok = 0.
-h = 0.7
-
 # Colours
 # Blue, green, turquoise, cyan
 blues = ['#332288', '#44AA99', '#117733', '#88CCEE']
@@ -57,26 +45,22 @@ Nrows = 1
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
-#"""
-path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_0p2']
+#percnames = ['0p05', '0p1', '0p15', '0p2', '0p25']
+#perclist = np.arange(0.05, 0.3, 0.05)
 
-path_cosmo = ['ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance']
-"""
-path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_0p2-Stheta5_1', \
-                'No_bins_gama_absmag/Ptheta5_0p8_1-Stheta5_1']
+percnames = ['0p05', '0p3']
+perclist = [0.05, 0.25]
 
-path_cosmo = ['ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins15_1_300_arcmin/shearcovariance', \
-              'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins15_1_300_arcmin/shearcovariance']
-
-"""
-
-datalabels = [r'Troughs, $\theta=5$ arcmin, $M_r<-19.7$']
-
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_profile_absmag'
-
+path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_%s'%pn for pn in percnames]
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
-esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo[i], path_filename)) \
+
+datalabels = [r'Troughs, $\theta=5$ arcmin, $P(\theta)<%g$'%pn for pn in perclist]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_depths'
+
+
+esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
 
 lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt').replace('randomsub_','') for e in esdfiles])
