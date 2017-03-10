@@ -45,19 +45,24 @@ Nrows = 1
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
-#percnames = ['0p05', '0p1', '0p15', '0p2', '0p25']
-#perclist = np.arange(0.05, 0.3, 0.05)
+"""
+percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5']
+perclist = np.arange(0.05, 0.55, 0.05)
 
-percnames = ['0p05', '0p3']
-perclist = [0.05, 0.25]
-
-path_lenssel = ['No_bins_gama_absmag/Ptheta5_0_%s'%pn for pn in percnames]
+path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_%s_%s'%(percnames[i], percnames[i+1]) for i in range(len(perclist))]
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
+datalabels = [r'$P(\theta)<%g$'%pn for pn in perclist]
+"""
 
-datalabels = [r'Troughs, $\theta=5$ arcmin, $P(\theta)<%g$'%pn for pn in perclist]
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_depths'
+path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p5_lw-Wtheta5/']
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datalabels = [r'Troughs: $\theta = 5$ arcmin, weighted by $\chi^2$']
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/weighted_troughs'
 
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
@@ -93,19 +98,19 @@ for N1 in range(Nrows):
         N = np.int(N1*Ncolumns + N2)
         ax_sub = fig.add_subplot(gs[N1, N2])
             
-        for i in range(len(path_lenssel)):
+#        for i in range(len(path_lenssel)):
             
-            #(error1_l[N])[(error1_l[N])>=data1_y[N]] = ((data1_y[N][(error1_l[N])>=data1_y[N]])*0.9999999999)
-            #(error2_l[N])[(error2_l[N])>=data2_y[N]] = ((data2_y[N][(error2_l[N])>=data2_y[N]])*0.9999999999)
-            
-            # Plot the data and title
-            title = r'Bin %i'%(N+1)
-            
-            data_x_plot = data_x[i]*(1+0.1*i)
-            ax_sub.errorbar(data_x_plot, data_y[i], yerr=[error_l[i], error_h[i]], \
-            ls='', marker='.', label=datalabels[i])
+        #(error1_l[N])[(error1_l[N])>=data1_y[N]] = ((data1_y[N][(error1_l[N])>=data1_y[N]])*0.9999999999)
+        #(error2_l[N])[(error2_l[N])>=data2_y[N]] = ((data2_y[N][(error2_l[N])>=data2_y[N]])*0.9999999999)
         
-            ax_sub.axvline(x=[5.])
+        # Plot the data and title
+        title = r'Bin %i'%(N+1)
+        
+        #data_x_plot = data_x[N]*(1+0.1*N)
+        ax_sub.errorbar(data_x[N], data_y[N], yerr=[error_l[N], error_h[N]], \
+        ls='', marker='.', label=datalabels[N])
+    
+        ax_sub.axvline(x=[5.])
         
         ax_sub.axhline(y=0., ls=':')
 
@@ -130,9 +135,9 @@ for N1 in range(Nrows):
         
         #plt.title(title, x = 0.6, y = 0.8)
         
-#lgd = ax_sub.legend(bbox_to_anchor=(2.1, 1.4)) # side
-#lgd = ax_sub.legend(bbox_to_anchor=(0.6, 2.7)) # top
-plt.legend()
+        #lgd = ax_sub.legend(bbox_to_anchor=(2.1, 1.4)) # side
+        #lgd = ax_sub.legend(bbox_to_anchor=(0.6, 2.7)) # top
+        plt.legend()
 
 # Define the labels for the plot
 ax.set_xlabel(xlabel)
@@ -148,9 +153,9 @@ ax.yaxis.set_label_coords(-0.07, 0.5)
 plt.tight_layout()
 
 # Save plot
-plotname = '%s.png'%plotfilename
+plotname = '%s.pdf'%plotfilename
 
-plt.savefig(plotname, format='png', bbox_inches='tight')
+plt.savefig(plotname, format='pdf', bbox_inches='tight')
 print('Written: ESD profile plot:', plotname)
 
 plt.show()
