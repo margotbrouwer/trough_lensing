@@ -40,20 +40,20 @@ colors = np.array([reds,blues])
 
 # Defining the paths to the data
 blind = 'A'
-Nbins = 1
-Nrows = 1
+Nbins = 10
+Nrows = 2
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
-"""
+#"""
 percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5']
-perclist = np.arange(0.05, 0.55, 0.05)
+perclist = np.arange(0., 0.55, 0.05)
 
-path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_%s_%s'%(percnames[i], percnames[i+1]) for i in range(len(perclist))]
+path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_%s_%s'%(percnames[i], percnames[i+1]) for i in range(Nbins)]
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
-datalabels = [r'$P(\theta)<%g$'%pn for pn in perclist]
+datalabels = [r'$%g<P<%g$'%(perclist[i], perclist[i+1]) for i in range(Nbins)]
 """
 
 path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p5_lw-Wtheta5/']
@@ -61,8 +61,9 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'Troughs: $\theta = 5$ arcmin, weighted by $\chi^2$']
+"""
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/weighted_troughs'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_percs'
 
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
@@ -84,7 +85,7 @@ ylabel = r'Shear $\gamma$'
 Ncolumns = int(Nbins/Nrows)
 
 # Plotting the ueber matrix
-fig = plt.figure(figsize=(8,6))
+fig = plt.figure(figsize=(12,6))
 canvas = FigureCanvas(fig)
 
 gs_full = gridspec.GridSpec(1,1)
@@ -153,9 +154,10 @@ ax.yaxis.set_label_coords(-0.07, 0.5)
 plt.tight_layout()
 
 # Save plot
-plotname = '%s.pdf'%plotfilename
-
-plt.savefig(plotname, format='pdf', bbox_inches='tight')
+for ext in ['png', 'pdf']:
+    plotname = '%s.%s'%(plotfilename, ext)
+    plt.savefig(plotname, format=ext, bbox_inches='tight')
+    
 print('Written: ESD profile plot:', plotname)
 
 plt.show()

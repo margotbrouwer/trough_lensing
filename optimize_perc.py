@@ -157,11 +157,14 @@ plt.ylabel(r'Lensing detection $\chi^2$')
 
 plt.ylim(50,400)
 
-plt.legend(loc='best')
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/chi2_trough_weights'
-plotname = '%s.pdf'%plotfilename
+for ext in ['png', 'pdf']:
+    
+    plt.legend(loc='best')
+    plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/chi2_trough_weights'
+    plotname = '%s.%s'%(plotfilename, ext)
 
-plt.savefig(plotname, format='pdf', bbox_inches='tight')
+    plt.savefig(plotname, format=ext, bbox_inches='tight')
+    
 print('Written: Eplot:', plotname)
 plt.show()
 
