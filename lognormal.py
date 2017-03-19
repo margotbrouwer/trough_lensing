@@ -22,7 +22,7 @@ import trough_modules_all as utils
 # Model to fit the troughs
 def trough_model(x, A):
     
-    model_y = -A/x
+    model_y = A/x
     
     return model_y
 
@@ -92,8 +92,9 @@ for N1 in range(Nrows):
 
         model_y = trough_model(data_x[xmask], A)
 
-        ax_sub.plot(data_x[xmask], model_y)
-        ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], ls='', marker='.', label=r'$%g < P(x) < %g$'%(perclist[N], perclist[N+1]))
+        ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], \
+        ls='', marker='.', color='blue', label=r'$%g < P(x) < %g$'%(perclist[N], perclist[N+1]))
+        ax_sub.plot(data_x[xmask], model_y, ls='-', color='red')
         
         ax_sub.axvline(x=xmin, ls='--')
         ax_sub.axvline(x=xmax, ls='--')
@@ -197,7 +198,7 @@ plt.show()
 # Write weight fits-file
 
 # Import trough catalog
-path_troughcat = '/data2/brouwer/MergedCatalogues/'
+path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogues'
 troughcatname = '/trough_catalog_gama_absmag_masked.fits'
 
 # Full directory & name of the trough catalogue
@@ -211,4 +212,4 @@ Wtheta = poly_func_weights(Ptheta)
 
 outputnames = ['Ptheta5', 'Atheta5', 'Wtheta5']
 output = [Ptheta, Atheta, Wtheta]
-utils.write_catalog('/data2/brouwer/MergedCatalogues/trough_weights.fits', np.arange(len(Wtheta)), outputnames, output)
+utils.write_catalog('%s/amplitude_trough_weights.fits'%path_troughcat, np.arange(len(Wtheta)), outputnames, output)

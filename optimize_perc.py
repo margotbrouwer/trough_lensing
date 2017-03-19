@@ -38,17 +38,14 @@ reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
 colors = np.array([reds,blues])
 
 Nbins = 1
+
+# Defining the percentile bins
 dperc = 0.05
 
 # Troughs
 percmin = 0.
-percmax = 0.5
-percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5']
-
-# Ridges
-#percmin = 0.5
-#percmax = 1.0
-#percnames = ['0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','0p1']
+percmax = 1.
+percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
 
 perclist = np.arange(percmin, percmax, dperc)
 perccenters = perclist+dperc/2.
@@ -95,29 +92,26 @@ print('Chi (without covariance):', chilist)
 print('Chi (with covariance):', chicovlist)
 print('Ratio:', chilist/chicovlist)
 
-fig = plt.figure(figsize=(6,6))
+fig = plt.figure(figsize=(10,6))
 plt.plot(perccenters, chi2covlist, 'o', ls='', label=r'$\chi^2(P)$ per percentile bin')
 #plt.plot(perccenters, chi2list, 'o', ls='--', label='$\chi^2(P)$ without covariance')
 
 
-# Fitting the optimal curve to the chi2 a.f.o. percentile
-def calc_model(x, A, B, C):
-    
-    model_y = A*x**2 + B*x + C
-    
-    return model_y
 
-A, B, C = optimization.curve_fit(calc_model, perccenters, chi2covlist, [-300., 20., 120.])[0]
-model_y = calc_model(perccenters, A, B, C)
+# Fitting a polynomial curve to the weight a.f.o. percentile
+poly_param_weights = np.polyfit(perccenters, chi2covlist, 5)
+poly_func_weights = np.poly1d(poly_param_weights)
+model_y = poly_func_weights(perccenters)
+
 
 # Plot best-fit polynomial
-plt.plot(perccenters, model_y, label=r'Best-fit $2^{\rm nd}$ degree polynomial')
+plt.plot(perccenters, model_y, label=r'Best-fit $5^{\rm th}$ degree polynomial')
 
 
 # Write weight fits-file
 
 # Import trough catalog
-path_troughcat = '/data2/brouwer/MergedCatalogues/'
+path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogues'
 troughcatname = '/trough_catalog_gama_absmag_masked.fits'
 
 # Full directory & name of the trough catalogue
@@ -126,14 +120,14 @@ troughcat = pyfits.open(troughcatfile, memmap=True)[1].data
 
 # List of the observables of all sources in the KiDS catalogue
 Ptheta = troughcat['Ptheta5']
-Wtheta = calc_model(Ptheta, A, B, C)
+Wtheta = poly_func_weights(Ptheta)
 
 outputnames = ['Ptheta5', 'Wtheta5']
 output = [Ptheta, Wtheta]
-utils.write_catalog('/data2/brouwer/MergedCatalogues/trough_weights.fits', np.arange(len(Wtheta)), outputnames, output)
+utils.write_catalog('%s/chi2_trough_weights.fits'%path_troughcat, np.arange(len(Wtheta)), outputnames, output)
 
 
-# Calculating covariance of the weighted trough signal
+# Calculating covariance of the chi2 weighted trough signal
 path_lenssel_weighted = 'No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p5_lw-Wtheta5/'
 esdfiles_weighted = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_lenssel_weighted, path_cosmo, path_filename)])
 data_x, data_y_weighted, error_h_weighted, error_l_weighted = utils.read_esdfiles(esdfiles_weighted)
@@ -146,7 +140,23 @@ covariance_weighted = (np.loadtxt(covfiles_weighted[0]).T)
 chi2_weighted = np.sum(data_weighted**2/error_weighted**2)
 chi2cov_weighted = utils.calc_chi2(data_weighted, model, covariance_weighted, Nbins)
 
-plt.axhline(y=chi2cov_weighted, ls='--', label=r'$\chi^2$ of the weighted troughs')
+plt.axhline(y=chi2cov_weighted, ls='--', label=r'$\chi^2$ of the $\chi^2$-weighted troughs')
+
+
+# Calculating covariance of the amplitude weighted trough signal
+path_lenssel_weighted = 'No_bins/Pmasktheta5_0p8_1-Ptheta5_0_0p5_lw-Wtheta5/'
+esdfiles_weighted = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_lenssel_weighted, path_cosmo, path_filename)])
+data_x, data_y_weighted, error_h_weighted, error_l_weighted = utils.read_esdfiles(esdfiles_weighted)
+covfiles_weighted = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles_weighted])
+
+data_weighted = data_y_weighted[0]
+error_weighted = error_h_weighted[0]
+covariance_weighted = (np.loadtxt(covfiles_weighted[0]).T)
+
+chi2_weighted = np.sum(data_weighted**2/error_weighted**2)
+chi2cov_weighted = utils.calc_chi2(data_weighted, model, covariance_weighted, Nbins)
+
+plt.axhline(y=chi2cov_weighted, ls=':', label=r'$\chi^2$ of the A-weighted troughs')
 
 
 # Save plot
@@ -155,7 +165,6 @@ plt.axhline(y=chi2cov_weighted, ls='--', label=r'$\chi^2$ of the weighted trough
 plt.xlabel(r'Trough percentile $P(\theta)$')
 plt.ylabel(r'Lensing detection $\chi^2$')
 
-plt.ylim(50,400)
 
 for ext in ['png', 'pdf']:
     

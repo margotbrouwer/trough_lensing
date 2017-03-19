@@ -23,30 +23,12 @@ from matplotlib import rc, rcParams
 
 import trough_modules_all as utils
 
+# Defining the circle size and redshift bins
 theta = 5. # in arcmin
 
-# Names of the GAMA fields
-fieldnames = ['G9', 'G12', 'G15']
-
-# Boundaries of the GAMA fields
-coordsG9 = [[129., 141.], [-2.,3.]]
-coordsG12 = [[174., 186.], [-3.,2.]]
-coordsG15 = [[211.5, 223.5], [-2.,3.]]
-fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
-
-# Path to the KiDS fields
-path_gamacat = '/data2/brouwer/MergedCatalogues/'
-gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
-
-# Importing the GAMA coordinates
-galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
-
-galmask = (rmag_abs < -19.7)&(rmag <= 19.8)
-galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
-
-dz = 0.01
-zmin = 0.1
-zmax = 0.5
+dz = 1e-5
+zmin = 0.
+zmax = 0.3
 
 zbins = np.arange(zmin, zmax, dz)
 zcenters = (zbins + dz/2.)
@@ -54,32 +36,62 @@ zbins = np.append(zbins, zmax)
 print('Z-bins:', zbins)
 
 
+# Path to the GAMA fields
+path_gamacat = '/data2/brouwer/MergedCatalogues/'
+gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 
+# Importing the GAMA coordinates
+galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
+
+galmask = (rmag_abs < -21.)&(galZ < zmax)
+galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
+
+
+# Calculating the number of galaxies...
+Ngals = np.array([np.sum(galZ<zbins[z]) for z in range(len(zbins))]) # below each redshift bin
+Ngals_high = len(galZ)-Ngals # above each redshift bin
+
+# Calculating the volume of the cone at each redshift bin
 cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-Dcbins = (cosmo.comoving_distance(zbins).to('kpc')).value
-covollist = cosmo.comoving_volume(zbins).to('kpc3').value
 
-Ngals = np.zeros(len(zcenters))
+Dcbins = (cosmo.comoving_distance(zbins).to('Mpc')).value # Comoving distance to each bin limit
+Mpc_am = (cosmo.kpc_comoving_per_arcmin(zbins).to('Mpc/arcmin')).value # Comoving distance per arcmin at each bin limit
+areabins = np.pi * (theta * Mpc_am)**2. # Comoving area of the circle at each bin limit
+#covolbins = cosmo.comoving_volume(zbins).to('kpc3').value
 
-for z in range(len(zcenters)):
-    
-    zmask = (zbins[z] < galZ) & (galZ < zbins[z+1])
-    print('Zbin: %g, galaxies: %g'%(zcenters[z],  np.sum(zmask)))
-    Ngals[z] = np.sum(zmask)
+covolbins = 1./3. * areabins * Dcbins # Comoving cone volume below each bin limit
+covolbins_high = covolbins[-1] - covolbins # Comoving cone volume above each bin limit
 
-kpc_am = (cosmo.kpc_comoving_per_arcmin(zcenters)).value
-area = np.array([np.pi * (theta*kpc_am[z])**2. for z in range(len(zcenters))])
-density = Ngals/area
+density = Ngals/covolbins # Density below the redshift limit
+density_high = Ngals_high/covolbins_high # Density above the redshift limit
 
-    
-plt.plot(zcenters, density)
+
+densmask = (0.2<zbins)&(zbins<0.25)
+densplus = np.sum(zbins<0.2)
+
+plt.plot(zbins, density, label='Low-Z sample')
+plt.plot(zbins, density_high, label='High-Z sample')
 plt.ylabel('Density')
-plt.show()
+#plt.show()
+plt.close()
 
-plt.plot(zcenters, Ngals)
-plt.ylabel('Ngals')
-plt.show()
+plt.plot(zbins, Ngals, label='Low-Z sample')
+plt.plot(zbins, Ngals_high, label='High-Z sample')
+plt.ylabel('Number of galaxies')
+#plt.show()
+plt.close()
 
-plt.plot(zcenters, area)
-plt.ylabel('Area')
-plt.show()
+plt.plot(zbins, covolbins, label='Low-Z sample')
+plt.plot(zbins, covolbins_high, label='High-Z sample')
+plt.ylabel('Volume')
+#plt.show()
+plt.close()
+
+idxdensity = densplus + (np.abs(density[densmask] - density_high[densmask])).argmin()
+idxNgals = (np.abs(Ngals - Ngals_high)).argmin()
+idxcovol = (np.abs(covolbins - covolbins_high)).argmin()
+
+print()
+print('Density (#/Mpc^3): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxdensity, zbins[idxdensity], density[idxdensity], density_high[idxdensity]))
+print('Ngals (#): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxNgals, zbins[idxNgals], Ngals[idxNgals], Ngals_high[idxNgals]))
+print('Volume (Mpc^3): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxcovol, zbins[idxcovol], covolbins[idxcovol], covolbins_high[idxcovol]))

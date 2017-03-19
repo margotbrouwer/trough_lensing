@@ -40,12 +40,12 @@ colors = np.array([reds,blues])
 
 # Defining the paths to the data
 blind = 'A'
-Nbins = 10
-Nrows = 2
+Nbins = 1
+Nrows = 1
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
-#"""
+"""
 percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5']
 perclist = np.arange(0., 0.55, 0.05)
 
@@ -61,9 +61,9 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'Troughs: $\theta = 5$ arcmin, weighted by $\chi^2$']
-"""
+#"""
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/trough_percs'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/chi2_weighted_troughs'
 
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
@@ -85,7 +85,7 @@ ylabel = r'Shear $\gamma$'
 Ncolumns = int(Nbins/Nrows)
 
 # Plotting the ueber matrix
-fig = plt.figure(figsize=(12,6))
+fig = plt.figure(figsize=(Ncolumns*6,6))
 canvas = FigureCanvas(fig)
 
 gs_full = gridspec.GridSpec(1,1)
