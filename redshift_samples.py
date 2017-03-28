@@ -87,6 +87,11 @@ plt.ylabel('Volume')
 #plt.show()
 plt.close()
 
+plt.hist2d(galZ, rmag_abs)
+plt.colorbar()
+plt.invert_yaxis()
+plt.show()
+
 idxdensity = densplus + (np.abs(density[densmask] - density_high[densmask])).argmin()
 idxNgals = (np.abs(Ngals - Ngals_high)).argmin()
 idxcovol = (np.abs(covolbins - covolbins_high)).argmin()

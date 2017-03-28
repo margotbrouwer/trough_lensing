@@ -54,17 +54,30 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'$%g<P<%g$'%(perclist[i], perclist[i+1]) for i in range(Nbins)]
-"""
 
 path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p5_lw-Wtheta5/']
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'Troughs: $\theta = 5$ arcmin, weighted by $\chi^2$']
-#"""
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/chi2_weighted_troughs'
+path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p05', 'No_bins_gama_simplemask/Pmasktheta5_0p8_1-delta5_m1_m0p553201', \
+'No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0p05_0p1', 'No_bins_gama_simplemask/Pmasktheta5_0p8_1-delta5_m0p553201_m0p487318']
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+datalabels = ['Percentage', 'Density']*3
 
+"""
+
+# Randoms
+path_lenssel = ['No_bins/Pmasktheta5_0p8_1']
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datalabels = ['Random signal']
+
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/random_troughs'
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
@@ -111,7 +124,7 @@ for N1 in range(Nrows):
         ax_sub.errorbar(data_x[N], data_y[N], yerr=[error_l[N], error_h[N]], \
         ls='', marker='.', label=datalabels[N])
     
-        ax_sub.axvline(x=[5.])
+        #ax_sub.axvline(x=[5.])
         
         ax_sub.axhline(y=0., ls=':')
 

@@ -103,7 +103,7 @@ def import_gamacat(path_gamacat, gamacatname):
     
 
 # Define grid points for trough selection
-def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
+def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace):
 
     ## Grid
     
@@ -121,25 +121,22 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace, gridmax):
     print('Number of grid coordinates:', len(gridRAlist), 'x', len(gridDEClist), '=', len(gridcoords))
 
     ## Masking grid points
-    if gridmax > 0.:
-        # Distances of grind points to the nearest source
-        idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
-        
-        # Find grid points that are outside the field
-        outmask = (d2dsrc > gridmax*u.deg) # Points that lie outside the source field
-        outcoords = gridcoords[outmask]
-        
+
+    # Distances of grind points to the nearest source
+    idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
+    
+    # Find grid points that are outside the field
+    outmask = (d2dsrc > 1*u.deg) # Points that lie outside the source field
+    outcoords = gridcoords[outmask]
+    
+    if len(outcoords) > 0:
         # Remove points that lie close to the edge of the galaxy field
         idx, d2dout, d3d = gridcoords.match_to_catalog_sky(outcoords)
-        inmask = (d2dout > 1.*gridmax*u.deg)
-            
-        # Remove grid points that are in masked areas or outside the field
-        starmask = (d2dsrc < gridmax*u.deg)
-        gridmask = starmask*inmask
+        gridmask = (d2dout > 0.5*u.deg)
         
-    # Define new grid coordinates
-    gridRA, gridDEC, gridcoords = gridRA, gridDEC, gridcoords
-    print('New gridcoords:', len(gridcoords))
+        # Define new grid coordinates
+        gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
+        print('New gridcoords:', len(gridcoords))
     
     return gridRA, gridDEC, gridcoords
 
@@ -236,7 +233,7 @@ def write_catalog(filename, galIDlist, outputnames, output):
         for c in range(len(outputnames))]
 
     cols = pyfits.ColDefs(fitscols)
-    tbhdu = pyfits.new_table(cols)
+    tbhdu = pyfits.BinTableHDU.from_columns(cols)
 
     #	print
     if os.path.isfile(filename):
@@ -310,22 +307,30 @@ def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
     gamamasks = np.array([pyfits.open(path_gamamask, memmap=True)['PRIMARY'].data for path_gamamask in path_gamamasks])
     gamamasks[gamamasks < 0.] = 0.
 
-    # Creating the RA and DEC coordinates of each GAMA field
+    # Creating the RA and DEC coordinates of each GAMA mask
     print('Importing GAMAmask:')
     print('Old size:', np.shape(gamamasks))
-    gapsize = gridspace_mask/0.001
+    gridspace_orig = 0.001
+    gapsize = gridspace_mask/gridspace_orig
 
-    gamaRAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])+gapsize/2), int(gapsize))
-    gamaDECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])+gapsize/2), int(gapsize))
-    #print gamaRAnums
-    #print gamaDECnums
-
+    gamaRAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])+gapsize/2.), int(gapsize))
+    gamaDECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])+gapsize/2.), int(gapsize))
+    #print(gamaRAnums)
+    #print(gamaDECnums)
+    
     gamamasks_small = np.zeros([len(fieldboundaries), len(gamaRAnums), len(gamaDECnums)])
     
     for f in range(len(fieldboundaries)):
+        gamamask = gamamasks[f]
         for i in range(len(gamaRAnums)):
-            gamaRAnum = gamaRAnums[i]
-            gamamasks_small[f, i, :] = gamamasks[f, gamaRAnum, :][gamaDECnums]
+            #gamaRAnum = gamaRAnums[i]
+            #gamamasks_small[f, i, :] = gamamasks[f, gamaRAnum, :][gamaDECnums]
+            
+            gamaRAseq = np.arange(i*gapsize, ((i+1)*gapsize)-1, gridspace_orig)
+            
+            for j in range(len(gamaDECnums)):
+                maskmean = np.mean(gamamask[int(i*gapsize):int((i+1)*gapsize), int(j*gapsize):int((j+1)*gapsize)])
+                gamamasks_small[f, i, j] = maskmean
     
     print('New size:', np.shape(gamamasks_small))
 

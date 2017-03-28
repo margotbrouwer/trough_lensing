@@ -1,0 +1,4 @@
+# 1: Number of galaxies, 2: Effective area (arcmin^2), 3: Galaxy density (arcmin^-2)
+6.087900000000000000e+04
+3.611131069041279843e+05
+1.685870682510640095e-01
