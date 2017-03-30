@@ -72,25 +72,27 @@ densplus = np.sum(zbins<0.2)
 plt.plot(zbins, density, label='Low-Z sample')
 plt.plot(zbins, density_high, label='High-Z sample')
 plt.ylabel('Density')
-#plt.show()
+plt.xlabel('Redshift z')
+plt.legend()
+plt.show()
 plt.close()
 
 plt.plot(zbins, Ngals, label='Low-Z sample')
 plt.plot(zbins, Ngals_high, label='High-Z sample')
 plt.ylabel('Number of galaxies')
-#plt.show()
+plt.xlabel('Redshift z')
+plt.legend()
+plt.show()
 plt.close()
 
 plt.plot(zbins, covolbins, label='Low-Z sample')
 plt.plot(zbins, covolbins_high, label='High-Z sample')
 plt.ylabel('Volume')
-#plt.show()
+plt.xlabel('Redshift z')
+plt.legend()
+plt.show()
 plt.close()
 
-plt.hist2d(galZ, rmag_abs)
-plt.colorbar()
-plt.invert_yaxis()
-plt.show()
 
 idxdensity = densplus + (np.abs(density[densmask] - density_high[densmask])).argmin()
 idxNgals = (np.abs(Ngals - Ngals_high)).argmin()
@@ -100,3 +102,13 @@ print()
 print('Density (#/Mpc^3): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxdensity, zbins[idxdensity], density[idxdensity], density_high[idxdensity]))
 print('Ngals (#): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxNgals, zbins[idxNgals], Ngals[idxNgals], Ngals_high[idxNgals]))
 print('Volume (Mpc^3): number=%g, Zlim=%g, lowsamp=%g, highsamp=%g'%(idxcovol, zbins[idxcovol], covolbins[idxcovol], covolbins_high[idxcovol]))
+
+print()
+
+zlim = zbins[idxdensity]
+zlims = np.array([zmin, zlim, zmax])
+Dlims = (cosmo.comoving_distance(zlims).to('Mpc')).value
+
+print(zlims)
+print(Dlims)
+print(np.diff(Dlims))

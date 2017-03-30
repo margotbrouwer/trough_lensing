@@ -67,7 +67,6 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 datalabels = ['Percentage', 'Density']*3
 
-"""
 
 # Randoms
 path_lenssel = ['No_bins/Pmasktheta5_0p8_1']
@@ -75,9 +74,20 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = ['Random signal']
+"""
+
+# KiDS vs GAMA
+
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_Mar'
+path_lenssel = ['No_bins_kids_gama-area/Pmasktheta5_0p8_1-Ptheta5_0_0p2']
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance/'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datalabels = ['KiDS (GAMA area)']
 
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Feb/Plots/random_troughs'
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Mar/Plots/troughs_kids_gama-area'
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])

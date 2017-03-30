@@ -37,14 +37,14 @@ print()
 ## 1a) Importing the galaxy catalogue.
 
 # Select the galaxy catalogue for trough selection (kids/gama)
-cat = 'gama'
+cat = 'kids'
 masktype = 'complex'
 
 # Spacing of the grid (in deg)
 gridspace = 2./60. # 2 arcmin
 
 # Import maskfile if present
-maskfilename = '/data2/brouwer/MergedCatalogues/trough_catalogues/mask_catalogue_%s_%garcmin_%s.fits'%(cat, gridspace*60., masktype)
+maskfilename = '/data2/brouwer/MergedCatalogues/trough_catalogues/mask_catalogue_%s_%garcmin_%s.fits'%('gama', gridspace*60., masktype)
 masktextname = 'area_info_%s.txt'%masktype
 if os.path.isfile(maskfilename):
     nomaskfile = False
@@ -54,6 +54,7 @@ else:
 
 if cat == 'kids':
     
+    """
     # Names of the KiDS fields
     fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
     
@@ -64,10 +65,20 @@ if cat == 'kids':
     coordsG23 = np.array([[328.0,361.0], [-35.0,-28.0]])
     coordsGS = np.array([[31.0,54.0], [-35.0,-29.0]])
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
+    """
+    
+    # Names of the GAMA fields
+    fieldnames = ['G9', 'G12', 'G15']
+    
+    # Boundaries of the GAMA fields
+    coordsG9 = [[129., 141.], [-2.,3.]]
+    coordsG12 = [[174., 186.], [-3.,2.]]
+    coordsG15 = [[211.5, 223.5], [-2.,3.]]
+    fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
     
     # Path to the KiDS fieldsc
-    path_kidscat = '/data2/brouwer/KidsCatalogues'
-    kidscatname = 'KiDS.DR3.zpbpzLess0.6.fits'
+    path_kidscat = '/data2/brouwer/MergedCatalogues'
+    kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
     
     # Importing the KiDS coordinates
     galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
@@ -84,44 +95,45 @@ if cat == 'gama':
     coordsG15 = [[211.5, 223.5], [-2.,3.]]
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
 
-    # Path to the KiDS fields
+    # Path to the GAMA fields
     path_gamacat = '/data2/brouwer/MergedCatalogues/'
     gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
     
     # Importing the GAMA coordinates
     galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
+    
+# Importing GAMA mask
+gridspace_mask = 0.02 # in degree
+mask_density = 1/(gridspace_mask*60.)**2 # Density of mask gridpoints (in arcmin^-2)
+if nomaskfile:
+    # Import GAMA masks for effective area calculation
+    path_gamamasks = ['/data2/brouwer/MergedCatalogues/GamaMasks/%smask08000.fits'%g for g in ['g09', 'g12', 'g15']]
+    gamamasks = utils.import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries)
 
-    gridspace_mask = 0.02 # in degree
-    mask_density = 1/(gridspace_mask*60.)**2 # Density of mask gridpoints (in arcmin^-2)
-    if nomaskfile:
-        # Import GAMA masks for effective area calculation
-        path_gamamasks = ['/data2/brouwer/MergedCatalogues/GamaMasks/%smask08000.fits'%g for g in ['g09', 'g12', 'g15']]
-        gamamasks = utils.import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries)
-        
 
 ## 1b) Select the galaxy sample to define the troughs
 
 # Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
-#selection = 'all'
+selection = 'all'
 #selection = 'absmag'
 #selection = 'redseq4'
-selection = 'lowZ'
+#selection = 'lowZ'
 #selection = 'highZ'
 
 # Defining the selection for the KiDS galaxy sample
 if cat=='kids':
 
-    # Redshift cut
-    zmin = 0.1
-    zmax = 0.4
+    if selection == 'all':
+        galmask = (galZ >= 0.)
 
-    galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
-
+    if ('redseq' in selection) or (selection=='ell'):
+        galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
+    
 # Defining the selection for the GAMA galaxy sample
 if cat=='gama':
 
     if selection == 'all':
-        galmask = (rmag <= 19.8)    
+        galmask = (rmag <= 19.8)
     if selection == 'absmag':
         galmask = (rmag_abs < -19.7) & (rmag <= 19.8)
 
@@ -156,7 +168,7 @@ for field in range(len(fieldnames)):
     
     # Selecting the galaxies lying within this field
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
-
+    
     print()
     print('KiDS field %s:'%fieldnames[field])
 
@@ -244,13 +256,8 @@ for field in range(len(fieldnames)):
     Ngaltheta_tot = np.hstack([Ngaltheta_tot, Ngaltheta])
     Nmasktheta_tot = np.hstack([Nmasktheta_tot, Nmasktheta])
     
-    # Define the total grid (of all fields)
-    Ngrid_tot = len(gridRA_tot)
-    gridID_tot = np.arange(Ngrid_tot)
-    gridcoords_tot = SkyCoord(ra=gridRA_tot*u.deg, dec=gridDEC_tot*u.deg)
 
-    
-# Calculate the percentage of the area that is masked
+# Calculate the percentage of the circle areas that is masked
 
 # If there is no file containing the masked percentage ...
 if nomaskfile:
@@ -283,11 +290,16 @@ else:
     
     field_area = np.loadtxt(masktextname)
 
+# Effective area and density of the fields, for printing to text file
 field_area = np.append(field_area, np.mean(field_area))
 field_galaxies = np.append(field_galaxies, np.mean(field_galaxies))
 field_density = field_galaxies/field_area
 
-   
+# Define the total grid (of all fields)
+Ngrid_tot = len(gridRA_tot)
+gridID_tot = np.arange(Ngrid_tot)
+gridcoords_tot = SkyCoord(ra=gridRA_tot*u.deg, dec=gridDEC_tot*u.deg)
+
 #  3c) For each grid point, the galaxy density is defined as the galaxy count within the circle, divided by the effective area of the circle.
 
 ### 5) Selecting the trough sample:
@@ -295,13 +307,17 @@ field_density = field_galaxies/field_area
 ##  5a) For each grid point/circle, we calculate the percentage Ptheta of grid points that has a lower galaxy density.
 
 # Density
-eff_area = Nmasktheta_tot/mask_density # Effective area of each circle
-rhotheta_tot = Ngaltheta_tot/eff_area
+Aefftheta_tot = Nmasktheta_tot/mask_density # Effective area of each circle
+rhotheta_tot = Ngaltheta_tot/Aefftheta_tot
 
 # Percentile and delta = (rho - av(rho))/av(rho)
 sort_rho = np.array([np.argsort(rhotheta_tot[theta]) for theta in range(Ntheta)])
 Ptheta_tot = np.array([np.argsort(gridID_tot[sort_rho[theta]])/Ngrid_tot for theta in range(Ntheta)])
 delta_tot = (rhotheta_tot - field_density[-1]) / field_density[-1]
+
+# Average redshift of the trough sample
+redshift_av = np.mean(galZ[galmask])
+redshift_tot = np.array([redshift_av]*Ngrid_tot)
 
 
 # Following the definition from DES, we usually define the 20% of all circles with the lowest density to be the troughs.
@@ -322,9 +338,9 @@ filename = '/data2/brouwer/MergedCatalogues/trough_catalogues/trough_catalog_%s_
 # percentage of circles below its density (Ptheta), and non-overlapping selection flag (Stheta).
 
 # Defining the names of the columns
-outputnames = ['RA', 'DEC']
+outputnames = ['RA', 'DEC', 'Z']
 [outputnames.append('Ngaltheta%i'%(theta*60)) for theta in thetalist]
-[outputnames.append('Nmasktheta%i'%(theta*60)) for theta in thetalist]
+[outputnames.append('Aefftheta%i'%(theta*60)) for theta in thetalist]
 [outputnames.append('Pmasktheta%i'%(theta*60)) for theta in thetalist]
 [outputnames.append('rhotheta%i'%(theta*60)) for theta in thetalist]
 [outputnames.append('Ptheta%i'%(theta*60)) for theta in thetalist]
@@ -332,9 +348,9 @@ outputnames = ['RA', 'DEC']
 #[outputnames.append('Stheta%i'%(theta*60)) for theta in thetalist]
 
 # Defining the output
-output = [gridRA_tot, gridDEC_tot]
+output = [gridRA_tot, gridDEC_tot, redshift_tot]
 [output.append(Ngaltheta_tot[theta,:]) for theta in range(Ntheta)]
-[output.append(Nmasktheta_tot[theta,:]) for theta in range(Ntheta)]
+[output.append(Aefftheta_tot[theta,:]) for theta in range(Ntheta)]
 [output.append(Pmasktheta_tot[theta,:]) for theta in range(Ntheta)]
 [output.append(rhotheta_tot[theta,:]) for theta in range(Ntheta)]
 [output.append(Ptheta_tot[theta,:]) for theta in range(Ntheta)]

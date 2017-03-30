@@ -33,17 +33,18 @@ def import_kidscat(path_kidscat, kidscatname):
     ODDS = kidscat['ODDS_BPZ'] # Quality of the photometric redshift
     mag_auto = kidscat['MAG_AUTO_R']
     
-    umag = kidscat['MAG_GAAP_u']
-    gmag = kidscat['MAG_GAAP_g']
-    rmag = kidscat['MAG_GAAP_r']
-    imag = kidscat['MAG_GAAP_i']
-
+    umag = kidscat['MAG_GAAP_u_CALIB']
+    gmag = kidscat['MAG_GAAP_g_CALIB']
+    rmag = kidscat['MAG_GAAP_r_CALIB']
+    imag = kidscat['MAG_GAAP_i_CALIB']
+    
+    """
     # Adding homogenization ZPT offset and subtracting Galactic foreground extinction following Schlegel et al. maps.
     umag = umag + kidscat['ZPT_OFFSET_U'] - kidscat['EXT_SFD_U']
     gmag = gmag + kidscat['ZPT_OFFSET_G'] - kidscat['EXT_SFD_G']
     rmag = rmag + kidscat['ZPT_OFFSET_R'] - kidscat['EXT_SFD_R']
     imag = imag + kidscat['ZPT_OFFSET_I'] - kidscat['EXT_SFD_I']
-
+    
     umagerr = kidscat['MAGERR_GAAP_u']
     gmagerr = kidscat['MAGERR_GAAP_g']
     rmagerr = kidscat['MAGERR_GAAP_r']
@@ -74,7 +75,8 @@ def import_kidscat(path_kidscat, kidscatname):
     imag = imag[srcmask]
     mag_auto = mag_auto[srcmask]
     ODDS = ODDS[srcmask]
-
+    """
+    
     return srcRA, srcDEC, srcZB, srcTB, mag_auto, ODDS, umag, gmag, rmag, imag
 
 
@@ -173,10 +175,6 @@ def define_galsamp(selection, zmin, zmax, srcZB, srcTB, gmag, rmag, mag_auto):
         
         probmask = (redseq_prob > problim)
         redmask = probmask*colormask*magmask
-    
-    if selection == 'all':
-        print('Selection: All galaxies')
-        redmask = zmask*magmask
     
     return redmask
     
@@ -306,7 +304,45 @@ def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
     
     gamamasks = np.array([pyfits.open(path_gamamask, memmap=True)['PRIMARY'].data for path_gamamask in path_gamamasks])
     gamamasks[gamamasks < 0.] = 0.
+    
+    print(gamamasks)
+    print(np.shape(gamamasks))
+    
+    # Creating the RA and DEC coordinates of each GAMA mask
+    print('Importing GAMAmask:')
+    print('Old size:', np.shape(gamamasks))
+    gridspace_orig = 0.001
+    gapsize = gridspace_mask/gridspace_orig
 
+    gamaRAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])+gapsize/2.), int(gapsize))
+    gamaDECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])+gapsize/2.), int(gapsize))
+    #print(gamaRAnums)
+    #print(gamaDECnums)
+    
+    gamamasks_small = np.zeros([len(fieldboundaries), len(gamaRAnums), len(gamaDECnums)])
+    
+    for f in range(len(fieldboundaries)):
+        gamamask = gamamasks[f]
+        for i in range(len(gamaRAnums)):
+            for j in range(len(gamaDECnums)):
+                maskmean = np.mean(gamamask[int(i*gapsize):int((i+1)*gapsize), int(j*gapsize):int((j+1)*gapsize)])
+                gamamasks_small[f, i, j] = maskmean
+    
+    print('New size:', np.shape(gamamasks_small))
+
+    gamamasks = gamamasks_small
+    gamamasks = np.reshape(gamamasks, [len(fieldboundaries), np.size(gamamasks[0])])
+
+    print('Final shape:', np.shape(gamamasks))
+    
+    return gamamasks
+    
+# Import GAMA masks for completeness calculation
+def import_kidsmasks(path_kidsmasks, gridspace_mask, fieldboundaries):
+    
+    kidsmasks = np.array([pyfits.open(path_kidsmask, memmap=True)['PRIMARY'].data for path_gamamask in path_kidsmasks])
+    kidsmasks[kidsmasks < 0.] = 0.
+    
     # Creating the RA and DEC coordinates of each GAMA mask
     print('Importing GAMAmask:')
     print('Old size:', np.shape(gamamasks))
@@ -340,3 +376,4 @@ def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
     print('Final shape:', np.shape(gamamasks))
     
     return gamamasks
+
