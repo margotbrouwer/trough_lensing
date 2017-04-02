@@ -40,8 +40,10 @@ print()
 cat = 'kids'
 masktype = 'complex'
 
-# Spacing of the grid (in deg)
-gridspace = 2./60. # 2 arcmin
+# Spacing of the trough and mask grids (in degree)
+gridspace = 2./60.
+gridspace_mask = 0.02
+mask_density = 1/(gridspace_mask*60.)**2 # Density of mask gridpoints (in arcmin^-2)
 
 # Import maskfile if present
 maskfilename = '/data2/brouwer/MergedCatalogues/trough_catalogues/mask_catalogue_%s_%garcmin_%s.fits'%('gama', gridspace*60., masktype)
@@ -103,8 +105,7 @@ if cat == 'gama':
     galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
     
 # Importing GAMA mask
-gridspace_mask = 0.02 # in degree
-mask_density = 1/(gridspace_mask*60.)**2 # Density of mask gridpoints (in arcmin^-2)
+
 if nomaskfile:
     # Import GAMA masks for effective area calculation
     path_gamamasks = ['/data2/brouwer/MergedCatalogues/GamaMasks/%smask08000.fits'%g for g in ['g09', 'g12', 'g15']]
@@ -193,19 +194,25 @@ for field in range(len(fieldnames)):
     gridID = np.arange(Ngrid)
     
     if nomaskfile:
-        # Define the mask coordinates in this field
-        maskRA, maskDEC, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, galcoords, gridspace_mask)
-        gamamask = gamamasks[field]
+        
+        if cat == 'gama':
+            # Define the mask coordinates in this field
+            catmask = catmasks[field]
+            maskRA, maskDEC, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, galcoords, gridspace_mask)
 
-        #n, bins, patches = plt.hist(gamamask, 50)
+        
+        if cat == 'kids':
+            
+
+        #n, bins, patches = plt.hist(catmask, 50)
         #plt.show()
         
         # Count only the mask coordinates above 0.
-        maskcoords = maskcoords[gamamask>0]
-        gamamask = gamamask[gamamask>0]
+        maskcoords = maskcoords[catmask>0]
+        catmask = catmask[catmask>0]
 
         # Field area information for printing to text file
-        Nmaskedgrid = np.sum(gamamask)
+        Nmaskedgrid = np.sum(catmask)
         field_area = np.append(field_area, Nmaskedgrid/mask_density)
     
     ### 3) Measuring galaxy density:
@@ -246,7 +253,7 @@ for field in range(len(fieldnames)):
                     (Nmasktheta[theta, sampindex[s]:sampindex[s+1]])[maskcountlist[0]] = maskcountlist[1]
                 else:
                     # Improved masking: completeness varies between 0 and 1.
-                    maskcountlist = np.array([np.sum(gamamask[gridxmask][maskxgrid==g]) for g in range(len(gridsamp))])
+                    maskcountlist = np.array([np.sum(catmask[gridxmask][maskxgrid==g]) for g in range(len(gridsamp))])
                     Nmasktheta[theta, sampindex[s]:sampindex[s+1]] = maskcountlist
 
     

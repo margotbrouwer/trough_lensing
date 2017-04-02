@@ -314,17 +314,17 @@ def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
     gridspace_orig = 0.001
     gapsize = gridspace_mask/gridspace_orig
 
-    gamaRAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])+gapsize/2.), int(gapsize))
-    gamaDECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])+gapsize/2.), int(gapsize))
+    RAnums = np.arange(int(gapsize/2.), int(len(gamamasks[0])), int(gapsize))
+    DECnums = np.arange(int(gapsize/2.), int(len(gamamasks[0,0])), int(gapsize))
     #print(gamaRAnums)
     #print(gamaDECnums)
     
-    gamamasks_small = np.zeros([len(fieldboundaries), len(gamaRAnums), len(gamaDECnums)])
+    gamamasks_small = np.zeros([len(fieldboundaries), len(RAnums), len(DECnums)])
     
     for f in range(len(fieldboundaries)):
         gamamask = gamamasks[f]
-        for i in range(len(gamaRAnums)):
-            for j in range(len(gamaDECnums)):
+        for i in range(len(RAnums)):
+            for j in range(len(DECnums)):
                 maskmean = np.mean(gamamask[int(i*gapsize):int((i+1)*gapsize), int(j*gapsize):int((j+1)*gapsize)])
                 gamamasks_small[f, i, j] = maskmean
     
