@@ -24,7 +24,7 @@ from matplotlib import rc, rcParams
 import trough_modules_all as utils
 
 # Defining the circle size and redshift bins
-thetalow = 10. # in arcmin
+thetalow = 5. # in arcmin
 am_to_rad = np.pi/(60.*180.)
 
 zmin = 0.05
@@ -39,7 +39,7 @@ gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 # Importing the GAMA coordinates
 galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
 
-galmask = (rmag_abs < -21.)&(galZ < zmax)
+galmask = (rmag_abs < -21.)& (zmin < galZ)&(galZ < zmax) & (rmag <= 19.8)
 galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
 
 # Calculating the volume of the cone at each redshift bin
@@ -56,8 +56,27 @@ print()
 print('Z(min,lim,max):', zlims)
 print('Dc(min,lim,max):', Dclims, 'Mpc')
 
-tanthetahigh = np.tan(thetalow*am_to_rad) * np.sqrt((Dclims[1]**3. - Dclims[0]**3.)/(Dclims[2]**3. - Dclims[1]**3.))
+# Equal volume
+#tanthetahigh = np.tan(thetalow*am_to_rad) * np.sqrt((Dclims[1]**3. - Dclims[0]**3.)/(Dclims[2]**3. - Dclims[1]**3.))
+
+# Equal radius at Dlim/Dmax
+#tanthetahigh = np.tan(thetalow*am_to_rad) * (Dclims[1] / Dclims[2])
+
+# Equal radius at the center of the sample
+lowmask = (galZ < zlims[1])
+highmask = (zlims[1] < galZ)
+
+Zlow, Zhigh = [ np.mean(galZ[mask]) for mask in [lowmask, highmask] ]
+Dlow, Dhigh = [ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ]
+
+tanthetahigh = np.tan(thetalow*am_to_rad) * (Dlow / Dhigh)
+
+print('mean Z(low,high):', Zlow, Zhigh)
+print('mean Dc(low,high):', Dlow, Dhigh)
+
 thetahigh = np.arctan(tanthetahigh)/am_to_rad
+
+
 print('theta(low,high):', thetalow, thetahigh, 'arcmin')
 
 V1low = 1./3.*np.pi * Dclims[0]**3. * np.tan(thetalow*am_to_rad)**2.

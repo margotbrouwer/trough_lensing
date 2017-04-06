@@ -40,7 +40,7 @@ colors = np.array([reds,blues])
 
 # Defining the paths to the data
 blind = 'A'
-Nbins = 1
+Nbins = 3
 Nrows = 1
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
@@ -79,11 +79,12 @@ datalabels = ['Random signal']
 # KiDS vs GAMA
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Mar'
-path_lenssel = ['No_bins_kids_gama-area/Pmasktheta5_0p8_1-Ptheta5_0_0p2']
+path_lenssel = ['No_bins_kids_gama-area/Pmasktheta5_0p8_1-Ptheta5_0_0p2', \
+'No_bins_kids_all_complex/Pmasktheta5_0p6_1-Ptheta5_0_0p2', 'No_bins_gama_all_complex/Pmasktheta5_0p8_1-Ptheta5_0_0p2']
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance/'
 path_filename = 'No_bins_%s.txt'%(blind)
 
-datalabels = ['KiDS (GAMA area)']
+datalabels = ['KiDS (GAMA area)', 'KiDS (KiDS area)', 'GAMA']
 
 
 

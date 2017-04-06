@@ -33,10 +33,10 @@ def import_kidscat(path_kidscat, kidscatname):
     ODDS = kidscat['ODDS_BPZ'] # Quality of the photometric redshift
     mag_auto = kidscat['MAG_AUTO_R']
     
-    umag = kidscat['MAG_GAAP_u_CALIB']
-    gmag = kidscat['MAG_GAAP_g_CALIB']
-    rmag = kidscat['MAG_GAAP_r_CALIB']
-    imag = kidscat['MAG_GAAP_i_CALIB']
+    umag = kidscat['MAG_ISO_u_CALIB']
+    gmag = kidscat['MAG_ISO_g_CALIB']
+    rmag = kidscat['MAG_ISO_r_CALIB']
+    imag = kidscat['MAG_ISO_i_CALIB']
     
     """
     # Adding homogenization ZPT offset and subtracting Galactic foreground extinction following Schlegel et al. maps.
@@ -105,14 +105,14 @@ def import_gamacat(path_gamacat, gamacatname):
     
 
 # Define grid points for trough selection
-def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace):
+def define_gridpoints(fieldRAs, fieldDECs, gridspace):
 
     ## Grid
     
     # Creating a grid to measure the galaxy density
-    gridRAlist = np.arange(fieldRAs[0], fieldRAs[1], gridspace)
-    gridDEClist = np.arange(fieldDECs[0], fieldDECs[1], gridspace)
-    gridmatrix = np.array([np.array([np.array([RA, DEC]) for RA in gridRAlist]) for DEC in gridDEClist])
+    gridRAlist = np.arange(fieldRAs[0]+gridspace/2., fieldRAs[1], gridspace)
+    gridDEClist = np.arange(fieldDECs[0]+gridspace/2., fieldDECs[1], gridspace)
+    gridmatrix = np.array([np.array([np.array([RA, DEC]) for DEC in gridDEClist]) for RA in gridRAlist])
     print('Grid shape:', np.shape(gridmatrix))
     
     gridlist = np.vstack(gridmatrix)
@@ -121,10 +121,13 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace):
     gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg) # All grid coordinates    
 
     print('Number of grid coordinates:', len(gridRAlist), 'x', len(gridDEClist), '=', len(gridcoords))
-
+    
+    print(len(gridRAlist), len(gridDEClist))
+    
+    """
     ## Masking grid points
 
-    # Distances of grind points to the nearest source
+    # Distances of grid points to the nearest source
     idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
     
     # Find grid points that are outside the field
@@ -139,6 +142,7 @@ def define_gridpoints(fieldRAs, fieldDECs, srccoords, gridspace):
         # Define new grid coordinates
         gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
         print('New gridcoords:', len(gridcoords))
+    """
     
     return gridRA, gridDEC, gridcoords
 
@@ -302,7 +306,7 @@ def calc_chi2(data, model, covariance, nbins):
 # Import GAMA masks for completeness calculation
 def import_gamamasks(path_gamamasks, gridspace_mask, fieldboundaries):
     
-    gamamasks = np.array([pyfits.open(path_gamamask, memmap=True)['PRIMARY'].data for path_gamamask in path_gamamasks])
+    gamamasks = np.array([pyfits.open(path_gamamask, memmap=True)['PRIMARY'].data for path_gamamask in path_gamamasks]).T
     gamamasks[gamamasks < 0.] = 0.
     
     print(gamamasks)

@@ -17,74 +17,148 @@ from collections import Counter
 
 import trough_modules_all as utils
 
-path_cat = '/data2/brouwer/KidsCatalogues'
-catnames = os.listdir('%s/kids_masks'%path_cat)
+cat = 'gama'
+gridspace_mask = 0.002 # in degree
 
-print(len(catnames))
+
+if cat == 'kids':
+    
+    # Names of the KiDS fields
+    fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
+
+    # Boundaries of the KiDS fields
+    coordsG9 = np.array([[128.0,142.5], [-2.5,3.5]])
+    coordsG12 = np.array([[155.0,190.0], [-3.5,3.5]])
+    coordsG15 = np.array([[209.5,239.0], [-3.5,3.5]])
+    coordsG23 = np.array([[328.0,361.0], [-35.0,-28.0]])
+    coordsGS = np.array([[31.0,54.0], [-35.0,-29.0]])
+    fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
+    
+    # Names of the mask files
+    kids_path = '/data2/brouwer/KidsCatalogues/kids_masks'
+    catnames = os.listdir(kids_path)
+    #catnames = ['KIDS450_0.0_-31.2_r_sci_masked_pixels.fits']
+    
+    # Path to the KiDS fields
+    path_kidscat = '/data2/brouwer/MergedCatalogues'
+    kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+    
+    """
+    # Importing the KiDS coordinates
+    galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
+    utils.import_kidscat(path_kidscat, kidscatname)
+    galcoords = SkyCoord(ra=galRA*u.deg, dec=galDEC*u.deg)
+    """
+
+if cat == 'gama':
+    
+    # Names of the GAMA fields
+    fieldnames = ['G9', 'G12', 'G15']
+    
+    # Boundaries of the GAMA fields
+    coordsG9 = [[129., 141.], [-2.,3.]]
+    coordsG12 = [[174., 186.], [-3.,2.]]
+    coordsG15 = [[211.5, 223.5], [-2.,3.]]
+    
+    fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
+    
+    # Names of the mask files
+    catnames = ['/data2/brouwer/MergedCatalogues/GamaMasks/%smask08000.fits'%g for g in fieldnames]
+
+
+## Making the big matrix files into a smaller array with [RA, DEC, mask] for every coordinate
 
 RAlist_tot = []
 DEClist_tot = []
 masklist_tot = []
 
-gridspace_mask = 0.02 # in degree
-gridspace_orig = 0.002
-gapsize = gridspace_mask/gridspace_orig
-
-# Names of the KiDS fields
-fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
-
-# Boundaries of the KiDS fields
-coordsG9 = np.array([[128.0,142.5], [-2.5,3.5]])
-coordsG12 = np.array([[155.0,190.0], [-3.5,3.5]])
-coordsG15 = np.array([[209.5,239.0], [-3.5,3.5]])
-coordsG23 = np.array([[328.0,361.0], [-35.0,-28.0]])
-coordsGS = np.array([[31.0,54.0], [-35.0,-29.0]])
-fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
-
-
-for c in range(len(catnames)):
-#for c in range(20):
+#for c in range(len(catnames)):
+for c in range(1):
     
-    # Full directory & name of the corresponding KiDS catalogue
-    catfile = '%s/kids_masks/%s'%(path_cat, catnames[c])
-    cat = pyfits.open(catfile, memmap=True)
-
-    kidsmask = 1.-np.array(cat[1].data)
-    RAs = (cat[2].data)
-    DECs = (cat[3].data)
-  
-    print('Importing KiDS mask: %s (%i/%i)'%(catnames[c], c+1, len(catnames)))
-    #print('Old size:', np.shape(kidsmask))
-   
-    RAnums = np.arange(int(gapsize/2.), int(len(kidsmask)), int(gapsize))
-    DECnums = np.arange(int(gapsize/2.), int(len(kidsmask[0])), int(gapsize))
+    print('Importing %s mask: %s (%i/%i)'%(cat, catnames[c], c+1, len(catnames)))
     
-    kidsmask_small = np.zeros([len(RAnums), len(DECnums)])
+    # Import the mask catalogue
+    if cat == 'kids':
+        maskcat = pyfits.open('%s/%s'%(kids_path, catnames[c]), memmap=True)
+
+        catmask = 1.-np.array(maskcat[1].data)
+        maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
+
+        # Finding the space between the original grid points
+        RAdiff, DECdiff = [np.diff(maskRA), np.diff(maskDEC)]
+        RAdiff, DECdiff = [RAdiff[RAdiff<1.], DECdiff[DECdiff<1.]]
+        
+        gridspace_RA = abs(np.mean(RAdiff))
+        gridspace_DEC = abs(np.mean(DECdiff))
+        gapsize_RA = round(gridspace_mask/gridspace_RA)
+        gapsize_DEC = round(gridspace_mask/gridspace_DEC)
+        
+        #print(gridspace_RA, gapsize_RA)
+        #print(gridspace_DEC, gapsize_DEC)
+        
+        """
+        # Highlight fields without galaxies
+        
+        fieldcoord = SkyCoord(ra=np.mean(maskRA)*u.deg, dec=np.mean(maskDEC)*u.deg)
+        idx, d2d, d3d = fieldcoord.match_to_catalog_sky(galcoords)
+        d2d = d2d[0].to('degree').value
+        
+        print(d2d)
+        if d2d > 0.1:
+            print('No galaxies in:', catnames[c])
+        """
+        
+    if cat == 'gama':
+        # Boundaries of the current GAMA field
+        fieldRAs = fieldboundaries[c,0]
+        fieldDECs = fieldboundaries[c,1]
+        
+        catmask = np.array(pyfits.open(catnames[c], memmap=True)['PRIMARY'].data).T
+        maskRA, maskDEC, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask)
+        maskRA, maskDEC = [np.sort(np.unique(maskRA)), np.sort(np.unique(maskDEC))]
+        
+        # The space between the original grid points
+        gridspace_orig = 0.001
+        
+        # Defining the gap between the points of the big matrix, to create the small matrix
+        gapsize_RA = round(gridspace_mask/gridspace_orig)
+        gapsize_DEC = gapsize_RA
+    
+    # Set all negative mask values to 0.
+    catmask[catmask < 0.] = 0.
+
+    RAnums = np.arange(int(round(gapsize_RA/2.)), np.shape(catmask)[0], int(gapsize_RA))
+    DECnums = np.arange(int(round(gapsize_DEC/2.)), np.shape(catmask)[1], int(gapsize_DEC))
+    
+    catmask_small = np.zeros([len(RAnums), len(DECnums)])
 
     for i in range(len(RAnums)):
         for j in range(len(DECnums)):
-            maskmean = np.mean(kidsmask[int(i*gapsize):int((i+1)*gapsize), int(j*gapsize):int((j+1)*gapsize)])
-            kidsmask_small[i, j] = maskmean
+            maskmean = np.mean(catmask[int(i*gapsize_RA):int((i+1)*gapsize_RA), int(j*gapsize_DEC):int((j+1)*gapsize_DEC)])
+            catmask_small[i, j] = maskmean
     
-    #print('New size:', np.shape(kidsmask_small))
-    #print()
+    print('Old size:', np.shape(catmask))
+    print('New size:', np.shape(catmask_small))
     
-    kidsmask = kidsmask_small
-    RAs = RAs[RAnums]
-    DECs = DECs[DECnums]
+    catmask = catmask_small
+    if cat == 'kids':
+        maskRA = maskRA[RAnums]
+        maskDEC = maskDEC[DECnums]
     
-    masklist =  np.array([[ kidsmask[i,j] for i in range(len(RAs)) ] for j in range(len(DECs)) ])
-    coordlist = np.array([[ [RAs[i], DECs[j]] for i in range(len(RAs)) ] for j in range(len(DECs)) ])
-
-    RAlist = np.reshape(coordlist[:,:,0], [len(RAs)*len(DECs)])
-    DEClist = np.reshape(coordlist[:,:,1], [len(RAs)*len(DECs)])
-    masklist = np.reshape(masklist, [len(RAs)*len(DECs)])
-
+    masklist =  np.array([[ catmask[i,j] for i in range(len(maskRA)) ] for j in range(len(maskDEC)) ])
+    coordlist = np.array([[ [maskRA[i], maskDEC[j]] for i in range(len(maskRA)) ] for j in range(len(maskDEC)) ])
+    
+    RAlist = np.reshape(coordlist[:,:,0], [len(maskRA)*len(maskDEC)])
+    DEClist = np.reshape(coordlist[:,:,1], [len(maskRA)*len(maskDEC)])
+    masklist = np.reshape(masklist, [len(maskRA)*len(maskDEC)])
+    
     RAlist_tot = np.append(RAlist_tot, RAlist)
     DEClist_tot = np.append(DEClist_tot, DEClist)
     masklist_tot = np.append(masklist_tot, masklist)
+    
+    #print()
 
-
+## Dividing total masks into different fields, and removing overlapping tiles
 for f in range(len(fieldnames)):
 
     # Boundaries of the current KiDS field
@@ -92,7 +166,7 @@ for f in range(len(fieldnames)):
     fieldDECs = fieldboundaries[f,1]
     
     # Selecting the mask points lying within this field
-    fieldmask = (fieldRAs[0] < RAlist_tot)&(RAlist_tot < fieldRAs[1]) & (fieldDECs[0] < DEClist_tot)&(DEClist_tot < fieldDECs[1])
+    fieldmask = (fieldRAs[0] <= RAlist_tot)&(RAlist_tot <= fieldRAs[1]) & (fieldDECs[0] <= DEClist_tot)&(DEClist_tot <= fieldDECs[1])
     Ngrid_field = np.sum(fieldmask)
     
     RAlist_field, DEClist_field, masklist_field = RAlist_tot[fieldmask], DEClist_tot[fieldmask], masklist_tot[fieldmask]
@@ -116,8 +190,8 @@ for f in range(len(fieldnames)):
         
         # 4c/d) For the underdense/overdense circles: We start from the lowest/highest density circle and flag all overlapping circles.
         
-        # Find grid points within 0.5 gridspace of each other
-        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, (gridspace_mask/2.)*u.deg)
+        # Find grid points within 0.8 gridspace of each other
+        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, (np.sqrt(2.)/2.)*gridspace_mask*u.deg)
         
         # Looping over grid points
         for g in range(len(selsamp)):
@@ -136,9 +210,11 @@ for f in range(len(fieldnames)):
 
     # Remove overlapping mask points
     selmask = (selected == 1)
+    print('Selected:', np.sum(selmask), '/', len(selmask))
     
     # Print output to file
-    filename = '%s/KiDS-450_mask_%s.fits'%(path_cat, fieldnames[f])
+    
+    filename = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[f], gridspace_mask)
     outputnames = ['RA', 'DEC', 'mask']
     output = [RAlist_field[selmask], DEClist_field[selmask], masklist_field[selmask]]
 
