@@ -25,8 +25,8 @@ import trough_modules_all as utils
 
 
 # Radii theta of circular regions (in deg)
-#thetalist = np.array([5., 10., 15., 20.])/60.
-thetalist = np.array([2.764, 5., 5.527, 8.291, 10., 11.054, 15., 20.])/60.
+thetalist = np.array([5., 10., 15., 20.])/60.
+#thetalist = np.array([5., 10., 15., 20., 3.163, 6.326, 9.490, 12.653])/60.
 #thetalist = np.array([5.])/60.
 
 Ntheta = len(thetalist)
@@ -45,13 +45,14 @@ gridspace = 0.04
 mask_density = 1/(gridspace*60.)**2 # Density of mask gridpoints (in arcmin^-2)
 
 # Import maskfile if present
-maskfilename = '/data2/brouwer/MergedCatalogues/Masks/mask_catalogue_%s_%gdeg_%s.fits'%(cat, gridspace, masktype)
+maskfilename = '/data2/brouwer/MergedCatalogues/Masks/mask_catalog_%s_%gdeg_%s.fits'%(cat, gridspace, masktype)
 masktextname = 'area_info_%s.txt'%masktype
 if os.path.isfile(maskfilename):
     nomaskfile = False
 else:
     nomaskfile = True
 
+print(maskfilename)
 
 if cat == 'kids':
     
@@ -77,7 +78,7 @@ if cat == 'kids':
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
     """
     
-    # Path to the KiDS fieldsc
+    # Path to the KiDS fields
     path_kidscat = '/data2/brouwer/MergedCatalogues'
     kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
     
@@ -109,10 +110,10 @@ if cat == 'gama':
 
 # Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
 #selection = 'all'
-selection = 'absmag'
+#selection = 'absmag'
 #selection = 'redseq4'
 #selection = 'lowZ'
-#selection = 'highZ'
+selection = 'highZ'
 
 # Defining the selection for the KiDS galaxy sample
 if cat=='kids':
@@ -138,18 +139,18 @@ if cat=='gama':
         galmask = (rmag_abs < -19.7) & (rmag <= 19.8)
 
     # Redshift samples
-    zmin = 0.05
-    zlim = 0.17075622469594484
+    zmin = 0.1
+    zlim = 0.197
     zmax = 0.3
     
     if selection == 'lowZ':
         galmask = (zmin < galZ)&(galZ < zlim) & (rmag_abs < -21.) & (rmag <= 19.8)
-        thetalist = np.array([10.])/60.
+        thetalist = np.array([5., 10., 15., 20.])/60.
         Ntheta = len(thetalist)
 
     if selection == 'highZ':
         galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag <= 19.8)
-        thetalist = np.array([5.527])/60.
+        thetalist = np.array([3.163, 6.326, 9.490, 12.653])/60.
         Ntheta = len(thetalist)
 
 
@@ -278,11 +279,11 @@ if nomaskfile:
     outputnames = ['RA', 'DEC']
     output = [gridRA_tot, gridDEC_tot]
 
-    [outputnames.append('Nmasktheta%i'%(theta*60)) for theta in thetalist]
+    [outputnames.append('Nmasktheta%g'%(theta*60)) for theta in thetalist]
     [output.append(Nmasktheta_tot[theta,:]) for theta in range(Ntheta)]
 
 
-    [outputnames.append('Pmasktheta%i'%(theta*60)) for theta in thetalist]
+    [outputnames.append('Pmasktheta%g'%(theta*60)) for theta in thetalist]
     [output.append(Pmasktheta_tot[theta,:]) for theta in range(Ntheta)]
 
     utils.write_catalog(maskfilename, gridID_tot, outputnames, output)
@@ -295,8 +296,8 @@ else:
     # Import the masked percentage
     maskcat = pyfits.open(maskfilename, memmap=True)[1].data
     
-    Nmasktheta_tot= np.array([maskcat['Nmasktheta%i'%(theta*60)] for theta in thetalist])
-    Pmasktheta_tot= np.array([maskcat['Pmasktheta%i'%(theta*60)] for theta in thetalist])
+    Nmasktheta_tot= np.array([maskcat['Nmasktheta%g'%(theta*60)] for theta in thetalist])
+    Pmasktheta_tot= np.array([maskcat['Pmasktheta%g'%(theta*60)] for theta in thetalist])
     
     field_area = np.loadtxt(masktextname)
 
@@ -341,7 +342,7 @@ redshift_tot = np.array([redshift_av]*Ngrid_tot)
 # - The non-overlapping sample, by taking only unflagged troughs (not flagged = 1, flagged = 0).
 
 # Writing the combined columns to a fits file
-filename = '/data2/brouwer/MergedCatalogues/trough_catalogues/trough_catalog_%s_%s_%gdeg_%s.fits'%(cat, selection, gridspace, masktype)
+filename = '/data2/brouwer/MergedCatalogues/trough_catalogs/trough_catalog_%s_%s_%gdeg_%s.fits'%(cat, selection, gridspace, masktype)
 
 # For each grid point/circle, we save the following information to the catalog:
 # the location (RA/DEC), number count (Ngaltheta), effective area in arcmin (grid count Ngtheta), galaxy density (rhotheta), 

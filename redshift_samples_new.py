@@ -24,10 +24,11 @@ from matplotlib import rc, rcParams
 import trough_modules_all as utils
 
 # Defining the circle size and redshift bins
-thetalow = 5. # in arcmin
+thetalow = np.array([5., 10., 15., 20.]) # in arcmin
+
 am_to_rad = np.pi/(60.*180.)
 
-zmin = 0.05
+zmin = 0.1
 zmax = 0.3
 
 zlims = np.array([zmin, zmax])
@@ -55,6 +56,7 @@ Dclims = [Dcmin, Dclim, Dcmax]
 print()
 print('Z(min,lim,max):', zlims)
 print('Dc(min,lim,max):', Dclims, 'Mpc')
+print('L(low,high):', np.diff(Dclims), 'Mpc')
 
 # Equal volume
 #tanthetahigh = np.tan(thetalow*am_to_rad) * np.sqrt((Dclims[1]**3. - Dclims[0]**3.)/(Dclims[2]**3. - Dclims[1]**3.))
@@ -70,14 +72,15 @@ Zlow, Zhigh = [ np.mean(galZ[mask]) for mask in [lowmask, highmask] ]
 Dlow, Dhigh = [ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ]
 
 tanthetahigh = np.tan(thetalow*am_to_rad) * (Dlow / Dhigh)
-
-print('mean Z(low,high):', Zlow, Zhigh)
-print('mean Dc(low,high):', Dlow, Dhigh)
-
 thetahigh = np.arctan(tanthetahigh)/am_to_rad
 
+print('mean Z(low,high):', [Zlow, Zhigh])
+print('mean Dc(low,high):', [Dlow, Dhigh], 'Mpc')
+print()
+print('theta(low):', thetalow, 'arcmin')
+print('theta(high):', thetahigh, 'arcmin')
+print('R(low/high):', np.tan(thetalow*am_to_rad) * Dlow, 'Mpc')
 
-print('theta(low,high):', thetalow, thetahigh, 'arcmin')
 
 V1low = 1./3.*np.pi * Dclims[0]**3. * np.tan(thetalow*am_to_rad)**2.
 V2low = 1./3.*np.pi * Dclims[1]**3. * np.tan(thetalow*am_to_rad)**2.

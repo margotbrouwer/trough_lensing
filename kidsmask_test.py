@@ -17,8 +17,8 @@ from collections import Counter
 
 import trough_modules_all as utils
 
-cat = 'gama'
-gridspace_mask = 0.002 # in degree
+cat = 'kids'
+gridspace_mask = 0.04 # in degree
 
 
 if cat == 'kids':
@@ -35,7 +35,7 @@ if cat == 'kids':
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
     
     # Names of the mask files
-    kids_path = '/data2/brouwer/KidsCatalogues/kids_masks'
+    kids_path = '/data2/brouwer/KidsCatalogues/kids_masks_new'
     catnames = os.listdir(kids_path)
     #catnames = ['KIDS450_0.0_-31.2_r_sci_masked_pixels.fits']
     
@@ -72,8 +72,8 @@ RAlist_tot = []
 DEClist_tot = []
 masklist_tot = []
 
-#for c in range(len(catnames)):
-for c in range(1):
+for c in range(len(catnames)):
+#for c in range(1):
     
     print('Importing %s mask: %s (%i/%i)'%(cat, catnames[c], c+1, len(catnames)))
     

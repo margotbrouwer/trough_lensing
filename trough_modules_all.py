@@ -282,6 +282,8 @@ def read_esdfiles(esdfiles):
         error_h.append(errorh) 
         error_l.append(errorl) 
     
+    data_x, data_y, error_h, error_l = np.array(data_x), np.array(data_y), np.array(error_h), np.array(error_l)
+    
     return data_x, data_y, error_h, error_l
     
 

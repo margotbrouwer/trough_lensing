@@ -40,12 +40,12 @@ colors = np.array([reds,blues])
 
 # Defining the paths to the data
 blind = 'A'
-Nbins = 3
 Nrows = 1
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
 
 """
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_Feb'
+
 percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4','0p45','0p5']
 perclist = np.arange(0., 0.55, 0.05)
 
@@ -67,28 +67,47 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 datalabels = ['Percentage', 'Density']*3
 
-
+"""
 # Randoms
-path_lenssel = ['No_bins/Pmasktheta5_0p8_1']
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
+
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_Apr'
+path_lenssel = ['No_bins_randoms/Pmasktheta5_0_inf', 'No_bins/Pmasktheta5_0p8_1-Ptheta5_0_0p05']
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
-datalabels = ['Random signal']
+datalabels = ['Random signal', 'Trough signal']
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/troughs_gama_randoms'
+
 """
 
 # KiDS vs GAMA
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Mar'
 path_lenssel = ['No_bins_kids_gama-area/Pmasktheta5_0p8_1-Ptheta5_0_0p2', \
-'No_bins_kids_all_complex/Pmasktheta5_0p6_1-Ptheta5_0_0p2', 'No_bins_gama_all_complex/Pmasktheta5_0p8_1-Ptheta5_0_0p2']
+'No_bins_kids_all_complex/Pmasktheta5_0p8_1-Ptheta5_0_0p2', 'No_bins_gama_all_complex/Pmasktheta5_0p8_1-Ptheta5_0_0p2']
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance/'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = ['KiDS (GAMA area)', 'KiDS (KiDS area)', 'GAMA']
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/troughs_gama_vs_kids'
 
 
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+#thetalist = np.array([3.163, 6.326, 9.490, 12.653]) # in arcmin
+theta = thetalist[1]
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Mar/Plots/troughs_kids_gama-area'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_Apr'
+path_lenssel = ['No_bins_gama_lowZ_complex/Pmasktheta%s_0p8_1-Ptheta%s_%s_%s'%(('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), '0', '0p1')]
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins10_0p5_20_Mpc/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datalabels = ['highZ']
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Mar/Plots/troughs_highZ'
+"""
+
+Nbins = len(path_lenssel)
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
@@ -99,6 +118,7 @@ lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt').replace('rand
 data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
 lensIDs = np.array([np.loadtxt(x) for x in lensIDfiles])
 
+print(data_x, data_y)
 
 # Create a plot of the halo model fit
 
@@ -151,9 +171,9 @@ for N1 in range(Nrows):
             ax_sub.tick_params(axis='y', labelleft='off')
         
         plt.autoscale(enable=False, axis='both', tight=None)
-        plt.axis([1e0,3.5e2,-1.5e-3,1.5e-3])
+        plt.axis([2,100,-1.5e-3,1.5e-3])
         plt.ylim(-1.5e-3,1.5e-3)
-#        plt.ylim(0,1e2)
+#       plt.ylim(0,1e2)
 
         plt.xscale('log')
         #plt.yscale('log')
