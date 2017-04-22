@@ -46,7 +46,7 @@ mask_density = 1/(gridspace*60.)**2 # Density of mask gridpoints (in arcmin^-2)
 
 # Import maskfile if present
 maskfilename = '/data2/brouwer/MergedCatalogues/Masks/mask_catalog_%s_%gdeg_%s.fits'%(cat, gridspace, masktype)
-masktextname = 'area_info_%s.txt'%masktype
+masktextname = 'area_info_%s_%s.txt'%(cat, masktype)
 if os.path.isfile(maskfilename):
     nomaskfile = False
 else:
@@ -110,10 +110,10 @@ if cat == 'gama':
 
 # Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
 #selection = 'all'
-#selection = 'absmag'
+selection = 'absmag'
 #selection = 'redseq4'
 #selection = 'lowZ'
-selection = 'highZ'
+#selection = 'highZ'
 
 # Defining the selection for the KiDS galaxy sample
 if cat=='kids':
@@ -123,9 +123,9 @@ if cat=='kids':
         
     if selection == 'absmag':
         cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-        galDc = (cosmo.comoving_distance(galZ).to('pc')).value
-        rmag_abs = rmag - 5.*np.log10(galDc) + 5.
-        selection = (rmag_abs < -19.7)
+        galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
+        rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
+        galmask = (rmag_abs < -19.7)
 
     if ('redseq' in selection) or (selection=='ell'):
         galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
@@ -291,7 +291,7 @@ if nomaskfile:
     # Save the effective survey area into a text file for later use
     np.savetxt(masktextname, field_area, header = 'Total effective field area (in arcmin^2)')
     print('Written:', masktextname)
-
+    
 else:
     # Import the masked percentage
     maskcat = pyfits.open(maskfilename, memmap=True)[1].data
@@ -378,7 +378,7 @@ field_header = '     '.join(np.append(fieldnames, 'Average'))
 field_footer = '1: Number of galaxies, 2: Effective area (arcmin^2), 3: Galaxy density (arcmin^-2)'
 density_info = np.array([field_galaxies, field_area, field_density])
 
-filename = 'density_info_%s.txt'%selection
+filename = 'density_info_%s_%s_%s.txt'%(cat, masktype, selection)
 
 np.savetxt(filename, density_info, delimiter='    ', header = field_header, footer = field_footer)
 print('Written:', filename)

@@ -93,6 +93,10 @@ def import_gamacat(path_gamacat, gamacatname):
     
     rmag = gamacat['Rpetro']
     rmag_abs = gamacat['absmag_r']
+    fluxscale = gamacat['fluxscale']
+    
+    h = 0.7
+    rmag_abs = rmag_abs + np.log10(fluxscale) - 2*np.log10(h/0.7)
     
     nQ = gamacat['nQ']
     

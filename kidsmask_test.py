@@ -183,7 +183,7 @@ for f in range(len(fieldnames)):
     for s in range(len(sampindex_field)-1):
     #for s in range(1):
 
-        print('Removing points within 0.5 gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
+        print('Removing points within 0.5*sqrt(2) gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
         
         # Defining the smaller grid point sample
         selsamp = maskcoords[sampindex_field[s]:sampindex_field[s+1]]
