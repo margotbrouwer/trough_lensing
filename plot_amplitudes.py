@@ -25,7 +25,7 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-colors = ['blue', 'green', 'red', 'cyan']
+colors = ['red', 'orange', 'cyan', 'blue']
 
 """
 # Redshifts
@@ -99,7 +99,7 @@ for i in range(len(filenames)):
 
     model_y[i] = poly_func_weights(model_x)
     
-    plt.plot(model_x, model_y[i])
+    plt.plot(model_x, model_y[i], color=colors[i])
     plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
     label=labels[i], marker='.', ls='', color=colors[i])
 
@@ -126,7 +126,8 @@ plt.close()
 ## AMPLITUDE (delta)
 fig = plt.figure(figsize=(5,4))
 
-[plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], label=labels[i], marker='.', ls=':') for i in range(len(filenames))]
+[plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+label=labels[i], marker='.', ls=':', color=colors[i]) for i in range(len(filenames))]
 
 plt.axhline(y=0., ls=':', color='black')
 plt.axvline(x=0., ls=':', color='black')

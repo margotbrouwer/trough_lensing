@@ -29,6 +29,8 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
+colors = ['red', 'orange', 'cyan', 'blue']
+
 # Radii theta of circular regions (in deg)
 thetalist = np.array([5., 10., 15., 20.])/60.
 
@@ -48,23 +50,23 @@ rhotheta = [troughcat['rhotheta%g'%(theta*60)] for theta in thetalist]
 delta = [troughcat['delta%g'%(theta*60)] for theta in thetalist]
 Pmasktheta = [troughcat['Pmasktheta%g'%(theta*60)] for theta in thetalist]
 
-fig = plt.figure(figsize=(4,3))
+fig = plt.figure(figsize=(5,4))
 
 for t in range(len(thetalist)):
     
     Ngal = (rhotheta[t])[Pmasktheta[t]>0.8]
     n, bins, patches = plt.hist(Ngal, bins=30, histtype='step', range=[0., 0.8], \
-                label=r"$\theta = %g'$"%(thetalist[t]*60.), alpha=1.)
+                label=r"$\theta_{\rm A} = %g'$"%(thetalist[t]*60.), alpha=1., color=colors[t])
+    plt.axvline( x=np.mean((rhotheta[t])[Pmasktheta[t]>0.8]), ls = '--', color=colors[t])
     
-    plt.xlabel(r'Galaxy number density $\rho(\theta)$ (${\rm arcmin}^{-2}$)')
-    #plt.xlabel(r'Number of galaxies')
-    plt.ylabel(r'Number of apertures')
+    plt.xlabel(r'Galaxy number density $\rho(\theta)$ (${\rm arcmin}^{-2}$)', fontsize=14)
+    plt.ylabel(r'Number of apertures', fontsize=14)
 
     #plt.yscale('log')
     #plt.yscale('log')
     plt.legend()
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Mar/Plots/trough_density_distribution'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/trough_density_distribution'
 
 plt.tight_layout()
 

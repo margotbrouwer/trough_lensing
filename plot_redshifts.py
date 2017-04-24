@@ -42,19 +42,23 @@ galmask = (-24.9 < rmag_abs) & (rmag_abs < -12.)
 galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
 
 # Plot samples in absmag-Z diagram
+fig = plt.figure(figsize=(6,5))
 
-plt.axhline(y=-19.7, ls='--', color='red', label= r'Fiducial sample $(M_r<-19.7)$')
+plt.axhline(y=-21, ls='--', linewidth=2., color='green', label = r'Volume limited $(M_{\rm r}<-21)$')
+plt.axhline(y=-19.7, ls='--', linewidth=2., color='blue', label= r'Fiducial $(M_{\rm r}<-19.7)$')
 
-plt.axhline(y=-21, ls='--', color='black', label = r'Volume limited sample $(M_r<-21)$')
-plt.axvline(x=0.1, ls='--', color='black', label = r'$Z_{\rm min} = 0.1$')
-plt.axvline(x=0.197, ls='--', color='black', label = r'$Z_{\rm lim} = 0.197$')
-plt.axvline(x=0.3, ls='--', color='black', label = r'$Z_{\rm max} = 0.3$')
+plt.axvline(x=0.1, ls='--', linewidth=2., color='black', label = r'$ \{ z_{\rm min}, z_{\rm lim}, z_{\rm max} \} $')
+plt.axvline(x=0.197, ls='--', linewidth=2., color='black')
+plt.axvline(x=0.3, ls='--', linewidth=2., color='black')
 
 plt.hist2d(galZ, rmag_abs, bins=100, norm=LogNorm())
 plt.colorbar()
 
 plt.xlim(0,0.4)
 plt.ylim(-25,-13)
+
+plt.xlabel(r'Redshift $z$', fontsize=14)
+plt.ylabel(r'Absolute magnitude $M_{\rm r}$', fontsize=14)
 
 plt.legend(loc='lower right')
 
@@ -67,7 +71,7 @@ plotname = '%s.%s'%(plotfilename, ext)
 plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+plt.show()
 plt.close()
 
 # Plot samples in comoving space
@@ -90,4 +94,5 @@ cone = d2d*Mpc_am
 plt.scatter(cone[dmask5], galDc[dmask5])
 #plt.colorbar()
 
-plt.show()
+#plt.show()
+plt.close()
