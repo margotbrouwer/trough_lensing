@@ -18,6 +18,7 @@ from matplotlib.colors import LogNorm
 from matplotlib import gridspec
 from matplotlib import rc, rcParams
 
+from scipy.stats import chi2
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -37,11 +38,6 @@ reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
 colors = np.array([reds,blues])
 
 
-# Define the labels for the plot
-xlabel = r'Angle $\theta$ [arcmin]'
-ylabel = r'Shear $\gamma$'
-
-
 # Defining the paths to the data
 blind = 'A'
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
@@ -49,7 +45,7 @@ thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 
 # Subplots or one plot
 subplots = True
-Nrows = 2
+Nrows = 1
 
 # Import shear and random profiles
 """
@@ -63,27 +59,50 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shear
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'$%g<P<%g$'%(perclist[i], perclist[i+1]) for i in range(Nbins)]
-"""
+
 
 # Weighted troughs
+
+Runit = 'arcmin'
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_Apr'
-path_lenssel = ['No_bins_gama_absmag_old/Pmasktheta%g_0p8_1-delta%g_minf_0_lw-Wtheta%g'%(theta,theta,theta) for theta in thetalist]
+
+path_lenssel = np.array([ ['No_bins_gama_absmag_complex/Pmasktheta%g_0p8_1-delta%g_%s_lw-Wtheta%g'%(theta,theta,delta,theta) \
+                for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
+
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datalabels = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
 plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/troughs_gama_weighted'
 
-path_randoms = ['No_bins_gama_randoms/Pmasktheta%g_0p8_1'%theta for theta in thetalist]
-
+path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%g_0p8_1'%theta
+                for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
 """
+# Redshifts
+# Weighted troughs
 
-path_lenssel = ['No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0_0p05', 'No_bins_gama_simplemask/Pmasktheta5_0p8_1-delta5_m1_m0p553201', \
-'No_bins_gama_absmag/Pmasktheta5_0p8_1-Ptheta5_0p05_0p1', 'No_bins_gama_simplemask/Pmasktheta5_0p8_1-delta5_m0p553201_m0p487318']
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins25_1_300_arcmin/shearcovariance'
+Runit = 'Mpc'
+h=0.7
+
+thetalist = np.array(['10', '6p326'])
+samplelist = np.array(['lowZ', 'highZ'])
+
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_Apr'
+
+path_lenssel = np.array([ ['No_bins_gama_%s_complex/Pmasktheta%s_0p8_1-delta%s_%s_lw-Wtheta%s'%(samplelist[i], thetalist[i], thetalist[i], delta, thetalist[i]) \
+                for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
+
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins10_0p5_20_Mpc/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
-datalabels = ['Percentage', 'Density']*3
+
+datalabels = [r'$0.1<z<0.197$', r'$0.197<z<0.3$']
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/troughs_gama_redshifts_weighted'
+
+path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%s_0p8_1'%theta
+                for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
+
+"""
 
 # Randoms
 
@@ -130,12 +149,21 @@ path_filename = 'No_bins_%s.txt'%(blind)
 datalabels = ['highZ']
 
 plotfilename = '/data2/brouwer/shearprofile/trough_results_Mar/Plots/troughs_highZ'
+
 """
+
+print(path_lenssel)
+
+Nbins = np.shape(path_lenssel)
+Nsize = np.size(path_lenssel)
+path_lenssel = np.reshape(path_lenssel, [Nsize])
+path_randoms = np.reshape(path_randoms, [Nsize])
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
 
 lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt').replace('randomsub_','') for e in esdfiles])
+covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles])
 
 # Importing the shearprofiles and lens IDs
 data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
@@ -179,80 +207,103 @@ plt.close()
 """
 
 # Create the plot
-Nbins = len(path_lenssel)
-if subplots:
 
-    Ncolumns = int(Nbins/Nrows)
+#if subplots:
 
-    # Plotting the ueber matrix
-    fig = plt.figure(figsize=(Ncolumns*2.5,Nrows*2))
-    canvas = FigureCanvas(fig)
+Ncolumns = int(Nbins[1]/Nrows)
 
-    gs_full = gridspec.GridSpec(1,1)
-    gs = gridspec.GridSpecFromSubplotSpec(Nrows, Ncolumns, wspace=0, hspace=0, subplot_spec=gs_full[0,0])
+# Plotting the ueber matrix
+fig = plt.figure(figsize=(Ncolumns*3,Nrows*3))
+canvas = FigureCanvas(fig)
 
-    ax = fig.add_subplot(gs_full[0,0])
+gs_full = gridspec.GridSpec(1,1)
+gs = gridspec.GridSpecFromSubplotSpec(Nrows, Ncolumns, wspace=0, hspace=0, subplot_spec=gs_full[0,0])
 
-    for N1 in range(Nrows):
-        for N2 in range(Ncolumns):
+ax = fig.add_subplot(gs_full[0,0])
 
-            N = np.int(N1*Ncolumns + N2)
-            ax_sub = fig.add_subplot(gs[N1, N2])
-                
-    #        for i in range(len(path_lenssel)):
-                
-            #(error1_l[N])[(error1_l[N])>=data1_y[N]] = ((data1_y[N][(error1_l[N])>=data1_y[N]])*0.9999999999)
-            #(error2_l[N])[(error2_l[N])>=data2_y[N]] = ((data2_y[N][(error2_l[N])>=data2_y[N]])*0.9999999999)
-            
-            # Plot the data and title
-            title = r'Bin %i'%(N+1)
-            
-            #data_x_plot = data_x[N]*(1+0.1*N)
-            ax_sub.errorbar(data_x[N], data_y[N], yerr=[error_l[N], error_h[N]], \
-            ls='', marker='.')
+for N1 in range(Nrows):
+    for N2 in range(Ncolumns):
+
+        ax_sub = fig.add_subplot(gs[N1, N2])
         
-            #ax_sub.axvline(x=[5.])
+        N = np.int(N1*Ncolumns + N2)
+        
+        for Nplot in range(Nbins[0]):
             
-            ax_sub.axhline(y=0., ls=':', color='black', label=datalabels[N])
+            Ndata = N + Nplot*(Nbins[1])
+            
+            ax_sub.errorbar(data_x[Ndata], data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
+            ls='', marker='.')
+            
+        ax_sub.errorbar(data_x[N], -data_y[N], yerr=[error_l[N], error_h[N]], \
+        ls='', marker='.', alpha=0.25, color='blue')
+            
+#        for i in range(len(path_lenssel)):
+            
+        #(error1_l[N])[(error1_l[N])>=data1_y[N]] = ((data1_y[N][(error1_l[N])>=data1_y[N]])*0.9999999999)
+        #(error2_l[N])[(error2_l[N])>=data2_y[N]] = ((data2_y[N][(error2_l[N])>=data2_y[N]])*0.9999999999)
+        
+        # Plot the data and title
+        title = r'Bin %i'%(N+1)
+    
+        #ax_sub.axvline(x=[5.])
+        
+        ax_sub.axhline(y=0., ls=':', color='black', label=datalabels[N])
 
-            # Plot the models
-            
-            
-            ax_sub.xaxis.set_label_position('top')
-            ax_sub.yaxis.set_label_position('right')
+        # Plot the models
+        
+        
+        ax_sub.xaxis.set_label_position('top')
+        ax_sub.yaxis.set_label_position('right')
 
-            ax.tick_params(labelleft='off', labelbottom='off', top='off', bottom='off', left='off', right='off')
+        ax.tick_params(labelleft='off', labelbottom='off', top='off', bottom='off', left='off', right='off')
 
-            if (N1+1) != Nrows:
-                ax_sub.tick_params(axis='x', labelbottom='off')
-            if N2 != 0:
-                ax_sub.tick_params(axis='y', labelleft='off')
+        if (N1+1) != Nrows:
+            ax_sub.tick_params(axis='x', labelbottom='off')
+        if N2 != 0:
+            ax_sub.tick_params(axis='y', labelleft='off')
+        
+        plt.autoscale(enable=False, axis='both', tight=None)
+
+        # Define the labels for the plot
+        if Runit == 'Mpc':
+            plt.axis([0.5,20,-3,9])
+            plt.ylim(-3,9)
             
-            plt.autoscale(enable=False, axis='both', tight=None)
+            xlabel = r'Radial distance $R$ (%s/h$_{%g}$)'%(Runit, h*100)
+            ylabel = r'ESD $\langle\Delta\Sigma\rangle$ [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100)
+            
+            ax.xaxis.set_label_coords(0.5, -0.15)
+            ax.yaxis.set_label_coords(-0.05, 0.5)
+        else:
             plt.axis([2,100,-1.5e-3,1.49e-3])
-            plt.ylim(-1.5e-3,1.49e-3)
-    #       plt.ylim(0,1e2)
+            plt.ylim(-1.5e-3,2.99e-3)
 
-            plt.xscale('log')
-            #plt.yscale('log')
+            xlabel = r'Opening angle $\theta$ (arcmin)'
+            ylabel = r'Shear $\gamma$'
             
-            #plt.title(title, x = 0.6, y = 0.8)
-            
-            #lgd = ax_sub.legend(bbox_to_anchor=(2.1, 1.4)) # side
-            #lgd = ax_sub.legend(bbox_to_anchor=(0.6, 2.7)) # top
-            plt.legend(loc='best', handlelength=0, handletextpad=0, numpoints=1)
+            ax.xaxis.set_label_coords(0.5, -0.07)
+            ax.yaxis.set_label_coords(-0.2, 0.5)
 
-    # Define the labels for the plot
-    ax.set_xlabel(xlabel, fontsize=14)
-    ax.set_ylabel(ylabel, fontsize=14)
+        plt.xscale('log')
+        #plt.yscale('log')
+        
+        #plt.title(title, x = 0.6, y = 0.8)
+        
+        #lgd = ax_sub.legend(bbox_to_anchor=(2.1, 1.4)) # side
+        #lgd = ax_sub.legend(bbox_to_anchor=(0.6, 2.7)) # top
+        plt.legend(loc='best', handlelength=0, handletextpad=0, numpoints=1)
 
-    ax.xaxis.set_label_coords(0.5, -0.07)
-    ax.yaxis.set_label_coords(-0.2, 0.5)
-
-    #ax.xaxis.label.set_size(17)
-    #ax.yaxis.label.set_size(17)
+# Define the labels for the plot
+ax.set_xlabel(xlabel, fontsize=14)
+ax.set_ylabel(ylabel, fontsize=14)
 
 
+
+#ax.xaxis.label.set_size(17)
+#ax.yaxis.label.set_size(17)
+
+"""
 else:
     
     for N in range(Nbins):
@@ -271,6 +322,7 @@ else:
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc='best')
+"""
 
 plt.tight_layout()
 
@@ -284,3 +336,27 @@ print('Written: ESD profile plot:', plotname)
 plt.show()
 plt.clf
 
+
+# Calculate detection significance
+
+model = np.zeros(len(data_x[0]))
+
+chi2list = np.zeros(Nsize)
+chi2covlist = np.zeros(Nsize)
+for N in range(Nsize):
+    data = data_y[N]
+    error = error_h[N]
+    covariance = (np.loadtxt(covfiles[N]).T)
+
+    chi2list[N] = np.sum(data**2/error**2)
+    chi2covlist[N] = utils.calc_chi2(data, model, covariance, 1)
+
+chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
+
+problist = [chi2.sf(chi2covlist[i], len(data_x[0])) for i in range(Nsize)] # Survival Function (SF = 1 - CDF)
+sigmalist = [chi2.ppf(1.-problist[i], len(data_x[0])) for i in range(Nsize)]
+
+print('Chi2 (without covariance):', chi2list)
+print('Chi2 (with covariance):', chi2covlist)
+print('Probability:', problist)
+print('Sigma:', sigmalist)

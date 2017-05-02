@@ -25,27 +25,39 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-colors = ['red', 'orange', 'cyan', 'blue']
-
-"""
-# Redshifts
-thetalist = np.array([10., 6.326]) # in arcmin
-samples = ['gama_lowZ_complex_10Mpc', 'gama_highZ_complex_6.326Mpc']
-labels = [r'$0.1<Z<0.197$', r'$0.197<Z<0.3$']
-Runit = 'Mpc'
-
-"""
-# Sizes
-thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-samples = np.array(['gama_absmag_complex_%garcmin'%theta for theta in thetalist])
-labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
-Runit = 'arcmin'
+#colors = ['blue', 'cyan', 'orange', 'red']
+colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
 
 #"""
 
+# Redshifts
+thetalist = np.array([10., 6.326]) # in arcmin
+Runit = 'Mpc'
+
+samples = ['gama_lowZ_complex', 'gama_highZ_complex']
+samplelist = ['gama_lowZ_complex_10Mpc', 'gama_highZ_complex_6.326Mpc']
+labels = [r'$0.1<z<0.197$', r'$0.197<z<0.3$']
+
+
+"""
+
+# Sizes
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+Runit = 'arcmin'
+
+samples = ['gama_absmag_complex']
+samplelist = ['%s_%g%s'%(samples[0], theta, Runit) for theta in thetalist]
+
+labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
+
+"""
+
+
+
 # Import amplitudes
-path_filename = 'data2/brouwer/shearprofile/trough_results_Apr/Plots/'
-filenames = ['/%s/trough_amplitudes_%s.txt'%(path_filename, sample) for sample in samples]
+path_filename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots'
+filenames = ['%s/trough_amplitudes_%s.txt'%(path_filename, sample) for sample in samplelist]
+sample = samples[0]
 
 amplitude_data = np.array([np.loadtxt(filename).T for filename in filenames])
 
@@ -54,6 +66,8 @@ deltacenters = amplitude_data[:, 1]
 Alist = amplitude_data[:,2]
 Alist_error = amplitude_data[:,3]
 
+#Alist = np.array([Alist[i]/thetalist[i] for i in range(len(thetalist))])
+#Alist_error = np.array([Alist_error[i]/thetalist[i] for i in range(len(thetalist))])
 
 ## AMPLITUDE (Percentile)
 fig = plt.figure(figsize=(5,4))
@@ -72,13 +86,13 @@ plt.legend(loc='best')
 
 for ext in ['png', 'pdf']:
 
-    plotfilename = '/%s/trough_amplitude_%s'%(path_filename, samples[0])
+    plotfilename = '%s/trough_amplitude_%s'%(path_filename, sample)
     plotname = '%s.%s'%(plotfilename, ext)
 
     plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+plt.show()
 plt.close()
 
 ## WEIGHT (Percentile)
@@ -114,13 +128,13 @@ plt.legend(loc='best')
 
 for ext in ['png', 'pdf']:
 
-    plotfilename = '/%s/trough_weight_%s'%(path_filename, samples[0])
+    plotfilename = '%s/trough_weight_%s'%(path_filename, sample)
     plotname = '%s.%s'%(plotfilename, ext)
 
     plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+plt.show()
 plt.close()
 
 ## AMPLITUDE (delta)
@@ -142,33 +156,42 @@ plt.legend(loc='upper left')
 
 for ext in ['png', 'pdf']:
 
-    plotfilename = '/%s/trough_amplitude_delta_%s'%(path_filename, samples[0])
+    plotfilename = '%s/trough_amplitude_delta_%s'%(path_filename, sample)
     plotname = '%s.%s'%(plotfilename, ext)
 
     plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+plt.show()
 plt.close()
 
 # Import trough catalog
 path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
-troughcatname = 'trough_catalog_%s_%s_0.04deg_%s.fits'%((samples[0]).split('_')[0], (samples[0]).split('_')[1], (samples[0]).split('_')[2])
 
-# Full directory & name of the trough catalogue
-troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
-troughcat = pyfits.open(troughcatfile, memmap=True)[1].data
+Ptheta = np.array([])
 
-# Write weight fits-file
+for s in range(len(samples)):
+    
+    troughcatname = 'trough_catalog_%s.fits'%samples[s]
 
-Ptheta = [troughcat['Ptheta%g'%theta] for theta in thetalist]
+    # Full directory & name of the trough catalogue
+    troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
+    troughcat = pyfits.open(troughcatfile, memmap=True)[1].data
+    print(troughcatfile)
+
+    # Write weight fits-file
+    if 'Z' in sample:
+        Ptheta_z = troughcat['Ptheta%g'%thetalist[s]]
+        Ptheta = np.vstack([Ptheta, Ptheta_z]) if Ptheta.size else Ptheta_z
+    else:
+        Ptheta = [troughcat['Ptheta%g'%theta] for theta in thetalist]
+
 Wtheta = [poly_func_weights(Ptheta[t]) for t in range(len(thetalist))]
 
 outputnames = ['Wtheta%g'%theta for theta in thetalist]
 output = [np.abs(Wtheta[t]) for t in range(len(thetalist))]
 
-print(output)
-
-weightcatname = '%s/amplitude_trough_weights_%s_%s.fits'%(path_troughcat, sample, Runit)
-utils.write_catalog(weightcatname, np.arange(len(Wtheta)), outputnames, output)
+sample = samples[0]
+weightcatname = '%s/amplitude_trough_weights_%s.fits'%(path_troughcat, sample)
+utils.write_catalog(weightcatname, np.arange(len(Wtheta[0])), outputnames, output)
 

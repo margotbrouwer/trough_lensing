@@ -59,7 +59,7 @@ for t in range(len(thetalist)):
                 label=r"$\theta_{\rm A} = %g'$"%(thetalist[t]*60.), alpha=1., color=colors[t])
     plt.axvline( x=np.mean((rhotheta[t])[Pmasktheta[t]>0.8]), ls = '--', color=colors[t])
     
-    plt.xlabel(r'Galaxy number density $\rho(\theta)$ (${\rm arcmin}^{-2}$)', fontsize=14)
+    plt.xlabel(r'Galaxy number density $\rho(\theta_{\rm A})$ (${\rm arcmin}^{-2}$)', fontsize=14)
     plt.ylabel(r'Number of apertures', fontsize=14)
 
     #plt.yscale('log')

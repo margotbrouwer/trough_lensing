@@ -110,10 +110,10 @@ if cat == 'gama':
 
 # Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
 #selection = 'all'
-selection = 'absmag'
+#selection = 'absmag'
 #selection = 'redseq4'
 #selection = 'lowZ'
-#selection = 'highZ'
+selection = 'highZ'
 
 # Defining the selection for the KiDS galaxy sample
 if cat=='kids':
@@ -342,7 +342,7 @@ redshift_tot = np.array([redshift_av]*Ngrid_tot)
 # - The non-overlapping sample, by taking only unflagged troughs (not flagged = 1, flagged = 0).
 
 # Writing the combined columns to a fits file
-filename = '/data2/brouwer/MergedCatalogues/trough_catalogs/trough_catalog_%s_%s_%gdeg_%s.fits'%(cat, selection, gridspace, masktype)
+filename = '/data2/brouwer/MergedCatalogues/trough_catalogs/trough_catalog_%s_%s_%s.fits'%(cat, selection, masktype)
 
 # For each grid point/circle, we save the following information to the catalog:
 # the location (RA/DEC), number count (Ngaltheta), effective area in arcmin (grid count Ngtheta), galaxy density (rhotheta), 

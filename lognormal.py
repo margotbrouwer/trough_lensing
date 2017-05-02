@@ -36,15 +36,14 @@ def trough_model(x, A):
 
 # Defining the paths to the data
 blind = 'A'
-sample = 'gama_absmag_complex'
-Runit = 'arcmin' # arcmin or Mpc
+sample = 'gama_lowZ_complex'
+Runit = 'Mpc' # arcmin or Mpc
 
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 if 'highZ' in sample:
     thetalist = np.array([3.163, 6.326, 9.490, 12.653])
-    Rlist = [0.94126266, 1.8825293, 2.8238039, 3.76509045] # Physical size of the troughs (in Mpc)
 
-thetanum = 0
+thetanum = 1
 theta = thetalist[thetanum]
 
 if Runit == 'arcmin':
@@ -63,7 +62,7 @@ if Runit == 'Mpc':
     
     dperc = 0.1
     percnames = ['0','0p1','0p2','0p3','0p4','0p5','0p6','0p7','0p8','0p9','1']
-
+    Rlist = [0.94126266, 1.8825293, 2.8238039, 3.76509045] # Physical size of the troughs (in Mpc)
 
 # Defining the percentile bins
 percmin = 0.
@@ -100,7 +99,7 @@ covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfile
 # Import random signal
 
 print('Import random signal:')
-path_randoms = ['No_bins_randoms/Pmasktheta%s_0p8_1'%(('%g'%theta).replace('.','p'))]
+path_randoms = ['No_bins_gama_randoms/Pmasktheta%s_0p8_1'%(('%g'%theta).replace('.','p'))]
 random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
 random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
 random_data_x, random_data_y, random_error_h, random_error_l = random_data_x[0], random_data_y[0], random_error_h[0], random_error_l[0]
