@@ -71,11 +71,16 @@ highmask = (zlims[1] < galZ)
 Zlow, Zhigh = [ np.mean(galZ[mask]) for mask in [lowmask, highmask] ]
 Dlow, Dhigh = [ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ]
 
+print( (cosmo.comoving_distance(Zlow).to('Mpc')).value/(1+Zlow) )
+print( (cosmo.comoving_distance(Zhigh).to('Mpc')).value/(1+Zhigh) )
+
+
 tanthetahigh = np.tan(thetalow*am_to_rad) * (Dlow / Dhigh)
 thetahigh = np.arctan(tanthetahigh)/am_to_rad
 
 print('mean Z(low,high):', [Zlow, Zhigh])
 print('mean Dc(low,high):', [Dlow, Dhigh], 'Mpc')
+print('mean Da(low,high):', [Dlow/(1+Zlow), Dhigh/(1+Zhigh)], 'Mpc')
 print()
 print('theta(low):', thetalow, 'arcmin')
 print('theta(high):', thetahigh, 'arcmin')

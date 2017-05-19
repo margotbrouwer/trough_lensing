@@ -35,7 +35,7 @@ if cat == 'kids':
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
     
     # Names of the mask files
-    kids_path = '/data2/brouwer/KidsCatalogues/kids_masks_new'
+    kids_path = '/data2/brouwer/KidsCatalogues/kids_masks_May'
     catnames = os.listdir(kids_path)
     #catnames = ['KIDS450_0.0_-31.2_r_sci_masked_pixels.fits']
     
@@ -183,15 +183,15 @@ for f in range(len(fieldnames)):
     for s in range(len(sampindex_field)-1):
     #for s in range(1):
 
-        print('Removing points within 0.5*sqrt(2) gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
+        print('Removing points within 0.99 gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
         
         # Defining the smaller grid point sample
         selsamp = maskcoords[sampindex_field[s]:sampindex_field[s+1]]
         
         # 4c/d) For the underdense/overdense circles: We start from the lowest/highest density circle and flag all overlapping circles.
         
-        # Find grid points within 0.8 gridspace of each other
-        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, (np.sqrt(2.)/2.)*gridspace_mask*u.deg)
+        # Find grid points within 0.99 gridspace of each other
+        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, 0.99*gridspace_mask*u.deg)
         
         # Looping over grid points
         for g in range(len(selsamp)):

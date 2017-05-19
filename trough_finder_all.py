@@ -37,8 +37,16 @@ Ntheta = len(thetalist)
 ## 1a) Importing the galaxy catalogue.
 
 # Select the galaxy catalogue for trough selection (kids/gama)
-cat = 'gama'
-masktype = 'complex'
+cat = 'kids'
+masktype = 'complex' # Nomask or complex
+
+# Name of the pre-defined galaxy selection
+selection = 'all'
+#selection = 'absmag'
+#selection = 'redseq4'
+#selection = 'lowZ'
+#selection = 'highZ'
+#selection = 'kids_absmag'
 
 # Spacing of the trough and mask grids (in degree)
 gridspace = 0.04
@@ -49,12 +57,14 @@ maskfilename = '/data2/brouwer/MergedCatalogues/Masks/mask_catalog_%s_%gdeg_%s.f
 masktextname = 'area_info_%s_%s.txt'%(cat, masktype)
 if os.path.isfile(maskfilename):
     nomaskfile = False
+    print('Importing mask file:', maskfilename)
 else:
     nomaskfile = True
+    print('No mask file present')
 
 print(maskfilename)
 
-if cat == 'kids':
+if 'kids' in cat:
     
     # Names of the KiDS fields
     fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
@@ -79,15 +89,15 @@ if cat == 'kids':
     """
     
     # Path to the KiDS fields
-    path_kidscat = '/data2/brouwer/MergedCatalogues'
-    kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+    path_kidscat = '/data2/brouwer/KidsCatalogues'
+    kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
     
     # Importing the KiDS coordinates
     galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
     utils.import_kidscat(path_kidscat, kidscatname)
 
 
-if cat == 'gama':
+if 'gama' in cat:
     
     # Names of the GAMA fields
     fieldnames = ['G9', 'G12', 'G15']
@@ -99,7 +109,7 @@ if cat == 'gama':
     fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
 
     # Path to the GAMA fields
-    path_gamacat = '/data2/brouwer/MergedCatalogues/'
+    path_gamacat = '/data2/brouwer/MergedCatalogues'
     gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
     
     # Importing the GAMA coordinates
@@ -108,15 +118,8 @@ if cat == 'gama':
 
 ## 1b) Select the galaxy sample to define the troughs
 
-# Name of the pre-defined galaxy selection [all, ell, redseq, redseq4]
-#selection = 'all'
-#selection = 'absmag'
-#selection = 'redseq4'
-#selection = 'lowZ'
-selection = 'highZ'
-
 # Defining the selection for the KiDS galaxy sample
-if cat=='kids':
+if 'kids' in cat:
 
     if selection == 'all':
         galmask = (galZ >= 0.)
@@ -131,7 +134,7 @@ if cat=='kids':
         galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
     
 # Defining the selection for the GAMA galaxy sample
-if cat=='gama':
+if 'gama' in cat:
 
     if selection == 'all':
         galmask = (rmag <= 19.8)
@@ -152,6 +155,21 @@ if cat=='gama':
         galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag <= 19.8)
         thetalist = np.array([3.163, 6.326, 9.490, 12.653])/60.
         Ntheta = len(thetalist)
+        
+    if selection == 'kids_absmag':
+        
+        # Path to the KiDS fields
+        path_kidscat = '/data2/brouwer/MergedCatalogues'
+        kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+        
+        # Importing the KiDS coordinates
+        galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
+        utils.import_kidscat(path_kidscat, kidscatname)
+        
+        cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
+        galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
+        rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
+        galmask = (rmag_abs < -19.7)
 
 
 print('Theta:', thetalist*60., 'arcmin')
@@ -249,16 +267,15 @@ for field in range(len(fieldnames)):
                 maskxgrid, gridxmask, d2d, d3d = gridcoords.search_around_sky(gridsamp, thetalist[theta]*u.deg)
                 print('Calculating the mask area...')
                 
-                if masktype == 'simple':
-                    # Simple masking: completeness is either 1 or 0.
+                if masktype == 'nomask':
+                    # No masking: completeness is always 1.
                     maskcountlist = np.array(list(Counter(maskxgrid).items())).T
                     (Nmasktheta[theta, sampindex[s]:sampindex[s+1]])[maskcountlist[0]] = maskcountlist[1]
-                else:
+                if masktype == 'complex':
                     # Improved masking: completeness varies between 0 and 1.
                     maskcountlist = np.array([np.sum(catmask[gridxmask][maskxgrid==g]) for g in range(len(gridsamp))])
                     Nmasktheta[theta, sampindex[s]:sampindex[s+1]] = maskcountlist
-
-    
+                    
     # Combine the field information into one final catalog
     gridRA_tot = np.append(gridRA_tot, gridRA)
     gridDEC_tot = np.append(gridDEC_tot, gridDEC)
@@ -273,7 +290,10 @@ gridID_tot = np.arange(Ngrid_tot)
 # If there is no file containing the masked percentage ...
 if nomaskfile:
     # Define the percentage of effective area
-    Pmasktheta_tot = Nmasktheta_tot/np.reshape(np.amax(Nmasktheta_tot, axis=1), [len(thetalist), 1])
+    Nmaxtheta = np.pi * (thetalist * 60.)**2. * mask_density
+    #Nmaxtheta = np.amax(Nmasktheta_tot, axis=1)
+    
+    Pmasktheta_tot = Nmasktheta_tot/np.reshape(Nmaxtheta, [len(thetalist), 1])
     
     # Print this to a catalogue for later use
     outputnames = ['RA', 'DEC']

@@ -29,7 +29,9 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-colors = ['red', 'orange', 'cyan', 'blue']
+#colors = ['red', 'orange', 'cyan', 'blue']
+colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
+
 
 # Radii theta of circular regions (in deg)
 thetalist = np.array([5., 10., 15., 20.])/60.

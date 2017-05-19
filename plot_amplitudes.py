@@ -25,7 +25,7 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-#colors = ['blue', 'cyan', 'orange', 'red']
+#colors = ['red', 'orange', 'cyan', 'blue']
 colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
 
 #"""

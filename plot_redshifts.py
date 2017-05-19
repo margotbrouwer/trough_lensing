@@ -29,6 +29,9 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
+#colors = ['red', 'orange', 'cyan', 'blue']
+colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
+
 
 # Path to the GAMA fields
 path_gamacat = '/data2/brouwer/MergedCatalogues/'
@@ -36,12 +39,19 @@ gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 
 # Importing the GAMA coordinates
 galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
-
-
 galmask = (-24.9 < rmag_abs) & (rmag_abs < -12.)
-galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
 
-# Plot samples in absmag-Z diagram
+
+# Path to the KiDS fields
+path_kidscat = '/data2/brouwer/MergedCatalogues'
+kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+
+# Importing the KiDS coordinates
+kidsRA, kidsDEC, kidsZ, kidsTB, mag_auto, ODDS, umag_kids, gmag_kids, rmag_kids, imag_kids = \
+utils.import_kidscat(path_kidscat, kidscatname)
+
+
+# Plot absmag-Z diagram of GAMA
 fig = plt.figure(figsize=(6,5))
 
 plt.axhline(y=-21, ls='--', linewidth=2., color='green', label = r'Volume limited $(M_{\rm r}<-21)$')
@@ -51,7 +61,7 @@ plt.axvline(x=0.1, ls='--', linewidth=2., color='black', label = r'$ \{ z_{\rm m
 plt.axvline(x=0.197, ls='--', linewidth=2., color='black')
 plt.axvline(x=0.3, ls='--', linewidth=2., color='black')
 
-plt.hist2d(galZ, rmag_abs, bins=100, norm=LogNorm())
+plt.hist2d(galZ[galmask], rmag_abs[galmask], bins=100, norm=LogNorm())
 plt.colorbar()
 
 plt.xlim(0,0.4)
@@ -71,28 +81,44 @@ plotname = '%s.%s'%(plotfilename, ext)
 plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-plt.show()
-plt.close()
-
-# Plot samples in comoving space
-
-troughRA, troughDEC = [140., 2.]
-troughcoord = SkyCoord(ra=troughRA*u.deg, dec=troughDEC*u.deg)
-galcoords = SkyCoord(ra=galRA*u.deg, dec=galDEC*u.deg)
-
-d2d = (troughcoord.separation(galcoords).to('arcmin')).value
-print(d2d)
-dmask5 = (d2d < 20.)
-
-# Calculating the volume of the cone at each redshift bin
-cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-galDc = (cosmo.comoving_distance(galZ).to('Mpc')).value # Comoving distance of the galaxies
-Mpc_am = (cosmo.kpc_comoving_per_arcmin(galZ).to('Mpc/arcmin')).value # Comoving distance per arcmin at each bin limit
-
-cone = d2d*Mpc_am
-
-plt.scatter(cone[dmask5], galDc[dmask5])
-#plt.colorbar()
-
 #plt.show()
 plt.close()
+
+
+# Plot redshift histograms of KiDS and GAMA
+fig = plt.figure(figsize=(5,4))
+
+galsamps = [rmag[rmag<=19.8], rmag_kids]
+galnames = ['GAMA galaxies', 'GAMA-like KiDS']
+
+for t in range(2):
+    n, bins, patches = plt.hist(galsamps[t], bins=30, histtype='step', range=[15., 20.5], \
+                normed=1., label=galnames[t], alpha=1., color=colors[t])
+    #plt.axvline( x=np.mean(galsamps[t]), ls = '--', color=colors[t])
+
+
+plt.xlabel(r'Magnitude $m_{\rm r}$', fontsize=14)
+plt.ylabel(r'Number of galaxies (normalized)', fontsize=14)
+
+#plt.axis([0.,0.6,-3,9])
+plt.ylim(0.,1.)
+
+#plt.yscale('log')
+#plt.yscale('log')
+plt.legend(loc='upper left')
+
+plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/magnitude_distribution'
+
+plt.tight_layout()
+
+# Save plot
+for ext in ['pdf']:
+    plotname = '%s.%s'%(plotfilename, ext)
+    plt.savefig(plotname, format=ext, bbox_inches='tight')
+    
+print('Written: ESD profile plot:', plotname)
+
+plt.show()
+plt.clf
+
+print(len(kidsZ))

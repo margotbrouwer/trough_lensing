@@ -25,25 +25,22 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-
 # Model to fit the troughs
 def trough_model(x, A):
-    
     model_y = A/x
-    
     return model_y
 
 
 # Defining the paths to the data
 blind = 'A'
-sample = 'gama_lowZ_complex'
-Runit = 'Mpc' # arcmin or Mpc
+sample = 'gama_absmag_complex'
+Runit = 'arcmin' # arcmin or Mpc
+thetanum = 0
 
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 if 'highZ' in sample:
     thetalist = np.array([3.163, 6.326, 9.490, 12.653])
 
-thetanum = 1
 theta = thetalist[thetanum]
 
 if Runit == 'arcmin':
@@ -143,6 +140,7 @@ for N1 in range(Nrows):
         N = np.int(N1*Ncolumns + N2)
         ax_sub = fig.add_subplot(gs[N1, N2])
       
+        """
         # Without covariance
         A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
         sigma=(error_h[N])[xmask], absolute_sigma=True)
@@ -153,11 +151,10 @@ for N1 in range(Nrows):
         ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
         covmatrix = np.reshape(covariance[4][ind], [len(data_x), len(data_x)])
         covmatrix = covmatrix[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
-        covmatrix = np.array([i for i in covmatrix], dtype=float)
         
         A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
         sigma=covmatrix, absolute_sigma=True)
-        """
+        #"""
         
         print('%g < P(x) < %g: Amplitude = %g'%(perclist[N], perclist[N+1], A))
         
@@ -218,7 +215,7 @@ plt.show()
 
 # Import trough catalog
 path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
-troughcatname = 'trough_catalog_%s_%s_0.04deg_%s.fits'%(sample.split('_')[0], sample.split('_')[1], sample.split('_')[2])
+troughcatname = 'trough_catalog_%s_%s_%s.fits'%(sample.split('_')[0], sample.split('_')[1], sample.split('_')[2])
 
 # Full directory & name of the trough catalogue
 troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
