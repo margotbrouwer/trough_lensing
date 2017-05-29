@@ -37,7 +37,7 @@ Ntheta = len(thetalist)
 ## 1a) Importing the galaxy catalogue.
 
 # Select the galaxy catalogue for trough selection (kids/gama)
-cat = 'kids'
+cat = 'gama'
 masktype = 'complex' # Nomask or complex
 
 # Name of the pre-defined galaxy selection
@@ -54,7 +54,7 @@ mask_density = 1/(gridspace*60.)**2 # Density of mask gridpoints (in arcmin^-2)
 
 # Import maskfile if present
 maskfilename = '/data2/brouwer/MergedCatalogues/Masks/mask_catalog_%s_%gdeg_%s.fits'%(cat, gridspace, masktype)
-masktextname = 'area_info_%s_%s.txt'%(cat, masktype)
+masktextname = 'density_info/area_info_%s_%s.txt'%(cat, masktype)
 if os.path.isfile(maskfilename):
     nomaskfile = False
     print('Importing mask file:', maskfilename)

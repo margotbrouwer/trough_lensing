@@ -36,8 +36,8 @@ colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
 # Radii theta of circular regions (in deg)
 thetalist = np.array([5., 10., 15., 20.])/60.
 
-path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogues'
-troughcatname = 'trough_catalog_gama_absmag_0.04deg_complex.fits'
+path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
+troughcatname = 'trough_catalog_gama_absmag_complex.fits'
 
 # Full directory & name of the trough catalogue
 troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
@@ -61,14 +61,14 @@ for t in range(len(thetalist)):
                 label=r"$\theta_{\rm A} = %g'$"%(thetalist[t]*60.), alpha=1., color=colors[t])
     plt.axvline( x=np.mean((rhotheta[t])[Pmasktheta[t]>0.8]), ls = '--', color=colors[t])
     
-    plt.xlabel(r'Galaxy number density $\rho(\theta_{\rm A})$ (${\rm arcmin}^{-2}$)', fontsize=14)
+    plt.xlabel(r'Galaxy number density $n_{\rm g}(\theta_{\rm A})$ (${\rm arcmin}^{-2}$)', fontsize=14)
     plt.ylabel(r'Number of apertures', fontsize=14)
 
     #plt.yscale('log')
     #plt.yscale('log')
     plt.legend()
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/trough_density_distribution'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/trough_density_distribution'
 
 plt.tight_layout()
 

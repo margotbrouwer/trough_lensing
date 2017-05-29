@@ -73,7 +73,9 @@ Dlow, Dhigh = [ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) f
 
 print( (cosmo.comoving_distance(Zlow).to('Mpc')).value/(1+Zlow) )
 print( (cosmo.comoving_distance(Zhigh).to('Mpc')).value/(1+Zhigh) )
-
+print()
+print( (cosmo.comoving_distance(0.5).to('Mpc')).value )
+print( (cosmo.comoving_distance(0.6).to('Mpc')).value )
 
 tanthetahigh = np.tan(thetalow*am_to_rad) * (Dlow / Dhigh)
 thetahigh = np.arctan(tanthetahigh)/am_to_rad

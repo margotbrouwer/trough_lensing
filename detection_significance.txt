@@ -1,0 +1,65 @@
+Detection significance as function of size
+
+('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_weighted.pdf')
+
+Troughs:
+
+('First bin S/N):', -8.7661855155684609)
+('Amplitude fit S/N', array([-13.83016382]))
+
+('First bin S/N):', -9.9996984749439157)
+('Amplitude fit S/N', array([-11.56973516]))
+
+('First bin S/N):', -8.1204040708575942)
+('Amplitude fit S/N', array([-8.77349022]))
+
+('First bin S/N):', -6.7954090532134144)
+('Amplitude fit S/N', array([-7.32757067]))
+
+Ridges:
+
+('First bin S/N):', 14.404591968360119)
+('Amplitude fit S/N', array([ 20.01299992]))
+
+('First bin S/N):', 14.237477736759951)
+('Amplitude fit S/N', array([ 15.41890904]))
+
+('First bin S/N):', 11.586510908732867)
+('Amplitude fit S/N', array([ 11.65912434]))
+
+('First bin S/N):', 9.5426338936702386)
+('Amplitude fit S/N', array([ 10.11371041]))
+
+
+
+Detection significance of KiDS vs. GAMA
+
+('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_gama_all_complex.pdf')
+
+KiDS:
+
+('First bin S/N):', -7.8893625231422488)
+('Amplitude fit S/N', array([-10.46755569]))
+
+('First bin S/N):', -6.2924213833993274)
+('Amplitude fit S/N', array([-7.42082579]))
+
+('First bin S/N):', -6.3657106317526599)
+('Amplitude fit S/N', array([-6.58111346]))
+
+('First bin S/N):', -4.8803577637604985)
+('Amplitude fit S/N', array([-5.23040489]))
+
+GAMA:
+
+('First bin S/N):', -7.2467410195729816)
+('Amplitude fit S/N', array([-11.72858204]))
+
+('First bin S/N):', -7.6044574878640283)
+('Amplitude fit S/N', array([-8.97333668]))
+
+('First bin S/N):', -6.8355931946448596)
+('Amplitude fit S/N', array([-7.36301222]))
+
+('First bin S/N):', -5.7859048427553166)
+('Amplitude fit S/N', array([-6.13546135]))

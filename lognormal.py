@@ -72,8 +72,8 @@ perclist = np.append(perclist, percmax)
 Npercs = len(percnames)-1
 
 # Import lensing profiles
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_Apr'
-path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_1-Ptheta%s_%s_%s'\
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
     %(sample, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins%i_%s_%s_%s/shearcovariance'%(Nbins, ('%g'%Rmin).replace('.','p'), ('%g'%Rmax).replace('.','p'), Runit)
 path_filename = 'No_bins_%s.txt'%(blind)
@@ -96,7 +96,7 @@ covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfile
 # Import random signal
 
 print('Import random signal:')
-path_randoms = ['No_bins_gama_randoms/Pmasktheta%s_0p8_1'%(('%g'%theta).replace('.','p'))]
+path_randoms = ['No_bins_gama_randoms/Pmasktheta%s_0p8_inf'%(('%g'%theta).replace('.','p'))]
 random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
 random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
 random_data_x, random_data_y, random_error_h, random_error_l = random_data_x[0], random_data_y[0], random_error_h[0], random_error_l[0]
@@ -196,9 +196,13 @@ for N1 in range(Nrows):
         
         plt.xscale('log')
 
-ax.set_xlabel(r'Radial distance $R$ (arcmin)', fontsize=14)
-ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
-
+if Runit == 'arcmin':
+    ax.set_xlabel(r'Radial separation $\theta$ (arcmin)', fontsize=14)
+    ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
+if Runit == 'Mpc':
+    ax.set_xlabel(r'Radial distance $R$ (Mpc \, {h_{70}}^{-1})', fontsize=14)
+    ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
+    
 ax.xaxis.set_label_coords(0.5, -0.07)
 ax.yaxis.set_label_coords(-0.07, 0.5)
 

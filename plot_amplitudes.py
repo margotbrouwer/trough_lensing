@@ -28,7 +28,7 @@ rc('font',**{'family':'serif','serif':['Computer Modern']})
 #colors = ['red', 'orange', 'cyan', 'blue']
 colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
 
-#"""
+"""
 
 # Redshifts
 thetalist = np.array([10., 6.326]) # in arcmin
@@ -50,12 +50,12 @@ samplelist = ['%s_%g%s'%(samples[0], theta, Runit) for theta in thetalist]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
 
-"""
+#"""
 
 
 
 # Import amplitudes
-path_filename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots'
+path_filename = '/data2/brouwer/shearprofile/trough_results_May/Plots'
 filenames = ['%s/trough_amplitudes_%s.txt'%(path_filename, sample) for sample in samplelist]
 sample = samples[0]
 
@@ -121,7 +121,7 @@ plt.axhline(y=0., ls=':', color='black')
 plt.axvline(x=0.5, ls=':', color='black')
 
 # Define the labels for the plot
-plt.ylabel(r'Lensing ``signal to noise" ($A/\delta A$)')
+plt.ylabel(r'Lensing signal to noise ($A/\delta A$)')
 plt.xlabel(r"Percentile $P(\theta_{\rm A})$")
 
 plt.legend(loc='best')
