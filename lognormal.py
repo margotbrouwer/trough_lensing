@@ -33,7 +33,7 @@ def trough_model(x, A):
 
 # Defining the paths to the data
 blind = 'A'
-sample = 'gama_absmag_complex'
+sample = 'kids_all_complex'
 Runit = 'arcmin' # arcmin or Mpc
 thetanum = 0
 
@@ -113,7 +113,7 @@ if Runit == 'arcmin':
     xmax = 70.
 if Runit == 'Mpc':
     xmin = Rlist[thetanum]*1.2
-    xmax = 10
+    xmax = 10.
 
 xmask = (xmin < data_x) & (data_x < xmax)
 xwhere = np.where(xmask)[0]

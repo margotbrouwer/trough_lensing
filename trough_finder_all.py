@@ -38,7 +38,6 @@ Ntheta = len(thetalist)
 
 # Select the galaxy catalogue for trough selection (kids/gama)
 cat = 'gama'
-masktype = 'complex' # Nomask or complex
 
 # Name of the pre-defined galaxy selection
 selection = 'all'
@@ -46,7 +45,11 @@ selection = 'all'
 #selection = 'redseq4'
 #selection = 'lowZ'
 #selection = 'highZ'
-#selection = 'kids_absmag'
+#selection = 'gama_all'
+#selection = 'kids_all'
+
+# Select mask type (nomask or complex)
+masktype = 'complex'
 
 # Spacing of the trough and mask grids (in degree)
 gridspace = 0.04
@@ -64,33 +67,37 @@ else:
 
 print(maskfilename)
 
+
+# Import galaxy catalog
 if 'kids' in cat:
     
-    # Names of the KiDS fields
-    fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
-    
-    # Boundaries of the KiDS fields
-    coordsG9 = np.array([[128.0,142.5], [-2.5,3.5]])
-    coordsG12 = np.array([[155.0,190.0], [-3.5,3.5]])
-    coordsG15 = np.array([[209.5,239.0], [-3.5,3.5]])
-    coordsG23 = np.array([[328.0,361.0], [-35.0,-28.0]])
-    coordsGS = np.array([[31.0,54.0], [-35.0,-29.0]])
-    fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
-    
-    """
-    # Names of the GAMA fields
-    fieldnames = ['G9', 'G12', 'G15']
-    
-    # Boundaries of the GAMA fields
-    coordsG9 = [[129., 141.], [-2.,3.]]
-    coordsG12 = [[174., 186.], [-3.,2.]]
-    coordsG15 = [[211.5, 223.5], [-2.,3.]]
-    fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
-    """
-    
+    if 'gama' in selection:
+        # Names of the GAMA fields
+        fieldnames = ['G9', 'G12', 'G15']
+        
+        # Boundaries of the KiDS fields
+        coordsG9 = [[128.0,142.5], [-2.5,3.5]]
+        coordsG12 = [[155.0,190.0], [-3.5,3.5]]
+        coordsG15 = [[209.5,239.0], [-3.5,3.5]]
+        fieldboundaries = np.array([coordsG9,coordsG12,coordsG15]) # Boundaries of all fields
+    else:
+        # Names of the KiDS fields
+        fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
+        
+        # Boundaries of the KiDS fields
+        coordsG9 = [[128.0,142.5], [-2.5,3.5]]
+        coordsG12 = [[155.0,190.0], [-3.5,3.5]]
+        coordsG15 = [[209.5,239.0], [-3.5,3.5]]
+        coordsG23 = [[328.0,361.0], [-35.0,-28.0]]
+        coordsGS = [[31.0,54.0], [-35.0,-29.0]]
+        fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
+
     # Path to the KiDS fields
     path_kidscat = '/data2/brouwer/KidsCatalogues'
-    kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
+    if masktype == 'nomask':
+        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17.fits'
+    else:
+        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
     
     # Importing the KiDS coordinates
     galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
@@ -121,10 +128,10 @@ if 'gama' in cat:
 # Defining the selection for the KiDS galaxy sample
 if 'kids' in cat:
 
-    if selection == 'all':
+    if 'all' in selection:
         galmask = (galZ >= 0.)
         
-    if selection == 'absmag':
+    if 'absmag' in selection:
         cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
         galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
         rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
@@ -156,20 +163,23 @@ if 'gama' in cat:
         thetalist = np.array([3.163, 6.326, 9.490, 12.653])/60.
         Ntheta = len(thetalist)
         
-    if selection == 'kids_absmag':
+    if 'kids' in selection:
         
         # Path to the KiDS fields
-        path_kidscat = '/data2/brouwer/MergedCatalogues'
-        kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+        path_kidscat = '/data2/brouwer/KidsCatalogues'
+        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17.fits'
         
         # Importing the KiDS coordinates
         galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
         utils.import_kidscat(path_kidscat, kidscatname)
         
-        cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-        galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
-        rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
-        galmask = (rmag_abs < -19.7)
+        if 'all' in selection:
+            galmask = (galZ >= 0.)
+        if 'absmag' in selection:
+            cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
+            galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
+            rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
+            galmask = (rmag_abs < -19.7)
 
 
 print('Theta:', thetalist*60., 'arcmin')
@@ -316,10 +326,10 @@ else:
     # Import the masked percentage
     maskcat = pyfits.open(maskfilename, memmap=True)[1].data
     
-    Nmasktheta_tot= np.array([maskcat['Nmasktheta%g'%(theta*60)] for theta in thetalist])
-    Pmasktheta_tot= np.array([maskcat['Pmasktheta%g'%(theta*60)] for theta in thetalist])
+    Nmasktheta_tot= np.array([(maskcat['Nmasktheta%g'%(theta*60)])[0:Ngrid_tot] for theta in thetalist])
+    Pmasktheta_tot= np.array([(maskcat['Pmasktheta%g'%(theta*60)])[0:Ngrid_tot] for theta in thetalist])
     
-    field_area = np.loadtxt(masktextname)
+    field_area = np.loadtxt(masktextname)[0:len(fieldnames)]
 
 # Effective area and density of the fields, for printing to text file
 field_area = np.append(field_area, np.mean(field_area))
@@ -398,7 +408,7 @@ field_header = '     '.join(np.append(fieldnames, 'Average'))
 field_footer = '1: Number of galaxies, 2: Effective area (arcmin^2), 3: Galaxy density (arcmin^-2)'
 density_info = np.array([field_galaxies, field_area, field_density])
 
-filename = 'density_info_%s_%s_%s.txt'%(cat, masktype, selection)
+filename = 'density_info_%s_%s_%s.txt'%(cat, selection, masktype)
 
 np.savetxt(filename, density_info, delimiter='    ', header = field_header, footer = field_footer)
 print('Written:', filename)

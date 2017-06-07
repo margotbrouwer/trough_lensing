@@ -15,6 +15,7 @@ from matplotlib import rc, rcParams
 
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
 import scipy.optimize as optimization
 import trough_modules_all as utils
@@ -42,10 +43,11 @@ labels = [r'$0.1<z<0.197$', r'$0.197<z<0.3$']
 """
 
 # Sizes
-thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+#thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+thetalist = np.array([5.]) # in arcmin
 Runit = 'arcmin'
 
-samples = ['gama_absmag_complex']
+samples = ['kids_all_complex']
 samplelist = ['%s_%g%s'%(samples[0], theta, Runit) for theta in thetalist]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
@@ -69,8 +71,10 @@ Alist_error = amplitude_data[:,3]
 #Alist = np.array([Alist[i]/thetalist[i] for i in range(len(thetalist))])
 #Alist_error = np.array([Alist_error[i]/thetalist[i] for i in range(len(thetalist))])
 
+
 ## AMPLITUDE (Percentile)
 fig = plt.figure(figsize=(5,4))
+ax1 = fig.add_subplot(111)
 
 [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i],\
 label=labels[i], marker='.', ls=':', color=colors[i]) for i in range(len(filenames))]
@@ -84,6 +88,19 @@ plt.xlabel(r"Percentile $P(\theta_{\rm A})$")
 
 plt.legend(loc='best')
 
+# These are in unitless percentages of the figure size. (0,0 is bottom left)
+left, bottom, width, height = [0.555, 0.16, 0.31, 0.23]
+ax2 = fig.add_axes([left, bottom, width, height])
+
+[plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i], \
+marker='.', ls=':', color=colors[i]) for i in range(len(filenames))]
+
+plt.axhline(y=0., ls=':', color='black')
+plt.axvline(x=0.5, ls=':', color='black')
+
+ax2.axis([0.45,0.65,-0.01,0.0075])
+ax2.tick_params(labelleft='off', top='off', left='off', right='off')
+
 for ext in ['png', 'pdf']:
 
     plotfilename = '%s/trough_amplitude_%s'%(path_filename, sample)
@@ -94,6 +111,7 @@ for ext in ['png', 'pdf']:
 print('Written plot:', plotname)
 plt.show()
 plt.close()
+
 
 ## WEIGHT (Percentile)
 
@@ -137,8 +155,10 @@ print('Written plot:', plotname)
 plt.show()
 plt.close()
 
+
 ## AMPLITUDE (delta)
 fig = plt.figure(figsize=(5,4))
+ax1 = fig.add_subplot(111)
 
 [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
 label=labels[i], marker='.', ls=':', color=colors[i]) for i in range(len(filenames))]
@@ -153,6 +173,20 @@ plt.ylabel(r'Lensing detection Amplitude')
 plt.xlabel(r"Overdensity $\delta(\theta_{\rm A})$")
 
 plt.legend(loc='upper left')
+
+# These are in unitless percentages of the figure size. (0,0 is bottom left)
+left, bottom, width, height = [0.48, 0.16, 0.39, 0.25]
+ax2 = fig.add_axes([left, bottom, width, height])
+
+[plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+marker='.', ls=':', color=colors[i]) for i in range(len(filenames))]
+
+plt.axhline(y=0., ls=':', color='black')
+plt.axvline(x=0., ls=':', color='black')
+
+ax2.axis([-0.2,0.2,-0.02,0.02])
+ax2.tick_params(labelleft='off', top='off', left='off', right='off')
+plt.xticks(np.arange(-0.2,0.3,0.1))
 
 for ext in ['png', 'pdf']:
 

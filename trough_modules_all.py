@@ -114,29 +114,38 @@ def define_gridpoints(fieldRAs, fieldDECs, gridspace):
     ## Grid
     
     # Creating a grid to measure the galaxy density
-    gridRAlist = np.arange(fieldRAs[0]+gridspace/2., fieldRAs[1], gridspace)
-    gridDEClist = np.arange(fieldDECs[0]+gridspace/2., fieldDECs[1], gridspace)
-    gridmatrix = np.array([np.array([np.array([RA, DEC]) for DEC in gridDEClist]) for RA in gridRAlist])
-    print('Grid shape:', np.shape(gridmatrix))
+    gridDEC = np.arange(fieldDECs[0]+gridspace/2., fieldDECs[1], gridspace)
+    eqcor = np.cos(np.radians(np.abs(gridDEC)))
     
+    gridRA = np.array([ np.arange(fieldRAs[0]+gridspace/(2.*eqcor[DEC]), fieldRAs[1], \
+    gridspace/eqcor[DEC]) for DEC in range(len(gridDEC)) ]) # Corrected for equatorial frame
+    
+    print('Correction(min,max):', 1/np.amax(eqcor), 1/np.amin(eqcor))
+    
+#    for DEC in range(len(gridDEC)):
+#        for RA in range(len(gridRA[DEC])):
+#            coords = [gridRA[DEC, RA], gridDEC[DEC]]
+#            print(coords)
+    
+    gridmatrix = [ [ [gridRA[DEC, RA], gridDEC[DEC]] for RA in range(len(gridRA[DEC]))] for DEC in range(len(gridDEC)) ]
     gridlist = np.vstack(gridmatrix)
-    
-    gridRA, gridDEC = gridlist[:,0], gridlist[:,1]
-    gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg) # All grid coordinates    
 
-    print('Number of grid coordinates:', len(gridRAlist), 'x', len(gridDEClist), '=', len(gridcoords))
-    
-    print(len(gridRAlist), len(gridDEClist))
+    gridRAlist, gridDEClist = gridlist[:,0], gridlist[:,1]
+    gridcoords = SkyCoord(ra=gridRAlist*u.deg, dec=gridDEClist*u.deg) # All grid coordinates    
     
     """
     ## Masking grid points
-
+    inmask = (fieldRAs[0] < gridRAlist) & (gridRAlist < fieldRAs[1])
+    gridRAlist, gridDEClist = gridRAlist[inmask], gridDEClist[inmask]
+    
+    print( 'Number of grid coordinates:', len(gridRA), 'x', len(gridDEC), '=', len(gridRA)*len(gridDEC), '/', np.sum(inmask) )
+    
     # Distances of grid points to the nearest source
     idx, d2dsrc, d3d = gridcoords.match_to_catalog_sky(srccoords)
-    
+
     # Find grid points that are outside the field
-    outmask = (d2dsrc > 1*u.deg) # Points that lie outside the source field
-    outcoords = gridcoords[outmask]
+    inmask = (d2dsrc > 1*u.deg) # Points that lie outside the source field
+    incoords = gridcoords[inmask]
     
     if len(outcoords) > 0:
         # Remove points that lie close to the edge of the galaxy field
@@ -148,7 +157,7 @@ def define_gridpoints(fieldRAs, fieldDECs, gridspace):
         print('New gridcoords:', len(gridcoords))
     """
     
-    return gridRA, gridDEC, gridcoords
+    return gridRAlist, gridDEClist, gridcoords
 
 
 # Defining the mask for the galaxy sample

@@ -101,7 +101,6 @@ path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%s_0p8_1'%theta
                 for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
 
-
 # Randoms
 
 Runit = 'arcmin'
@@ -115,42 +114,83 @@ datalabels = [r'GAMA ($A_{\rm eff} > %g$)'%n for n in np.arange(0.6, 1.0, 0.1)]
 
 plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_randoms'
 
+
+## KiDS vs GAMA
+
 """
 
-# KiDS vs GAMA
-
-# Troughs
+# Troughs (with different sizes)
 
 Runit = 'arcmin'
+plotfit = True
+thetalist = np.array([5., 5.]) # in arcmin
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
-path_lenssel = [ ['No_bins_%s_all_complex/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) for theta in thetalist] for cat in ['kids', 'gama'] ]
+path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) \
+for theta in [thetalist[0]]] for cat in ['kids_all_complex', 'kids_all_nomask'] ]
+
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r'KiDS $(P<0.2)$', r'GAMA $(P<0.2)$']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_gama_all_complex'
-Nrows = 2
+datalabels = [r"KiDS $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_all_nomask_complex'
+Nrows = 1
 
-path_randoms = np.array([ ['No_bins_%s_randoms/Pmasktheta%g_0p8_inf'%(cat, theta)
-                 for theta in thetalist] for cat in ['kids', 'gama'] ])
+path_randoms = np.array([ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat, theta)
+                 for theta in [thetalist[0]] ] for cat in ['kids_randoms_complex', 'kids_randoms_nomask'] ])
 
 """
 
-# Randoms
+# Troughs (with different completeness)
 
 Runit = 'arcmin'
+plotfit = False
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
-path_lenssel = [ ['No_bins_%s_randoms/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in thetalist] for cat in ['kids', 'gama'] ]
+path_lenssel = [ ['No_bins_kids_all_complex/Pmasktheta5_0p%g_inf-Ptheta5_0_0p2'%(compnum)] for compnum in np.arange(6, 10, 1) ]
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datatitles = []
+datalabels = [r'comp(A) $> 0.%g$'%(compnum) for compnum in np.arange(6, 10, 1)]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_completeness'
+Nrows = 1
+
+
+
+# Randoms (with different sizes)
+
+Runit = 'arcmin'
+plotfit = False
+
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
+                                        for cat in ['gama_kids_randoms_complex', 'gama_randoms'] ]
 path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r'KiDS randoms', r'GAMA randoms']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_gama_randoms'
-Nrows = 2
+datalabels = [r'KiDS randoms (no mask)', r'GAMA randoms']
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_kids_randoms_complex'
+Nrows = 1
+
+
+
+# Randoms (with different completeness)
+
+Runit = 'arcmin'
+plotfit = False
+
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_lenssel = [ ['No_bins_kids_randoms/Pmasktheta5_0p%g_inf'%(compnum)] for compnum in np.arange(6, 10, 1) ]
+path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datatitles = []
+datalabels = [r'comp(A) $> 0.%g$'%(compnum) for compnum in np.arange(6, 10, 1)]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_randoms_completeness'
+Nrows = 1
 
 
 """
@@ -224,7 +264,7 @@ for N in range(Nsize):
     thetaNlist = np.append(thetalist, thetalist)
     
     if Runit == 'arcmin':
-        xmin = thetaNlist[N]*1.2
+        xmin = thetalist[N]*1.2
         xmax = 70.
     if Runit == 'Mpc':
         xmin = Rlist[N]*1.2
@@ -234,20 +274,31 @@ for N in range(Nsize):
     xwhere = np.array(np.where(xmask))[0]
 
     # Signal to noise of the Amplitude fit
+
+    """
     
+    # Without covariance
+    A, Acov = optimization.curve_fit(f=trough_model, xdata=datax[xmask], ydata=datay[xmask], p0=[0.], \
+    sigma=error[xmask], absolute_sigma=True)
+
+    """
     # With covariance
     ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
     covmatrix = np.reshape(covariance[4][ind], [len(datax), len(datax)])
     covmatrix = covmatrix[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
-
+        
     A, Acov = optimization.curve_fit(f=trough_model, xdata=datax[xmask], ydata=datay[xmask], p0=[0.], \
     sigma=covmatrix, absolute_sigma=True)
+    #"""
     
     Alist = np.append(Alist, A)
     Alist_error = np.append(Alist_error, np.sqrt(Acov[0,0]))
     
+    print
+    print(datalabels[N])
     print('First bin S/N):', datay[xwhere[0]]/error[xwhere[0]])
     print('Amplitude fit S/N', A/np.sqrt(Acov[0,0]))
+    print('Amplitude', A)
     print
 
 # Calculate the detection significance
@@ -267,7 +318,10 @@ print('Sigma:', sigmalist)
 Ncolumns = int(Nbins[1]/Nrows)
 
 # Plotting the ueber matrix
-fig = plt.figure(figsize=(Ncolumns*4.,Nrows*3.))
+if Nbins[1] > 1:
+    fig = plt.figure(figsize=(Ncolumns*4.,Nrows*3.))
+else:
+    fig = plt.figure(figsize=(5,4))
 canvas = FigureCanvas(fig)
 
 gs_full = gridspec.GridSpec(1,1)
@@ -285,7 +339,26 @@ for N1 in range(Nrows):
         for Nplot in range(Nbins[0]):
             
             Ndata = N + Nplot*(Nbins[1])
-            data_x_plot = data_x[Ndata]# * (1.+0.05*Nplot)
+            
+            if Nbins[0] > 2:
+                data_x_plot = data_x[Ndata] * (1.+0.03*Nplot)
+            else:
+                data_x_plot = data_x[Ndata]
+            
+            # Plot the fit
+            if plotfit:
+                
+                # Plot fitted model
+                if Runit == 'arcmin':
+                    xmin = thetalist[N]*1.2
+                    xmax = 70.
+                if Runit == 'Mpc':
+                    xmin = Rlist[N]*1.2
+                    xmax = 10.
+                    
+                model_x = np.linspace(xmin, xmax, 50)
+                model_y = trough_model(model_x, Alist[Ndata])
+                ax_sub.plot(model_x, model_y, ls='-', color='grey')
 
             if Nsize==Nbins:
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
@@ -294,10 +367,7 @@ for N1 in range(Nrows):
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
                 ls='', marker='.', label=datalabels[Nplot])
 
-            # Plot fitted model
-            model_x = np.linspace(xmin, xmax, 10)
-            model_y = trough_model(model_x, Alist[Ndata])
-            ax_sub.plot(model_x, model_y, ls='-', color='red', label=r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), zorder=4)
+
 
         # Negative troughs for comparison
         #ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
@@ -333,20 +403,25 @@ for N1 in range(Nrows):
             ax.xaxis.set_label_coords(0.5, -0.15)
             ax.yaxis.set_label_coords(-0.05, 0.5)
         else:
-            plt.axis([2,100,-1.3e-3,2.e-3])
-            plt.ylim(-1.3e-3,2.e-3)
+            plt.axis([2,100,-1.4e-3,1.5e-3])
+            plt.ylim(-1.4e-3,1.5e-3)
 
-            xlabel = r'Opening angle $\theta$ (arcmin)'
+            xlabel = r'Separation angle $\theta$ (arcmin)'
             ylabel = r'Shear $\gamma$'
             
-            ax.xaxis.set_label_coords(0.5, -0.025*Ncolumns)
-            ax.yaxis.set_label_coords(-0.06*Nrows, 0.5)
-
+            if Nbins[1] > 1:
+                ax.xaxis.set_label_coords(0.5, -0.025*Ncolumns)
+                ax.yaxis.set_label_coords(-0.06*Nrows, 0.5)
+            else:
+                ax.xaxis.set_label_coords(0.5, -0.07)
+                ax.yaxis.set_label_coords(-0.15, 0.5)
+        
         plt.xscale('log')
         #plt.yscale('log')
         
         if Nbins[1]>1:
             plt.title(datatitles[N], x = 0.73, y = 0.86, fontsize=16)
+
 
 # Define the labels for the plot
 ax.set_xlabel(xlabel, fontsize=14)
@@ -356,9 +431,10 @@ ax.set_ylabel(ylabel, fontsize=14)
 #ax.yaxis.label.set_size(17)
 
 # Plot the legend
-#plt.legend(loc='upper right') # handlelength=0, handletextpad=0, numpoints=1)
-lgd = ax_sub.legend(bbox_to_anchor=(1.75, 1.15)) # side
-#lgd = ax_sub.legend(bbox_to_anchor=(0.6, 2.7)) # top
+if Nbins[1] > 1:
+    lgd = ax_sub.legend(bbox_to_anchor=(1.75, 1.15)) # side
+else:
+    plt.legend(loc='upper left')
 
 
 """

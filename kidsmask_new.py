@@ -73,90 +73,62 @@ DEClist_tot = []
 masklist_tot = []
 
 for c in range(len(catnames)):
-#for c in range(1):
+#for c in range(10):
     
     print('Importing %s mask: %s (%i/%i)'%(cat, catnames[c], c+1, len(catnames)))
     
-    # Import the mask catalogue
     if cat == 'kids':
+        # Import the mask catalogue
         maskcat = pyfits.open('%s/%s'%(kids_path, catnames[c]), memmap=True)
-
         catmask = 1.-np.array(maskcat[1].data)
+        masklist = np.hstack(catmask)
+        
+        # Boundaries of the current KiDS tile
         maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
+        fieldRAs = [np.amin(maskRA), np.amax(maskRA)]
+        fieldDECs = [np.amin(maskDEC), np.amax(maskDEC)]
 
-        # Finding the space between the original grid points
-        RAdiff, DECdiff = [np.diff(maskRA), np.diff(maskDEC)]
-        RAdiff, DECdiff = [RAdiff[RAdiff<1.], DECdiff[DECdiff<1.]]
+        # Creating coordinate matrix for the mask
+        maskmatrix = np.array([np.array([np.array([RA, DEC]) for DEC in maskDEC]) for RA in maskRA])
+        maskcoordlist = np.vstack(maskmatrix)
+        maskRAlist, maskDEClist = maskcoordlist[:,0], maskcoordlist[:,1]
         
-        gridspace_RA = abs(np.mean(RAdiff))
-        gridspace_DEC = abs(np.mean(DECdiff))
-        gapsize_RA = round(gridspace_mask/gridspace_RA)
-        gapsize_DEC = round(gridspace_mask/gridspace_DEC)
-        
-        #print(gridspace_RA, gapsize_RA)
-        #print(gridspace_DEC, gapsize_DEC)
-        
-        """
-        # Highlight fields without galaxies
-        
-        fieldcoord = SkyCoord(ra=np.mean(maskRA)*u.deg, dec=np.mean(maskDEC)*u.deg)
-        idx, d2d, d3d = fieldcoord.match_to_catalog_sky(galcoords)
-        d2d = d2d[0].to('degree').value
-        
-        print(d2d)
-        if d2d > 0.1:
-            print('No galaxies in:', catnames[c])
-        """
-        
+        print('Mask shape/length:', np.shape(maskmatrix), '/', len(masklist))
+    
     if cat == 'gama':
-        # Boundaries of the current GAMA field
-        fieldRAs = fieldboundaries[c,0]
+        # Import the mask catalogue
+        masklist = np.array(pyfits.open(catnames[c], memmap=True)['PRIMARY'].data).T
+        print('Imported mask')
+        
+        gridspace_orig = 0.001 # The space between the original grid points
+        fieldRAs = fieldboundaries[c,0] # Boundaries of the current GAMA field
         fieldDECs = fieldboundaries[c,1]
         
-        catmask = np.array(pyfits.open(catnames[c], memmap=True)['PRIMARY'].data).T
-        maskRA, maskDEC, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask)
-        maskRA, maskDEC = [np.sort(np.unique(maskRA)), np.sort(np.unique(maskDEC))]
+        maskRAlist, maskDEClist, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_orig)
+        print('Created mask grid')
         
-        # The space between the original grid points
-        gridspace_orig = 0.001
-        
-        # Defining the gap between the points of the big matrix, to create the small matrix
-        gapsize_RA = round(gridspace_mask/gridspace_orig)
-        gapsize_DEC = gapsize_RA
-    
+    # Creating the grid for each field
+    gridRAlist, gridDEClist, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask)
+    eqcor = np.cos(np.radians(np.abs(gridDEClist)))
+
     # Set all negative mask values to 0.
-    catmask[catmask < 0.] = 0.
+    masklist[masklist < 0.] = 0.
+    masklist_small = np.zeros(len(gridRAlist))
+    
+    for g in range(len(gridcoords)):
+        maskmask = ( maskRAlist-gridspace_mask/(2.*eqcor[g]) < gridRAlist[g] ) & ( gridRAlist[g] < maskRAlist+gridspace_mask/(2.*eqcor[g]) ) & \
+                    ( maskDEClist-gridspace_mask/(2.*eqcor[g]) < gridDEClist[g] ) & (gridDEClist[g] < maskDEClist+gridspace_mask/(2.*eqcor[g]))
+        masklist_small[g] = np.mean(masklist[maskmask])
+        
+    print('Old size:', np.shape(masklist))
+    print('New size:', np.shape(masklist_small))
+    print()
+    
+    RAlist_tot = np.append(RAlist_tot, gridRAlist)
+    DEClist_tot = np.append(DEClist_tot, gridDEClist)
+    masklist_tot = np.append(masklist_tot, masklist_small)
 
-    RAnums = np.arange(int(round(gapsize_RA/2.)), np.shape(catmask)[0], int(gapsize_RA))
-    DECnums = np.arange(int(round(gapsize_DEC/2.)), np.shape(catmask)[1], int(gapsize_DEC))
-    
-    catmask_small = np.zeros([len(RAnums), len(DECnums)])
-
-    for i in range(len(RAnums)):
-        for j in range(len(DECnums)):
-            maskmean = np.mean(catmask[int(i*gapsize_RA):int((i+1)*gapsize_RA), int(j*gapsize_DEC):int((j+1)*gapsize_DEC)])
-            catmask_small[i, j] = maskmean
-    
-    print('Old size:', np.shape(catmask))
-    print('New size:', np.shape(catmask_small))
-    
-    catmask = catmask_small
-    if cat == 'kids':
-        maskRA = maskRA[RAnums]
-        maskDEC = maskDEC[DECnums]
-    
-    masklist =  np.array([[ catmask[i,j] for i in range(len(maskRA)) ] for j in range(len(maskDEC)) ])
-    coordlist = np.array([[ [maskRA[i], maskDEC[j]] for i in range(len(maskRA)) ] for j in range(len(maskDEC)) ])
-    
-    RAlist = np.reshape(coordlist[:,:,0], [len(maskRA)*len(maskDEC)])
-    DEClist = np.reshape(coordlist[:,:,1], [len(maskRA)*len(maskDEC)])
-    masklist = np.reshape(masklist, [len(maskRA)*len(maskDEC)])
-    
-    RAlist_tot = np.append(RAlist_tot, RAlist)
-    DEClist_tot = np.append(DEClist_tot, DEClist)
-    masklist_tot = np.append(masklist_tot, masklist)
-    
-    #print()
+print(masklist_tot)
 
 ## Dividing total masks into different fields, and removing overlapping tiles
 for f in range(len(fieldnames)):
@@ -170,6 +142,7 @@ for f in range(len(fieldnames)):
     Ngrid_field = np.sum(fieldmask)
     
     RAlist_field, DEClist_field, masklist_field = RAlist_tot[fieldmask], DEClist_tot[fieldmask], masklist_tot[fieldmask]
+    print(np.shape(masklist_field))
     
     maskcoords = SkyCoord(ra=RAlist_field*u.deg, dec=DEClist_field*u.deg)
 
@@ -183,7 +156,7 @@ for f in range(len(fieldnames)):
     for s in range(len(sampindex_field)-1):
     #for s in range(1):
 
-        print('Removing points within 0.8 gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
+        print('Removing points within 0.99 gridspace of each other. Grid sample: %i of %i'%(s+1, len(sampindex_field)-1))
         
         # Defining the smaller grid point sample
         selsamp = maskcoords[sampindex_field[s]:sampindex_field[s+1]]
@@ -191,7 +164,7 @@ for f in range(len(fieldnames)):
         # 4c/d) For the underdense/overdense circles: We start from the lowest/highest density circle and flag all overlapping circles.
         
         # Find grid points within 0.99 gridspace of each other
-        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, 0.8*gridspace_mask*u.deg)
+        sampxgrid, gridoverlap, d2d, d3d = maskcoords.search_around_sky(selsamp, 0.99*gridspace_mask*u.deg)
         
         # Looping over grid points
         for g in range(len(selsamp)):
