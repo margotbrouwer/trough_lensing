@@ -14,7 +14,6 @@ from glob import glob
 from astropy import constants as const, units as u
 from astropy.coordinates import SkyCoord
 from collections import Counter
-from astropy.cosmology import LambdaCDM
 
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
@@ -36,12 +35,13 @@ Ntheta = len(thetalist)
 
 ## 1a) Importing the galaxy catalogue.
 
-# Select the galaxy catalogue for trough selection (kids/gama)
-cat = 'gama'
+# Select the galaxy catalogue for trough selection (kids, gama or mice)
+cat = 'kids'
 
 # Name of the pre-defined galaxy selection
-selection = 'all'
+#selection = 'all'
 #selection = 'absmag'
+selection = 'mice'
 #selection = 'redseq4'
 #selection = 'lowZ'
 #selection = 'highZ'
@@ -49,7 +49,7 @@ selection = 'all'
 #selection = 'kids_all'
 
 # Select mask type (nomask or complex)
-masktype = 'complex'
+masktype = 'nomask'
 
 # Spacing of the trough and mask grids (in degree)
 gridspace = 0.04
@@ -66,6 +66,7 @@ else:
     print('No mask file present')
 
 print(maskfilename)
+
 
 
 # Import galaxy catalog
@@ -95,14 +96,13 @@ if 'kids' in cat:
     # Path to the KiDS fields
     path_kidscat = '/data2/brouwer/KidsCatalogues'
     if masktype == 'nomask':
-        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17.fits'
+        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17-withNEWzANNz2.fits'
     else:
         kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
     
     # Importing the KiDS coordinates
-    galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
+    galRA, galDEC, galZB, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
     utils.import_kidscat(path_kidscat, kidscatname)
-
 
 if 'gama' in cat:
     
@@ -123,20 +123,44 @@ if 'gama' in cat:
     galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
     
 
+# Import galaxy catalog
+if 'mice' in cat:
+    
+    # Names of the GAMA fields
+    fieldnames = ['M']
+    
+    # Boundaries of the KiDS fields
+    coordsM = [[0.,20.], [0.,20.]]
+    fieldboundaries = np.array([coordsM]) # Boundaries of all fields
+    
+    # Path to the Mice field
+    path_mockcat = '/data2/brouwer/MergedCatalogues'
+    mockcatname = 'mice_catalog.fits'
+    
+    # Importing the Mice coordinates
+    galRA, galDEC, galZ, rmag, rmag_abs, e1, e2 = \
+    utils.import_mockcat(path_mockcat, mockcatname)
+    
+
+
 ## 1b) Select the galaxy sample to define the troughs
 
 # Defining the selection for the KiDS galaxy sample
 if 'kids' in cat:
-
+    
     if 'all' in selection:
         galmask = (galZ >= 0.)
         
     if 'absmag' in selection:
-        cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-        galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
-        rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
+        h, O_matter, O_lambda = [0.6898, 0.2905, 0.7095]
+        rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
         galmask = (rmag_abs < -19.7)
-
+    
+    if 'mice' in selection:
+        h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+        rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
+        galmask = (rmag_abs < -18.9)
+    
     if ('redseq' in selection) or (selection=='ell'):
         galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
     
@@ -147,6 +171,8 @@ if 'gama' in cat:
         galmask = (rmag <= 19.8)
     if selection == 'absmag':
         galmask = (rmag_abs < -19.7) & (rmag <= 19.8)
+    if 'mice' in selection:
+        galmask = (rmag_abs < -18.9) & (rmag <= 19.8)
 
     # Redshift samples
     zmin = 0.1
@@ -167,7 +193,7 @@ if 'gama' in cat:
         
         # Path to the KiDS fields
         path_kidscat = '/data2/brouwer/KidsCatalogues'
-        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17.fits'
+        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17-withNEWzANNz2.fits'
         
         # Importing the KiDS coordinates
         galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
@@ -176,10 +202,13 @@ if 'gama' in cat:
         if 'all' in selection:
             galmask = (galZ >= 0.)
         if 'absmag' in selection:
-            cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
-            galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
-            rmag_abs = rmag - 5.*(np.log10(galDl)-1.)
+            rmag_abs = calc_absmag()
+            
             galmask = (rmag_abs < -19.7)
+
+if 'mice' in cat:
+    if selection == 'all':
+        galmask = (rmag <= 20.05)
 
 
 print('Theta:', thetalist*60., 'arcmin')
@@ -202,7 +231,7 @@ for field in range(len(fieldnames)):
     # Boundaries of the current KiDS field
     fieldRAs = fieldboundaries[field,0]
     fieldDECs = fieldboundaries[field,1]
-    
+        
     # Selecting the galaxies lying within this field
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
     
@@ -225,22 +254,24 @@ for field in range(len(fieldnames)):
     ## 2a) Creating a cartesian grid of narrowly spaced (2 arcmin) points.
    
     # Define the grid coordinates in this field
+    
+    if 'mice' in cat:
+        # Creating the grid for each field
+        gridspace_mask = 0.04 # in degree
+        gridRA, gridDEC, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask)
 
-    # Import the mask coordinates of this field
-    path_catmask = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[field], gridspace)
+        Ngrid = len(gridcoords)    
+        catmask = np.ones(Ngrid)
+    else:
+        # Import the mask coordinates of this field
+        path_catmask = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[field], gridspace)
+        
+        maskcat = pyfits.open(path_catmask, memmap=True)[1].data
+        gridRA, gridDEC, catmask = [maskcat['RA'], maskcat['DEC'], maskcat['mask']]
+        gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg)
+        Ngrid = len(gridcoords)
     
-    maskcat = pyfits.open(path_catmask, memmap=True)[1].data
-    gridRA, gridDEC, catmask = [maskcat['RA'], maskcat['DEC'], maskcat['mask']]
-    gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg)
-    Ngrid = len(gridcoords)
     
-    #n, bins, patches = plt.hist(catmask, 50)
-    #plt.show()
-    
-    # Count only the mask coordinates above 0.
-    #gridcoords = gridcoords[catmask>0]
-    #catmask = catmask[catmask>0]
-
     # Field area information for printing to text file
     Nmaskedgrid = np.sum(catmask)
     field_area = np.append(field_area, Nmaskedgrid/mask_density)
@@ -329,8 +360,12 @@ else:
     Nmasktheta_tot= np.array([(maskcat['Nmasktheta%g'%(theta*60)])[0:Ngrid_tot] for theta in thetalist])
     Pmasktheta_tot= np.array([(maskcat['Pmasktheta%g'%(theta*60)])[0:Ngrid_tot] for theta in thetalist])
     
-    field_area = np.loadtxt(masktextname)[0:len(fieldnames)]
-
+    field_area = np.array(np.loadtxt(masktextname))
+    try:
+        field_area = field_area[0:len(fieldnames)]
+    except:
+        field_area = np.array([field_area])
+    
 # Effective area and density of the fields, for printing to text file
 field_area = np.append(field_area, np.mean(field_area))
 field_galaxies = np.append(field_galaxies, np.mean(field_galaxies))
@@ -408,7 +443,7 @@ field_header = '     '.join(np.append(fieldnames, 'Average'))
 field_footer = '1: Number of galaxies, 2: Effective area (arcmin^2), 3: Galaxy density (arcmin^-2)'
 density_info = np.array([field_galaxies, field_area, field_density])
 
-filename = 'density_info_%s_%s_%s.txt'%(cat, selection, masktype)
+filename = 'density_info/density_info_%s_%s_%s.txt'%(cat, selection, masktype)
 
 np.savetxt(filename, density_info, delimiter='    ', header = field_header, footer = field_footer)
 print('Written:', filename)

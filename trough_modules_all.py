@@ -12,6 +12,7 @@ from glob import glob
 
 from astropy import constants as const, units as u
 from astropy.coordinates import SkyCoord
+from astropy.cosmology import LambdaCDM
 
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
@@ -29,6 +30,7 @@ def import_kidscat(path_kidscat, kidscatname):
     srcRA = kidscat['RAJ2000']
     srcDEC = kidscat['DECJ2000']
     srcZB = kidscat['Z_B_BPZ']
+    srcZann = kidscat['zANNZ2_GAMAdepth']
     srcTB = kidscat['T_B_BPZ']
     ODDS = kidscat['ODDS_BPZ'] # Quality of the photometric redshift
     mag_auto = kidscat['MAG_AUTO_R']
@@ -77,7 +79,7 @@ def import_kidscat(path_kidscat, kidscatname):
     ODDS = ODDS[srcmask]
     """
     
-    return srcRA, srcDEC, srcZB, srcTB, mag_auto, ODDS, umag, gmag, rmag, imag
+    return srcRA, srcDEC, srcZB, srcZann, srcTB, mag_auto, ODDS, umag, gmag, rmag, imag
 
 
 def import_gamacat(path_gamacat, gamacatname):
@@ -106,30 +108,95 @@ def import_gamacat(path_gamacat, gamacatname):
     galRA[gamamask], galDEC[gamamask], galZ[gamamask], rmag[gamamask], rmag_abs[gamamask]
     
     return galRA, galDEC, galZ, rmag, rmag_abs
+
+
+def import_mockcat(path_mockcat, mockcatname):
     
+    # Full directory & name of the corresponding KiDS catalogue
+    mockcatfile = '%s/%s'%(path_mockcat, mockcatname)
+    mockcat = pyfits.open(mockcatfile, memmap=True)[1].data
+    
+    # List of the observables of all sources in the KiDS catalogue
+    galRA = mockcat['ra']
+    galDEC = mockcat['dec']
+    galZ = mockcat['z']
+    
+    rmag = mockcat['r_sdss_true']
+    rmag_abs = mockcat['abs_mag_r']
+    
+    e1 = mockcat['gamma1']
+    e2 = mockcat['gamma2']
+    
+    return galRA, galDEC, galZ, rmag, rmag_abs, e1, e2
+    
+def import_troughcat(path_troughcat, troughcatname, paramnames):
+    
+    # Full directory & name of the corresponding KiDS catalogue
+    troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
+    troughcat = pyfits.open(troughcatfile, memmap=True)[1].data
+    
+    # List of the observables of all sources in the KiDS catalogue
+    troughRA = troughcat['RA']
+    troughDEC = troughcat['DEC']
+    troughZ = troughcat['Z']
+    
+    paramlists = np.array([troughcat[param] for param in paramnames])
+    
+    return troughRA, troughDEC, troughZ, paramlists
+
+    
+def import_srccat(path_srccat, srccatname):
+    
+    # Full directory & name of the corresponding KiDS catalogue
+    srccatfile = '%s/%s'%(path_srccat, srccatname)
+    srccat = pyfits.open(srccatfile, memmap=True)[2].data
+    
+    # List of the observables of all sources in the KiDS catalogue
+    galRA = srccat['ALPHA_J2000']
+    galDEC = srccat['DELTA_J2000']
+    galZ = srccat['Z_B']
+    rmag = srccat['MAG_GAAP_r_CALIB']
+    
+    e1 = srccat['e1_A']
+    e2 = srccat['e2_A']
+    weight = srccat['weight_A']
+    
+    return galRA, galDEC, galZ, rmag, e1, e2, weight
+
 
 # Define grid points for trough selection
 def define_gridpoints(fieldRAs, fieldDECs, gridspace):
-
+    
     ## Grid
     
     # Creating a grid to measure the galaxy density
     gridDEC = np.arange(fieldDECs[0]+gridspace/2., fieldDECs[1], gridspace)
     eqcor = np.cos(np.radians(np.abs(gridDEC)))
-    
-    gridRA = np.array([ np.arange(fieldRAs[0]+gridspace/(2.*eqcor[DEC]), fieldRAs[1], \
-    gridspace/eqcor[DEC]) for DEC in range(len(gridDEC)) ]) # Corrected for equatorial frame
-    
-    print('Correction(min,max):', 1/np.amax(eqcor), 1/np.amin(eqcor))
-    
-#    for DEC in range(len(gridDEC)):
-#        for RA in range(len(gridRA[DEC])):
-#            coords = [gridRA[DEC, RA], gridDEC[DEC]]
-#            print(coords)
-    
-    gridmatrix = [ [ [gridRA[DEC, RA], gridDEC[DEC]] for RA in range(len(gridRA[DEC]))] for DEC in range(len(gridDEC)) ]
-    gridlist = np.vstack(gridmatrix)
+    cormin, cormax = [1./np.amax(eqcor), 1./np.amin(eqcor)]
+    print('Correction(min,max):', cormin, cormax)
 
+    #if cormax > 1.01:
+    #print('Applying correction')
+    
+    gridRA = [ np.arange(fieldRAs[0]+gridspace/(2.*eqcor[DEC]), fieldRAs[1], \
+    gridspace/eqcor[DEC]) for DEC in range(len(gridDEC)) ] # Corrected for equatorial frame
+    
+    gridmatrix = [ [ [gridRA[DEC][RA], gridDEC[DEC]] for RA in range(len(gridRA[DEC]))] for DEC in range(len(gridDEC)) ]
+    
+    """
+    for DEC in range(len(gridDEC)):
+        for RA in range(len(gridRA[DEC])):
+            print(len(gridDEC), len(gridRA))
+            print(DEC, RA)
+            print([gridRA[DEC][RA], gridDEC[DEC]])
+    
+    else:
+        gridRA = np.arange(fieldRAs[0]+gridspace/2., fieldRAs[1], gridspace)
+        gridmatrix = [ [ [RA, DEC] for RA in gridRA ] for DEC in gridDEC ]
+    """
+
+    gridlist = np.vstack(gridmatrix)        
+    
     gridRAlist, gridDEClist = gridlist[:,0], gridlist[:,1]
     gridcoords = SkyCoord(ra=gridRAlist*u.deg, dec=gridDEClist*u.deg) # All grid coordinates    
     
@@ -154,8 +221,9 @@ def define_gridpoints(fieldRAs, fieldDECs, gridspace):
         
         # Define new grid coordinates
         gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
-        print('New gridcoords:', len(gridcoords))
     """
+    print('Gridcoords:', len(gridRA), 'x', len(gridDEC), '=', len(gridcoords))
+    
     
     return gridRAlist, gridDEClist, gridcoords
 
@@ -194,8 +262,35 @@ def define_galsamp(selection, zmin, zmax, srcZB, srcTB, gmag, rmag, mag_auto):
         redmask = probmask*colormask*magmask
     
     return redmask
-    
 
+# Calculating the absolute magnitude  
+def calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda):
+    
+    # Calculating the distance modulus
+    cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
+    galDl = (cosmo.luminosity_distance(galZ).to('pc')).value
+    DM = 5.*np.log10(galDl/10.)
+    
+    # Calculating the K-corrections
+    kcorfile = np.loadtxt('kcorrection_list.txt').T
+    zbins = kcorfile[0]
+    kparams = kcorfile[1::3]
+
+    # Calculating the K-correction per redshift bin    
+    galKcor = np.zeros(len(galZ))
+    for k in range(len(zbins)):
+        
+        zmask = (zbins[k]-0.005 <= galZ) & (galZ < zbins[k]+0.005)
+        
+        a, b, c = kparams[:,k]
+        Kcor = a*(gmag-imag)**2 + b*(gmag-imag) + c
+        
+        galKcor[zmask] = Kcor[zmask]
+    
+    # Calculating the absolute magnitude    
+    rmag_abs = rmag - DM + galKcor
+    
+    return rmag_abs
 
 # Define the red sequence lines and probability of being an LRG
 def calc_redseq_prob(redseq, srcZB, gminr, mag_auto, elmask):
