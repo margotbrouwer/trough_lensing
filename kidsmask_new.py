@@ -80,35 +80,65 @@ for c in range(len(catnames)):
     if cat == 'kids':
         # Import the mask catalogue
         maskcat = pyfits.open('%s/%s'%(kids_path, catnames[c]), memmap=True)
-        catmask = 1.-np.array(maskcat[1].data)
+        catmask = 1.-np.array(maskcat[1].data).T
         masklist = np.hstack(catmask)
         
         # Boundaries of the current KiDS tile
         maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
         fieldRAs = [np.amin(maskRA), np.amax(maskRA)]
         fieldDECs = [np.amin(maskDEC), np.amax(maskDEC)]
-
+        
         # Creating coordinate matrix for the mask
-        maskmatrix = np.array([np.array([np.array([RA, DEC]) for DEC in maskDEC]) for RA in maskRA])
+        maskmatrix = np.array([np.array([np.array([RA, DEC]) for RA in maskRA]) for DEC in maskDEC])
         maskcoordlist = np.vstack(maskmatrix)
         maskRAlist, maskDEClist = maskcoordlist[:,0], maskcoordlist[:,1]
         
         print('Mask shape/length:', np.shape(maskmatrix), '/', len(masklist))
-    
+        
+        """
+        masklist = np.reshape(catmask, np.size(catmask))
+        
+        # Boundaries of the current KiDS tile
+        maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
+        print(len(maskRA), len(maskDEC))
+        
+        fieldRAs = [np.amin(maskRA), np.amax(maskRA)]
+        fieldDECs = [np.amin(maskDEC), np.amax(maskDEC)]
+        
+        # Creating coordinate matrix for the mask
+        maskRAlist, maskDEClist = np.meshgrid(maskRA, maskDEC)
+        maskRAlist = np.reshape(maskRAlist, np.size(maskRAlist))
+        maskDEClist = np.reshape(maskDEClist, np.size(maskDEClist))
+        
+        print('Mask shape/length:', len(maskRA), len(maskDEC), '/', len(masklist))
+        
+        
+        # Test file
+        filename = '/data2/brouwer/MergedCatalogues/Masks/test_%i.fits'%(c+1)
+        outputnames = ['RA', 'DEC', 'mask']
+        output = [maskRAlist, maskDEClist, masklist]
+        
+        print('Writing output catalogue...')
+        utils.write_catalog(filename, np.arange(len(maskRAlist)), outputnames, output)
+        """
+        
     if cat == 'gama':
         # Import the mask catalogue
         masklist = np.array(pyfits.open(catnames[c], memmap=True)['PRIMARY'].data).T
+        masklist = np.reshape(masklist, np.size(masklist))
         print('Imported mask')
         
         gridspace_orig = 0.001 # The space between the original grid points
         fieldRAs = fieldboundaries[c,0] # Boundaries of the current GAMA field
         fieldDECs = fieldboundaries[c,1]
         
-        maskRAlist, maskDEClist, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_orig)
-        print('Created mask grid')
+        print(fieldRAs, fieldDECs)
         
+        maskRAlist, maskDEClist, maskcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_orig, False)
+        print('Created mask grid')
+    
     # Creating the grid for each field
-    gridRAlist, gridDEClist, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask)
+    gridRAlist, gridDEClist, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask, True)
     eqcor = np.cos(np.radians(np.abs(gridDEClist)))
 
     # Set all negative mask values to 0.
@@ -117,9 +147,12 @@ for c in range(len(catnames)):
     
     for g in range(len(gridcoords)):
         maskmask = ( maskRAlist-gridspace_mask/(2.*eqcor[g]) < gridRAlist[g] ) & ( gridRAlist[g] < maskRAlist+gridspace_mask/(2.*eqcor[g]) ) & \
-                    ( maskDEClist-gridspace_mask/(2.*eqcor[g]) < gridDEClist[g] ) & (gridDEClist[g] < maskDEClist+gridspace_mask/(2.*eqcor[g]))
+                    ( maskDEClist-gridspace_mask/2. < gridDEClist[g] ) & (gridDEClist[g] < maskDEClist+gridspace_mask/2.)
+                    
+        #print(len(masklist_small), g)
+        #print(len(masklist), len(maskmask))
         masklist_small[g] = np.mean(masklist[maskmask])
-        
+    
     print('Old size:', np.shape(masklist))
     print('New size:', np.shape(masklist_small))
     print()
@@ -187,7 +220,7 @@ for f in range(len(fieldnames)):
     
     # Print output to file
     
-    filename = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[f], gridspace_mask)
+    filename = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg_new.fits'%(cat, fieldnames[f], gridspace_mask)
     outputnames = ['RA', 'DEC', 'mask']
     output = [RAlist_field[selmask], DEClist_field[selmask], masklist_field[selmask]]
 

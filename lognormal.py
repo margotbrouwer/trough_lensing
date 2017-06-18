@@ -25,6 +25,9 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
+colors = ['red', 'orange', 'cyan', 'blue']
+#colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
+
 # Model to fit the troughs
 def trough_model(x, A):
     model_y = A/x
@@ -33,12 +36,13 @@ def trough_model(x, A):
 
 # Defining the paths to the data
 blind = 'A'
-sample = 'kids_all_complex'
+selection = 'kids_all_complex'
+randomsel = 'kids_randoms_nomask'
 Runit = 'arcmin' # arcmin or Mpc
 thetanum = 0
 
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-if 'highZ' in sample:
+if 'highZ' in selection:
     thetalist = np.array([3.163, 6.326, 9.490, 12.653])
 
 theta = thetalist[thetanum]
@@ -49,8 +53,8 @@ if Runit == 'arcmin':
     Nbins = 20
     
     dperc = 0.05
-    percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4',\
-    '0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
+    percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35']#,'0p4',\
+    #'0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
 
 if Runit == 'Mpc':
     Rmin = 0.5
@@ -63,48 +67,74 @@ if Runit == 'Mpc':
 
 # Defining the percentile bins
 percmin = 0.
-percmax = 1.
+percmax = 0.35
 
 perclist = np.arange(percmin, percmax, dperc)
 perccenters = perclist+dperc/2.
 perclist = np.append(perclist, percmax)
 
+print(perclist)
+
 Npercs = len(percnames)-1
 
 # Import lensing profiles
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
-path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
-    %(sample, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins%i_%s_%s_%s/shearcovariance'%(Nbins, ('%g'%Rmin).replace('.','p'), ('%g'%Rmax).replace('.','p'), Runit)
-path_filename = 'No_bins_%s.txt'%(blind)
 
+if ('kids' in selection) or ('gama' in selection):
+    # Observed lensing profiles
+    path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+    path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
+        %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
+    path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins%i_%s_%s_%s/shearcovariance'%(Nbins, ('%g'%Rmin).replace('.','p'), ('%g'%Rmax).replace('.','p'), Runit)
+    path_filename = 'No_bins_%s.txt'%(blind)
 
-path_plots = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/%s'%sample
+    esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
+               for i in range(len(path_lenssel))])
 
-esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
-           for i in range(len(path_lenssel))])
+    covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles])
+    covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfiles)) ])
 
-covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles])
+    # Mock lensing profiles
+    path_mockdata = 'data2/brouwer/shearprofile/trough_results_May'
+    path_mocksel = ['No_bins_mice_all_nomask/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
+        %(('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
+    mockfiles = np.array([('/%s/%s.txt'%(path_mockdata, path_mocksel[i])) \
+               for i in range(len(path_mocksel))])
+
+else:
+    # Mock lensing profiles
+    path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+    path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
+        %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
+    esdfiles = np.array([('/%s/%s.txt'%(path_sheardata, path_lenssel[i])) \
+               for i in range(len(path_lenssel))])
+
+path_plots = '/data2/brouwer/shearprofile/trough_results_May/Plots/%s'%selection
 
 # Importing the shearprofiles and lens IDs
 print('Import shear signal:')
 data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
 data_x = data_x[0]
 
-covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfiles)) ])
+try:
+    print('Import mock signal:')
+    mock_x, mock_y, mock_error_h, mock_error_l = utils.read_esdfiles(mockfiles)
+    mock_x = mock_x[0]
+except:
+    pass
 
-# Import random signal
+if ('kids' in selection) or ('gama' in selection):
+    # Import random signal
 
-print('Import random signal:')
-path_randoms = ['No_bins_gama_randoms/Pmasktheta%s_0p8_inf'%(('%g'%theta).replace('.','p'))]
-random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
-random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
-random_data_x, random_data_y, random_error_h, random_error_l = random_data_x[0], random_data_y[0], random_error_h[0], random_error_l[0]
+    print('Import random signal:')
+    path_randoms = ['No_bins_%s/Pmasktheta%s_0p8_inf'%(randomsel, ('%g'%theta).replace('.','p'))]
+    random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
+    random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
+    random_data_x, random_data_y, random_error_h, random_error_l = random_data_x[0], random_data_y[0], random_error_h[0], random_error_l[0]
 
-# Subtract random signal
-data_y = data_y-random_data_y
-error_h = np.sqrt(error_h**2. + random_error_h**2)
-error_l = np.sqrt(error_l**2. + random_error_l**2)
+    # Subtract random signal
+    data_y = data_y-random_data_y
+    error_h = np.sqrt(error_h**2. + random_error_h**2)
+    error_l = np.sqrt(error_l**2. + random_error_l**2)
 
 
 # Define the part of the trough profile that contributes to the fit
@@ -140,21 +170,20 @@ for N1 in range(Nrows):
         N = np.int(N1*Ncolumns + N2)
         ax_sub = fig.add_subplot(gs[N1, N2])
       
-        """
-        # Without covariance
-        A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
-        sigma=(error_h[N])[xmask], absolute_sigma=True)
-        
-        """
-        # With covariance
-        covariance = covariance_tot[N]
-        ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
-        covmatrix = np.reshape(covariance[4][ind], [len(data_x), len(data_x)])
-        covmatrix = covmatrix[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
-        
-        A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
-        sigma=covmatrix, absolute_sigma=True)
-        #"""
+        if 'mice' in selection:
+            # Without covariance
+            A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
+            #sigma=(error_h[N])[xmask], absolute_sigma=True)
+            
+        else:
+            # With covariance
+            covariance = covariance_tot[N]
+            ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
+            covmatrix = np.reshape(covariance[4][ind], [len(data_x), len(data_x)])
+            covmatrix = covmatrix[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
+            
+            A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+            sigma=covmatrix, absolute_sigma=True)
         
         print('%g < P(x) < %g: Amplitude = %g'%(perclist[N], perclist[N+1], A))
         
@@ -164,10 +193,19 @@ for N1 in range(Nrows):
         model_x = np.linspace(xmin, xmax, 10)
         model_y = trough_model(model_x, A)
 
-        ax_sub.plot(model_x, model_y, ls='-', color='red', label=r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), zorder=4)
+        # Plot mock profile
+        try:
+            ax_sub.plot(mock_x, mock_y[N], ls='-', color='black', zorder=1)
+        except:
+            pass
         
-        ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], ls='', marker='.', color='blue', zorder=3)
+        # Plot fitted model
+        ax_sub.plot(model_x, model_y, ls='-', color=colors[0], label=r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), zorder=6)
         
+        # Plot observed profile
+        ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], ls='', marker='.', color=colors[3], zorder=4)
+        
+        # Plot lines
         ax_sub.axvline(x=xmin, ls=':', color='black', zorder=1)
         ax_sub.axvline(x=xmax, ls=':', color='black', zorder=2)
         ax_sub.axhline(y=0., ls=':', color='black', zorder=3)
@@ -219,7 +257,7 @@ plt.show()
 
 # Import trough catalog
 path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
-troughcatname = 'trough_catalog_%s_%s_%s.fits'%(sample.split('_')[0], sample.split('_')[1], sample.split('_')[2])
+troughcatname = 'trough_catalog_%s_%s_%s.fits'%(selection.split('_')[0], selection.split('_')[1], selection.split('_')[2])
 
 # Full directory & name of the trough catalogue
 troughcatfile = '%s/%s'%(path_troughcat, troughcatname)
@@ -238,7 +276,7 @@ for p in range(len(perccenters)):
 
 
 # Write amplitude text-file
-Afilename = '/%s/Plots/trough_amplitudes_%s_%g%s.txt'%(path_sheardata, sample, theta, Runit)
+Afilename = '/%s/Plots/trough_amplitudes_%s_%g%s.txt'%(path_sheardata, selection, theta, Runit)
 np.savetxt(Afilename, np.array([perccenters, deltacenters, Alist, Alist_error]).T, header = 'Trough Percentile     Delta     Amplitude     Error(Amplitude)')
 print('Written textfile:', Afilename)
 

@@ -124,7 +124,7 @@ def import_mockcat(path_mockcat, mockcatname):
     rmag = mockcat['r_sdss_true']
     rmag_abs = mockcat['abs_mag_r']
     
-    e1 = mockcat['gamma1']
+    e1 = -mockcat['gamma1']
     e2 = mockcat['gamma2']
     
     return galRA, galDEC, galZ, rmag, rmag_abs, e1, e2
@@ -141,6 +141,8 @@ def import_troughcat(path_troughcat, troughcatname, paramnames):
     troughZ = troughcat['Z']
     
     paramlists = np.array([troughcat[param] for param in paramnames])
+    
+    print('Imported trough catalogue:', troughcatfile)
     
     return troughRA, troughDEC, troughZ, paramlists
 
@@ -165,7 +167,7 @@ def import_srccat(path_srccat, srccatname):
 
 
 # Define grid points for trough selection
-def define_gridpoints(fieldRAs, fieldDECs, gridspace):
+def define_gridpoints(fieldRAs, fieldDECs, gridspace, corrected):
     
     ## Grid
     
@@ -173,31 +175,30 @@ def define_gridpoints(fieldRAs, fieldDECs, gridspace):
     gridDEC = np.arange(fieldDECs[0]+gridspace/2., fieldDECs[1], gridspace)
     eqcor = np.cos(np.radians(np.abs(gridDEC)))
     cormin, cormax = [1./np.amax(eqcor), 1./np.amin(eqcor)]
-    print('Correction(min,max):', cormin, cormax)
 
-    #if cormax > 1.01:
-    #print('Applying correction')
+
+    if corrected:
+        print('Applying correction (min,max):', cormin, cormax)
+        
+        gridRA = [ np.arange(fieldRAs[0]+gridspace/(2.*eqcor[DEC]), fieldRAs[1], \
+        gridspace/eqcor[DEC]) for DEC in range(len(gridDEC)) ] # Corrected for equatorial frame
+        lenRA = len(gridRA[0])
     
-    gridRA = [ np.arange(fieldRAs[0]+gridspace/(2.*eqcor[DEC]), fieldRAs[1], \
-    gridspace/eqcor[DEC]) for DEC in range(len(gridDEC)) ] # Corrected for equatorial frame
-    
-    gridmatrix = [ [ [gridRA[DEC][RA], gridDEC[DEC]] for RA in range(len(gridRA[DEC]))] for DEC in range(len(gridDEC)) ]
-    
-    """
-    for DEC in range(len(gridDEC)):
-        for RA in range(len(gridRA[DEC])):
-            print(len(gridDEC), len(gridRA))
-            print(DEC, RA)
-            print([gridRA[DEC][RA], gridDEC[DEC]])
-    
+        gridlist = [ [ [gridRA[DEC][RA], gridDEC[DEC]] for RA in range(len(gridRA[DEC]))] for DEC in range(len(gridDEC)) ]
+        gridlist = np.vstack(gridlist)
+        
+        gridRAlist, gridDEClist = gridlist[:,0], gridlist[:,1]
+        
     else:
+        print('Not correcting for equatorial coordinates!')
         gridRA = np.arange(fieldRAs[0]+gridspace/2., fieldRAs[1], gridspace)
-        gridmatrix = [ [ [RA, DEC] for RA in gridRA ] for DEC in gridDEC ]
-    """
+        lenRA = len(gridRA)
+        
+        gridRAlist, gridDEClist = np.meshgrid(gridRA, gridDEC)
+        gridRAlist = np.reshape(gridRAlist, np.size(gridRAlist))
+        gridDEClist = np.reshape(gridDEClist, np.size(gridDEClist))
+        #gridlist = [ [ [RA, DEC] for RA in gridRA ] for DEC in gridDEC ]
 
-    gridlist = np.vstack(gridmatrix)        
-    
-    gridRAlist, gridDEClist = gridlist[:,0], gridlist[:,1]
     gridcoords = SkyCoord(ra=gridRAlist*u.deg, dec=gridDEClist*u.deg) # All grid coordinates    
     
     """
@@ -222,7 +223,7 @@ def define_gridpoints(fieldRAs, fieldDECs, gridspace):
         # Define new grid coordinates
         gridRA, gridDEC, gridcoords = gridRA[gridmask], gridDEC[gridmask], gridcoords[gridmask]
     """
-    print('Gridcoords:', len(gridRA), 'x', len(gridDEC), '=', len(gridcoords))
+    print('Gridcoords:', lenRA, 'x', len(gridDEC), '=', len(gridcoords))
     
     
     return gridRAlist, gridDEClist, gridcoords
@@ -393,7 +394,36 @@ def read_esdfiles(esdfiles):
     data_x, data_y, error_h, error_l = np.array(data_x), np.array(data_y), np.array(error_h), np.array(error_l)
     
     return data_x, data_y, error_h, error_l
+
+
+# Printing stacked ESD profile to a text file
+def write_stack(filename, Rcenters, Runit, ESDt_tot, ESDx_tot, \
+    error_tot, bias, h, Nsrc):
+
+    if 'pc' in Runit:
+        filehead = '# Radius(%s)    ESD_t(h%g*M_sun/pc^2)    ESD_x(h%g*M_sun/pc^2)    error(h%g*M_sun/pc^2)^2    bias(1+K)    Nsources'%(Runit, h*100, h*100, h*100)
+    else:
+        filehead = '# Radius(%s)    gamma_t    gamma_x    error    bias(1+K)    Nsources'%(Runit)
+
+    index = np.where(np.logical_not((0 <= error_tot) & (error_tot < np.inf)))
+    ESDt_tot.setflags(write=True)
+    ESDx_tot.setflags(write=True)
+    error_tot.setflags(write=True)
+    bias.setflags(write=True)
+    Nsrc.setflags(write=True)
     
+    ESDt_tot[index] = int(-999)
+    ESDx_tot[index] = int(-999)
+    error_tot[index] = int(-999)
+    bias[index] = int(-999)
+    Nsrc[index] = int(-999)
+
+    data_out = np.vstack((Rcenters.T, ESDt_tot.T, ESDx_tot.T, error_tot.T, bias.T, Nsrc.T)).T
+    np.savetxt(filename, data_out, delimiter='\t', header=filehead)
+
+    print('Written: ESD profile data:', filename)
+
+    return
 
 def calc_chi2(data, model, covariance, nbins):
     
@@ -490,4 +520,3 @@ def import_kidsmasks(path_kidsmasks, gridspace_mask, fieldboundaries):
     print('Final shape:', np.shape(gamamasks))
     
     return gamamasks
-

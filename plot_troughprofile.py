@@ -126,20 +126,20 @@ plotfit = True
 thetalist = np.array([5., 5.]) # in arcmin
 
 path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
-path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) \
-for theta in [thetalist[0]]] for cat in ['kids_all_nomask', 'gama_all_complex'] ]
+path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p05'%(cat,theta,theta) \
+for theta in [thetalist[0]]] for cat in ['kids_all_nomask', 'kids_19p8_nomask'] ]
 
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r"KiDS (no mask) $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
-#datalabels = [r"KiDS $(P(5')<0.2)$", r"KiDS (no mask)"]
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_kids_all_complex'
+#datalabels = [r"KiDS (no mask) $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
+datalabels = [r"KiDS $(P(5')<0.2)$", r"KiDS (no mask)"]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_all_19p8_nomask_complex'
 Nrows = 1
 
-path_randoms = np.array([ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat, theta)
-                 for theta in [thetalist[0]] ] for cat in ['kids_randoms_nomask', 'gama_randoms_complex'] ])
+path_randoms = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
+                                        for cat in ['kids_randoms', 'kids_randoms_nomask'] ]
 
 """
 
