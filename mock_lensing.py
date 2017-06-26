@@ -31,7 +31,7 @@ c = const.c.to('pc/s')
 # Configuration
 
 cat = 'mice' # Select the galaxy catalogue for trough selection (kids, gama or mice)
-selection = 'lowZ' # Name of the pre-defined galaxy selection
+selection = 'all' # Name of the pre-defined galaxy selection
 masktype = 'nomask' # Select mask type (nomask or complex)
 
 h, O_matter, O_lambda = [0.7, 0.25, 0.75]
@@ -50,25 +50,29 @@ if 'highZ' in selection:
 # Trough selection
 
 # Percentiles
-thetanum = 0
+thetanum = 3
 
-if Runit == 'arcmin':
+if 'arcmin' in Runit:
     Rmin = 2
     Rmax = 100
     Nbins = 20
+    
+    ymin, ymax = [-1.4e-3,1.5e-3]
     
     dperc = 0.05
     percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4',\
     '0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
 
-if Runit == 'Mpc':
+if 'pc' in Runit:
     Rmin = 0.5
     Rmax = 20
     Nbins = 10
     
+    ymin, ymax = [-1.4,1.5]
+    
     dperc = 0.1
     percnames = ['0','0p1','0p2','0p3','0p4','0p5','0p6','0p7','0p8','0p9','1']
-    Rlist = [0.94126266, 1.8825293, 2.8238039, 3.76509045] # Physical size of the troughs (in Mpc)
+    Rlist = [1.8825293] # Physical size of the troughs (in Mpc)
 
 # Defining the radial bins
 Rbins = np.logspace(np.log10(Rmin), np.log10(Rmax), Nbins+1)
@@ -107,7 +111,13 @@ troughZ = troughZ[0]
 troughDc = (cosmo.comoving_distance(troughZ).to('pc')).value
 troughDa = troughDc / (1+troughZ)
 
-
+if 'pc' in Runit:
+    # Translate radial distances from Mpc to arcmin
+    Rarcmin = np.degrees(Rmin/(troughDa/10**6.))*60.
+    Rarcmax = np.degrees(Rmax/(troughDa/10**6.))*60.
+else:
+    Rarcmin = Rmin
+    Rarcmax = Rmax
 
 # Import source catalog
 if 'mice' in cat:
@@ -129,7 +139,7 @@ else:
     utils.import_srccat(path_srccat, srccatname)
 
 # Masking the sources
-srcmask = (0.1 < galZ) & (galZ < 0.9) & (rmag > 20.) & (rmag_abs >-19.3)
+srcmask = (0.1 < galZ) & (galZ < 0.9) & (rmag > 20.) & (rmag_abs > -19.3)
 if 'pc' in Runit:
     # Only use sources behind the lens
     zmask = (galZ > troughZ)
@@ -138,25 +148,23 @@ if 'pc' in Runit:
 galRA, galDEC, galZ, rmag, e1, e2  = \
 galRA[srcmask], galDEC[srcmask], galZ[srcmask], rmag[srcmask], e1[srcmask], e2[srcmask]
 
-# Calculate source distances
-galDc = np.zeros(len(galRA))
-print('Calculating source distances...')
-print(len(galRA))
-
-galbins = np.arange(0, len(galRA), 1e5)
-
-for i in range(len(galbins)-1):
-    print([galbins[i], galbins[i+1]])
-    galDc[galbins[i]:galbins[i+1]] = (cosmo.comoving_distance(galZ[galbins[i]:galbins[i+1]]).to('pc')).value
-print('Calculated source distances')
-
-# Calculate Sigma_crit for every source (there is only one lens distance)
-DlsoDs = (galDc - troughDc)/galDc
-Sigma_crit = (c.value**2)/(4*np.pi*G.value) * 1/(troughDa*DlsoDs)
-
 if 'pc' in Runit:
-    # Translate Mpc to arcmin
-    Rmin = 
+    # Calculate source distances
+    print('Calculating source distances...')
+
+    galbins = np.arange(0, len(galRA), 1e5)
+    galbins = np.append(galbins, len(galRA))
+
+    galDc = np.zeros(len(galRA))
+    for i in range(len(galbins)-1):
+        print([galbins[i], galbins[i+1]])
+        galDc[galbins[i]:galbins[i+1]] = (cosmo.comoving_distance(galZ[galbins[i]:galbins[i+1]]).to('pc')).value
+        
+    print('Calculated source distances')
+
+    # Calculate Sigma_crit for every source (there is only one lens distance)
+    DlsoDs = (galDc - troughDc)/galDc
+    Sigma_crit = (c.value**2)/(4*np.pi*G.value) * 1/(troughDa*DlsoDs)
 
 
 for p in range(len(paramnames_tot)):
@@ -206,7 +214,7 @@ for p in range(len(paramnames_tot)):
     
     troughcat = treecorr.Catalog(ra=RA, dec=DEC, ra_units='deg', dec_units='deg', w=troughweights)
     
-    config = {'min_sep': Rmin, 'max_sep': Rmax, 'nbins': Nbins, 'sep_units': 'arcmin', 'verbose': 2}
+    config = {'min_sep': Rarcmin, 'max_sep': Rarcmax, 'nbins': Nbins, 'sep_units': 'arcmin', 'verbose': 2}
     ng = treecorr.NGCorrelation(config)
     ng.process(troughcat,galcat)   # Compute the cross-correlation.
 
@@ -229,15 +237,18 @@ for p in range(len(paramnames_tot)):
     utils.write_stack(filename_output, Rcenters, Runit, gamma_t, gamma_x, \
         gamma_error, bias, h, Nsrc)
 
+    """
     
     # Plot the resulting shear profile
-    plt.plot(Rbins, gamma_t)
+    plt.plot(Rcenters, gamma_t)
     plt.axhline(y=0., ls=':', color='black')
     #plt.axvline(x=thetalist[p], ls=':', color='black')
     
     plt.xscale('log')
-    plt.axis([2,100,-1.4e-3,1.5e-3])
-    plt.ylim(-1.4e-3,1.5e-3)
+    
+    plt.axis([Rmin,Rmax,ymin,ymax])
+    plt.ylim(ymin, ymax)
 
     plt.show()
     
+    """

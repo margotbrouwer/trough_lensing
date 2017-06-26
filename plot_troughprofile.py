@@ -32,9 +32,13 @@ rc('font',**{'family':'serif','serif':['Computer Modern']})
 
 # Model to fit the troughs
 def trough_model(x, A):
-    model_y = A/x
+    model_y = A*x**-0.5
     return model_y
 
+# Model to fit the mocks
+def mock_model(x, A, B):
+    model_y = A*x**B
+    return model_y
 
 
 # Colours
@@ -43,8 +47,9 @@ blues = ['#332288', '#44AA99', '#117733', '#88CCEE']
 
 # Light red, Red, light pink, pink
 reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
-colors = np.array([reds,blues])
+#colors = np.array([reds,blues])
 
+colors = ['green', 'blue', 'red', 'orange']
 
 # Defining the paths to the data
 blind = 'A'
@@ -123,25 +128,32 @@ plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gam
 
 Runit = 'arcmin'
 plotfit = True
-thetalist = np.array([5., 5.]) # in arcmin
+thetalist = np.array([5., 5., 5.]) # in arcmin
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
-path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p05'%(cat,theta,theta) \
-for theta in [thetalist[0]]] for cat in ['kids_all_nomask', 'kids_19p8_nomask'] ]
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_June'
+path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) \
+for theta in [thetalist[0]]] for cat in ['gama_mice_complex', 'kids_mice_complex'] ]
 
 path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-#datalabels = [r"KiDS (no mask) $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
-datalabels = [r"KiDS $(P(5')<0.2)$", r"KiDS (no mask)"]
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_all_19p8_nomask_complex'
+#datalabels = [r"KiDS $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
+datalabels = [r"GAMA: $P(5')<0.2$", r"KiDS: $P(5')<0.2$"]
+
+plotfilename = '/%s/Plots/troughs_gama_kids_mocks_complex'%path_sheardata
 Nrows = 1
 
 path_randoms = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
-                                        for cat in ['kids_randoms', 'kids_randoms_nomask'] ]
+                                        for cat in ['gama_randoms_complex', 'kids_randoms_complex'] ]
+
+
+path_mocksel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2.txt'%(cat,theta, theta) for theta in [thetalist[0]]] \
+                                        for cat in ['mice_all_nomask'] ]
+mocklabels = [r"MICE2: $P(5')<0.2$"]
 
 """
+
 
 # Troughs (with different completeness)
 
@@ -166,17 +178,18 @@ Nrows = 1
 Runit = 'arcmin'
 plotfit = False
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_June'
 path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
-                                        for cat in ['kids_randoms', 'kids_randoms_nomask'] ]
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+                                        for cat in ['gama_randoms_complex', 'kids_randoms_complex'] ]
+path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r'KiDS randoms', r'KiDS randoms (no mask)']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/kids_randoms_complex_nomask'
+datalabels = [r'GAMA random signal', r'KiDS random signal']
+plotfilename = '/%s/Plots/kids_gama_randoms_complex'%path_sheardata
 Nrows = 1
 
+path_mocksel = []
 
 
 
@@ -206,6 +219,11 @@ Nsize = np.size(path_lenssel)
 path_lenssel = np.reshape(path_lenssel, [Nsize])
 
 try:
+    path_mocksel = np.reshape(path_mocksel, np.size(path_mocksel))
+except:
+    pass
+
+try:
     path_randoms = np.reshape(path_randoms, [Nsize])
 except:
     print()
@@ -222,12 +240,24 @@ print('Profiles, Bins:', Nbins)
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
 
+try:
+    esdfiles_mock = np.array([('/%s/%s'%(path_sheardata, path_mocksel[i])) \
+           for i in range(len(path_mocksel))])
+except:
+    pass
+
 lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt') for e in esdfiles])
 covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles])
 
 # Importing the shearprofiles and lens IDs
 data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
 lensIDs = np.array([np.loadtxt(x) for x in lensIDfiles])
+
+try:
+    # Importing the mock shearprofiles
+    data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
+except:
+    pass
 
 try:
     print('Import random signal:')
@@ -238,8 +268,13 @@ try:
     data_y = data_y-random_data_y
     error_h = np.sqrt(error_h**2. + random_error_h**2)
     error_l = np.sqrt(error_l**2. + random_error_l**2)
+
 except:
+    print()
+    print('No randoms subtracted!')
+    print()
     pass
+    
 
 
 
@@ -252,25 +287,25 @@ chi2covlist = np.zeros(Nsize)
 Alist = []
 Alist_error = []
 
-for N in range(Nsize):
+for n in range(Nsize):
     
-    datax = data_x[N]
-    datay = data_y[N]
+    datax = data_x[n]
+    datay = data_y[n]
     
-    error = error_h[N]
-    covariance = np.array(np.loadtxt(covfiles[N])).T
+    error = error_h[n]
+    covariance = np.array(np.loadtxt(covfiles[n])).T
 
-    chi2list[N] = np.sum(datay**2/error**2)
-    chi2covlist[N] = utils.calc_chi2(datay, model, covariance, 1)
+    chi2list[n] = np.sum(datay**2/error**2)
+    chi2covlist[n] = utils.calc_chi2(datay, model, covariance, 1)
 
     # Signal to noise of the first bin beyond the trough size
     thetaNlist = np.append(thetalist, thetalist)
     
     if Runit == 'arcmin':
-        xmin = thetalist[N]*1.2
+        xmin = thetalist[n]*1.2
         xmax = 70.
     if Runit == 'Mpc':
-        xmin = Rlist[N]*1.2
+        xmin = Rlist[n]*1.2
         xmax = 10.
 
     xmask = (xmin < datax) & (datax < xmax)
@@ -278,13 +313,6 @@ for N in range(Nsize):
 
     # Signal to noise of the Amplitude fit
 
-    """
-    
-    # Without covariance
-    A, Acov = optimization.curve_fit(f=trough_model, xdata=datax[xmask], ydata=datay[xmask], p0=[0.], \
-    sigma=error[xmask], absolute_sigma=True)
-
-    """
     # With covariance
     ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
     covmatrix = np.reshape(covariance[4][ind], [len(datax), len(datax)])
@@ -292,28 +320,40 @@ for N in range(Nsize):
         
     A, Acov = optimization.curve_fit(f=trough_model, xdata=datax[xmask], ydata=datay[xmask], p0=[0.], \
     sigma=covmatrix, absolute_sigma=True)
-    #"""
+    A = A[0]
     
     Alist = np.append(Alist, A)
     Alist_error = np.append(Alist_error, np.sqrt(Acov[0,0]))
     
     print
-    print(datalabels[N])
+    print(datalabels[n])
     print('First bin S/N):', datay[xwhere[0]]/error[xwhere[0]])
     print('Amplitude fit S/N', A/np.sqrt(Acov[0,0]))
-    print('Amplitude', A)
+    print('Amplitude:', A)
     print
 
+# Fit to mock profile
+for m in range(len(path_mocksel)):
+    
+    datax_mock = data_x_mock[m]
+    datay_mock = data_y_mock[m]
+    
+    # Without covariance
+    Avals_mock, Acov_mock = optimization.curve_fit(f=mock_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0., -1.])
+    
+    A_mock = Avals_mock[0]
+    B_mock = Avals_mock[1]
+    
+    print('Mocks:')
+    print('Mock Amplitude:', A_mock)
+    print('Mock Index:', B_mock)
+    print
+    
 # Calculate the detection significance
 chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
 
-problist = [chi2.sf(chi2covlist[i], len(data_x[0])) for i in range(Nsize)] # Survival Function (SF = 1 - CDF)
-sigmalist = [chi2.ppf(1.-problist[i], len(data_x[0])) for i in range(Nsize)]
-
 print('Chi2 (without covariance):', chi2list)
 print('Chi2 (with covariance):', chi2covlist)
-print('Probability:', problist)
-print('Sigma:', sigmalist)
 
 
 # Create the plot
@@ -361,21 +401,26 @@ for N1 in range(Nrows):
                     
                 model_x = np.linspace(xmin, xmax, 50)
                 model_y = trough_model(model_x, Alist[Ndata])
-                ax_sub.plot(model_x, model_y, ls='-', color='grey')
+                ax_sub.plot(model_x, model_y, ls='--', color=colors[Nplot])
 
             if Nsize==Nbins:
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
-                ls='', marker='.')
+                ls='', marker='.', color = colors[Nplot])
             else:
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
-                ls='', marker='.', label=datalabels[Nplot])
-
-
+                ls='', marker='.', label=datalabels[Nplot], color = colors[Nplot])
+        
+        try:
+            # Plot mock shearprofiles
+            ax_sub.plot(data_x_mock[0], data_y_mock[0], ls='-', color='black', label=mocklabels[0])
+        except:
+            pass
 
         # Negative troughs for comparison
         #ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
         
-        # Plot the data and title
+        
+        # Plot the axes and title
     
         # Vertical lines
         ax_sub.axvline(x=1.2*thetalist[N], color='black', ls=':')
@@ -394,7 +439,7 @@ for N1 in range(Nrows):
             ax_sub.tick_params(axis='y', labelleft='off')
         
         plt.autoscale(enable=False, axis='both', tight=None)
-
+        
         # Define the labels for the plot
         if Runit == 'Mpc':
             plt.axis([0.5,20,-3,9])
@@ -406,8 +451,8 @@ for N1 in range(Nrows):
             ax.xaxis.set_label_coords(0.5, -0.15)
             ax.yaxis.set_label_coords(-0.05, 0.5)
         else:
-            plt.axis([2,100,-1.4e-3,1.5e-3])
-            plt.ylim(-1.4e-3,1.5e-3)
+            plt.axis([2,100,-1.6e-3,1.5e-3])
+            plt.ylim(-1.5e-3,1.5e-3)
 
             xlabel = r'Separation angle $\theta$ (arcmin)'
             ylabel = r'Shear $\gamma$'
@@ -433,11 +478,13 @@ ax.set_ylabel(ylabel, fontsize=14)
 #ax.xaxis.label.set_size(17)
 #ax.yaxis.label.set_size(17)
 
+handles, labels = ax_sub.get_legend_handles_labels()
+
 # Plot the legend
 if Nbins[1] > 1:
-    lgd = ax_sub.legend(bbox_to_anchor=(1.75, 1.15)) # side
+    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(1.75, 1.15)) # side
 else:
-    plt.legend(loc='upper left')
+    plt.legend(handles[::-1], labels[::-1], loc='upper center')
 
 
 """

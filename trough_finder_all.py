@@ -23,11 +23,12 @@ from matplotlib import rc, rcParams
 
 import trough_modules_all as utils
 
+micecor = 5*np.log10(0.7) # Correction on MICE absmag_r (= -0.7745)
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-#thetalist = np.array([5., 10., 15., 20., 6.326])/60.
-thetalist = np.array([5.])/60.
+thetalist = np.array([5., 10., 15., 20., 6.326])/60.
+#thetalist = np.array([5.])/60.
 
 Ntheta = len(thetalist)
 
@@ -37,18 +38,18 @@ Ntheta = len(thetalist)
 ## 1a) Importing the galaxy catalogue.
 
 # Select the galaxy catalogue for trough selection (kids, gama or mice)
-cat = 'gama'
-#cat = 'kids'
+#cat = 'gama'
+cat = 'kids'
 #cat = 'mice'
 
 # Name of the pre-defined galaxy selection
 #selection = 'all'
 #selection = 'absmag'
 #selection = 'mice'
-#selection = '19p8'
+selection = '19p8'
 #selection = 'redseq4'
 #selection = 'lowZ'
-selection = 'highZ'
+#selection = 'highZ'
 #selection = 'gama_all'
 #selection = 'kids_all'
 
@@ -150,7 +151,7 @@ if 'mice' in cat:
     # Importing the Mice galaxies
     galRA, galDEC, galZ, rmag, rmag_abs, e1, e2 = \
     utils.import_mockcat(path_mockcat, mockcatname)
-    rmag_abs = rmag_abs-1.
+    rmag_abs = rmag_abs + micecor
     
 
 
@@ -158,12 +159,23 @@ if 'mice' in cat:
 
 # Defining the selection for the KiDS galaxy sample
 if 'kids' in cat:
+
+    h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+    rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
+
+    # Write test absmag_r catalogue
+    outputnames = ['RA', 'DEC', 'Z', 'mag_auto', 'mag_r', 'absmag_r']
+    output = [galRA, galDEC, galZ, mag_auto, rmag, rmag_abs]
+    
+    testfilename = '/data2/brouwer/KidsCatalogues/absmag_test.fits'
+    print('Writing output catalogue...')
+    utils.write_catalog(testfilename, np.arange(len(galRA))+1, outputnames, output)
     
     if 'all' in selection:
-        galmask = (galZ >= 0.)
+        galmask = (galZ < 0.5)
         
     if '19p8' in selection:
-         galmask = (rmag < 19.8)
+        galmask = (galZ < 0.5) & (rmag_abs < -18.9 + micecor) & (rmag < 19.8)
         
     if 'absmag' in selection:
         h, O_matter, O_lambda = [0.6898, 0.2905, 0.7095]
@@ -171,9 +183,19 @@ if 'kids' in cat:
         galmask = (rmag_abs < -19.7)
     
     if 'mice' in selection:
-        h, O_matter, O_lambda = [0.7, 0.25, 0.75]
-        rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
-        galmask = (rmag_abs < -18.9) & (rmag < 19.8)
+        galmask = (galZ < 0.5) & (rmag_abs < -18.9 + micecor) & (rmag < 20.2)
+        
+    if 'lowZ' in selection:
+        galmask = (zmin < galZ)&(galZ < zlim) & (rmag_abs < -21.) & (rmag < 20.2)
+        #thetalist = np.array([5., 10., 15., 20.])/60.
+        thetalist = np.array([10.])/60.
+        Ntheta = len(thetalist)
+
+    if 'highZ' in selection:
+        galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag < 20.2)
+        #thetalist = np.array([3.163, 6.326, 9.490, 12.653])/60.
+        thetalist = np.array([6.326])/60.
+        Ntheta = len(thetalist)
         
     if ('redseq' in selection) or (selection=='ell'):
         galmask = utils.define_galsamp(selection, zmin, zmax, galZ, galTB, gmag, rmag, mag_auto)
@@ -186,7 +208,7 @@ if ('gama' in cat) or ('mice' in cat):
     if selection == 'absmag':
         galmask = (rmag_abs < -19.7) & (rmag < 19.8)
     if 'mice' in selection:
-        galmask = (rmag_abs < -19.9) & (rmag < 19.8)
+        galmask = (rmag_abs < -18.9 + micecor) & (rmag < 19.8)
 
     if 'lowZ' in selection:
         galmask = (zmin < galZ)&(galZ < zlim) & (rmag_abs < -21.) & (rmag < 19.8)
@@ -213,7 +235,6 @@ if ('gama' in cat) or ('mice' in cat):
             galmask = (galZ >= 0.)
         if 'absmag' in selection:
             rmag_abs = calc_absmag()
-            
             galmask = (rmag_abs < -19.7)
 
 
@@ -362,6 +383,7 @@ if nomaskfile:
     
 else:
     # Import the masked percentage
+    print('Importing mask from:', maskfilename)
     maskcat = pyfits.open(maskfilename, memmap=True)[1].data
     
     Nmasktheta_tot= np.array([(maskcat['Nmasktheta%g'%(theta*60)])[0:Ngrid_tot] for theta in thetalist])

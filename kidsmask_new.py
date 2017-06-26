@@ -80,39 +80,27 @@ for c in range(len(catnames)):
     if cat == 'kids':
         # Import the mask catalogue
         maskcat = pyfits.open('%s/%s'%(kids_path, catnames[c]), memmap=True)
-        catmask = 1.-np.array(maskcat[1].data).T
+        catmask = 1.-np.array(maskcat[1].data)
+        maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
+
+        maskRA = maskRA[:len(maskDEC)]
+        catmask = catmask[:len(maskDEC),:] # Transposed
+        
+        # Creating coordinate matrix for the mask
+        maskRAmatrix, maskDECmatrix = np.meshgrid(maskRA, maskDEC)
+        
+        # Making the matrices into lists
         masklist = np.hstack(catmask)
+        maskRAlist = np.hstack(maskRAmatrix)
+        maskDEClist = np.hstack(maskDECmatrix)
         
         # Boundaries of the current KiDS tile
-        maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
         fieldRAs = [np.amin(maskRA), np.amax(maskRA)]
         fieldDECs = [np.amin(maskDEC), np.amax(maskDEC)]
         
-        # Creating coordinate matrix for the mask
-        maskmatrix = np.array([np.array([np.array([RA, DEC]) for RA in maskRA]) for DEC in maskDEC])
-        maskcoordlist = np.vstack(maskmatrix)
-        maskRAlist, maskDEClist = maskcoordlist[:,0], maskcoordlist[:,1]
-        
-        print('Mask shape/length:', np.shape(maskmatrix), '/', len(masklist))
+        print('Mask shape/length:', np.shape(maskRAmatrix), '/', len(masklist))
         
         """
-        masklist = np.reshape(catmask, np.size(catmask))
-        
-        # Boundaries of the current KiDS tile
-        maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
-        print(len(maskRA), len(maskDEC))
-        
-        fieldRAs = [np.amin(maskRA), np.amax(maskRA)]
-        fieldDECs = [np.amin(maskDEC), np.amax(maskDEC)]
-        
-        # Creating coordinate matrix for the mask
-        maskRAlist, maskDEClist = np.meshgrid(maskRA, maskDEC)
-        maskRAlist = np.reshape(maskRAlist, np.size(maskRAlist))
-        maskDEClist = np.reshape(maskDEClist, np.size(maskDEClist))
-        
-        print('Mask shape/length:', len(maskRA), len(maskDEC), '/', len(masklist))
-        
-        
         # Test file
         filename = '/data2/brouwer/MergedCatalogues/Masks/test_%i.fits'%(c+1)
         outputnames = ['RA', 'DEC', 'mask']
@@ -160,8 +148,6 @@ for c in range(len(catnames)):
     RAlist_tot = np.append(RAlist_tot, gridRAlist)
     DEClist_tot = np.append(DEClist_tot, gridDEClist)
     masklist_tot = np.append(masklist_tot, masklist_small)
-
-print(masklist_tot)
 
 ## Dividing total masks into different fields, and removing overlapping tiles
 for f in range(len(fieldnames)):
@@ -220,7 +206,7 @@ for f in range(len(fieldnames)):
     
     # Print output to file
     
-    filename = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg_new.fits'%(cat, fieldnames[f], gridspace_mask)
+    filename = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[f], gridspace_mask)
     outputnames = ['RA', 'DEC', 'mask']
     output = [RAlist_field[selmask], DEClist_field[selmask], masklist_field[selmask]]
 

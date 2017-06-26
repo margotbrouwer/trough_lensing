@@ -30,20 +30,28 @@ colors = ['red', 'orange', 'cyan', 'blue']
 
 # Model to fit the troughs
 def trough_model(x, A):
-    model_y = A/x
+    model_y = A*x**-0.5
     return model_y
 
 
 # Defining the paths to the data
 blind = 'A'
-selection = 'kids_all_complex'
-randomsel = 'kids_randoms_nomask'
+
+selection = 'kids_lowZ_complex'
+#selection = 'mice_all_nomask'
+mocksel = 'mice_lowZ_nomask'
+randomsel = 'kids_randoms_complex'
+
 Runit = 'arcmin' # arcmin or Mpc
 thetanum = 0
 
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+if 'lowZ' in selection:
+    thetalist = np.array([10.])
+    Runit = 'Mpc'
 if 'highZ' in selection:
-    thetalist = np.array([3.163, 6.326, 9.490, 12.653])
+    thetalist = np.array([6.326])
+    Runit = 'Mpc'
 
 theta = thetalist[thetanum]
 
@@ -53,8 +61,8 @@ if Runit == 'arcmin':
     Nbins = 20
     
     dperc = 0.05
-    percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35']#,'0p4',\
-    #'0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
+    percnames = ['0','0p05','0p1','0p15','0p2','0p25','0p3','0p35','0p4',\
+    '0p45','0p5','0p55','0p6','0p65','0p7','0p75','0p8','0p85','0p9','0p95','1']
 
 if Runit == 'Mpc':
     Rmin = 0.5
@@ -63,17 +71,15 @@ if Runit == 'Mpc':
     
     dperc = 0.1
     percnames = ['0','0p1','0p2','0p3','0p4','0p5','0p6','0p7','0p8','0p9','1']
-    Rlist = [0.94126266, 1.8825293, 2.8238039, 3.76509045] # Physical size of the troughs (in Mpc)
+    Rlist = [1.8825293] # Physical size of the troughs (in Mpc)
 
 # Defining the percentile bins
 percmin = 0.
-percmax = 0.35
+percmax = 1.
 
 perclist = np.arange(percmin, percmax, dperc)
 perccenters = perclist+dperc/2.
 perclist = np.append(perclist, percmax)
-
-print(perclist)
 
 Npercs = len(percnames)-1
 
@@ -81,7 +87,7 @@ Npercs = len(percnames)-1
 
 if ('kids' in selection) or ('gama' in selection):
     # Observed lensing profiles
-    path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+    path_sheardata = 'data2/brouwer/shearprofile/trough_results_June'
     path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
         %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
     path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins%i_%s_%s_%s/shearcovariance'%(Nbins, ('%g'%Rmin).replace('.','p'), ('%g'%Rmax).replace('.','p'), Runit)
@@ -94,21 +100,21 @@ if ('kids' in selection) or ('gama' in selection):
     covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfiles)) ])
 
     # Mock lensing profiles
-    path_mockdata = 'data2/brouwer/shearprofile/trough_results_May'
-    path_mocksel = ['No_bins_mice_all_nomask/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
-        %(('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
+    path_mockdata = 'data2/brouwer/shearprofile/trough_results_June'
+    path_mocksel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
+        %(mocksel, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
     mockfiles = np.array([('/%s/%s.txt'%(path_mockdata, path_mocksel[i])) \
                for i in range(len(path_mocksel))])
 
 else:
     # Mock lensing profiles
-    path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+    path_sheardata = 'data2/brouwer/shearprofile/trough_results_June'
     path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
         %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[i], percnames[i+1]) for i in range(Npercs)]
     esdfiles = np.array([('/%s/%s.txt'%(path_sheardata, path_lenssel[i])) \
                for i in range(len(path_lenssel))])
 
-path_plots = '/data2/brouwer/shearprofile/trough_results_May/Plots/%s'%selection
+path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
 
 # Importing the shearprofiles and lens IDs
 print('Import shear signal:')
@@ -170,12 +176,7 @@ for N1 in range(Nrows):
         N = np.int(N1*Ncolumns + N2)
         ax_sub = fig.add_subplot(gs[N1, N2])
       
-        if 'mice' in selection:
-            # Without covariance
-            A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
-            #sigma=(error_h[N])[xmask], absolute_sigma=True)
-            
-        else:
+        if ('kids' in selection) or ('gama' in selection):
             # With covariance
             covariance = covariance_tot[N]
             ind = np.lexsort((covariance[3,:], covariance[1,:], covariance[2,:], covariance[0,:]))
@@ -184,7 +185,12 @@ for N1 in range(Nrows):
             
             A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
             sigma=covmatrix, absolute_sigma=True)
-        
+        else:
+            # Without covariance
+            A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
+            #sigma=(error_h[N])[xmask], absolute_sigma=True)
+        A = A[0]
+            
         print('%g < P(x) < %g: Amplitude = %g'%(perclist[N], perclist[N+1], A))
         
         Alist = np.append(Alist, A)
@@ -238,7 +244,7 @@ if Runit == 'arcmin':
     ax.set_xlabel(r'Radial separation $\theta$ (arcmin)', fontsize=14)
     ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
 if Runit == 'Mpc':
-    ax.set_xlabel(r'Radial distance $R$ (Mpc \, {h_{70}}^{-1})', fontsize=14)
+    ax.set_xlabel(r'Radial distance $R ({\rm Mpc} \, {h_{70}}^{-1})$', fontsize=14)
     ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
     
 ax.xaxis.set_label_coords(0.5, -0.07)
@@ -279,4 +285,3 @@ for p in range(len(perccenters)):
 Afilename = '/%s/Plots/trough_amplitudes_%s_%g%s.txt'%(path_sheardata, selection, theta, Runit)
 np.savetxt(Afilename, np.array([perccenters, deltacenters, Alist, Alist_error]).T, header = 'Trough Percentile     Delta     Amplitude     Error(Amplitude)')
 print('Written textfile:', Afilename)
-

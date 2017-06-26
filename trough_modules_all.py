@@ -98,7 +98,7 @@ def import_gamacat(path_gamacat, gamacatname):
     fluxscale = gamacat['fluxscale']
     
     h = 0.7
-    rmag_abs = rmag_abs + np.log10(fluxscale) - 2*np.log10(h/0.7)
+    rmag_abs = rmag_abs - 2.5*np.log10(fluxscale) + 5*np.log10(h/0.7)
     
     nQ = gamacat['nQ']
     
@@ -274,8 +274,8 @@ def calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda):
     
     # Calculating the K-corrections
     kcorfile = np.loadtxt('kcorrection_list.txt').T
-    zbins = kcorfile[0]
-    kparams = kcorfile[1::3]
+    zbins = kcorfile[5]
+    kparams = kcorfile[6:9]
 
     # Calculating the K-correction per redshift bin    
     galKcor = np.zeros(len(galZ))
