@@ -83,10 +83,11 @@ for c in range(len(catnames)):
         catmask = 1.-np.array(maskcat[1].data)
         maskRA, maskDEC = [maskcat[2].data, maskcat[3].data]
 
+        # Cutting RA to have equal length as DEC
         maskRA = maskRA[:len(maskDEC)]
-        catmask = catmask[:len(maskDEC),:] # Transposed
+        catmask = catmask[:len(maskDEC), :]
         
-        # Creating coordinate matrix for the mask
+        # Creating the coordinate matrix for the mask
         maskRAmatrix, maskDECmatrix = np.meshgrid(maskRA, maskDEC)
         
         # Making the matrices into lists

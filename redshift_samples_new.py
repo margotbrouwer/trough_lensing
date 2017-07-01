@@ -25,11 +25,13 @@ import trough_modules_all as utils
 
 # Defining the circle size and redshift bins
 thetalow = np.array([5., 10., 15., 20.]) # in arcmin
+thetamin, thetamax = np.array([2., 100.])
 
 am_to_rad = np.pi/(60.*180.)
 
 zmin = 0.1
 zmax = 0.3
+zgama = 0.5
 
 zlims = np.array([zmin, zmax])
 
@@ -40,13 +42,17 @@ gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 # Importing the GAMA coordinates
 galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
 
-galmask = (rmag_abs < -21.)& (zmin < galZ)&(galZ < zmax) & (rmag <= 19.8)
+gamamask = (rmag_abs < -19.67)
+zmean = np.mean(galZ[gamamask])
+print('Mean GAMA redshift:', zmean)
+
+galmask = (rmag_abs < -21.)& (zmin < galZ)&(galZ < zmax) & (rmag < 19.8)
 galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
 
 # Calculating the volume of the cone at each redshift bin
-cosmo = LambdaCDM(H0=70., Om0=0.315, Ode0=0.685)
+cosmo = LambdaCDM(H0=70., Om0=0.25, Ode0=0.75)
 
-Dcmin, Dcmax = [ (cosmo.comoving_distance(z).to('Mpc')).value for z in [zmin, zmax] ] # Comoving distance to each bin limit
+Dcmin, Dcmax, Dcgama, Dcmean = [ (cosmo.comoving_distance(z).to('Mpc')).value for z in [zmin, zmax, zgama, zmean] ] # Comoving distance to each bin limit
 Dclim = Dcmin + (Dcmax - Dcmin)/2
 zlim = z_at_value(cosmo.comoving_distance, Dclim*u.Mpc)
 
@@ -56,6 +62,7 @@ Dclims = [Dcmin, Dclim, Dcmax]
 print()
 print('Z(min,lim,max):', zlims)
 print('Dc(min,lim,max):', Dclims, 'Mpc')
+print('Dc(gama_max):', Dcgama, 'Mpc')
 print('L(low,high):', np.diff(Dclims), 'Mpc')
 
 # Equal volume
@@ -68,36 +75,39 @@ print('L(low,high):', np.diff(Dclims), 'Mpc')
 lowmask = (galZ < zlims[1])
 highmask = (zlims[1] < galZ)
 
-Zlow, Zhigh = [ np.mean(galZ[mask]) for mask in [lowmask, highmask] ]
-Dlow, Dhigh = [ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ]
+Nlow, Nhigh = [sum(lowmask), sum(highmask)]
 
-print( (cosmo.comoving_distance(Zlow).to('Mpc')).value/(1+Zlow) )
-print( (cosmo.comoving_distance(Zhigh).to('Mpc')).value/(1+Zhigh) )
-print()
-print( (cosmo.comoving_distance(0.5).to('Mpc')).value )
-print( (cosmo.comoving_distance(0.6).to('Mpc')).value )
+Zlow, Zhigh = np.array([ np.mean(galZ[mask]) for mask in [lowmask, highmask] ])
+Dclow, Dchigh = np.array([ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ])
+Dalow, Dahigh, Dagama, Damean = np.array([Dclow/(1+Zlow), Dchigh/(1+Zhigh), Dcgama/(1+zgama), Dcmean/(1+zmean)])
+Vclow, Vchigh = np.array([ np.mean((cosmo.comoving_volume(galZ[mask]).to('Mpc^3')).value) for mask in [lowmask, highmask] ])
 
-tanthetahigh = np.tan(thetalow*am_to_rad) * (Dlow / Dhigh)
-thetahigh = np.arctan(tanthetahigh)/am_to_rad
+thetahigh = thetalow * (Dalow / Dahigh)
 
 print('mean Z(low,high):', [Zlow, Zhigh])
-print('mean Dc(low,high):', [Dlow, Dhigh], 'Mpc')
-print('mean Da(low,high):', [Dlow/(1+Zlow), Dhigh/(1+Zhigh)], 'Mpc')
+print('mean Dc(low,high):', [Dclow, Dchigh], 'Mpc')
+print('mean Da(low,high):', [Dalow, Dahigh], 'Mpc')
 print()
 print('theta(low):', thetalow, 'arcmin')
 print('theta(high):', thetahigh, 'arcmin')
-print('R(low/high):', np.tan(thetalow*am_to_rad) * Dlow, 'Mpc')
+print('R(low):', (thetalow*am_to_rad) * Dalow, 'Mpc')
+print('R(high):', (thetahigh*am_to_rad) * Dahigh, 'Mpc')
+print('R(min,max):', (thetamin*am_to_rad) * Damean, (thetamax*am_to_rad) * Damean, 'Mpc')
 
-
-V1low = 1./3.*np.pi * Dclims[0]**3. * np.tan(thetalow*am_to_rad)**2.
-V2low = 1./3.*np.pi * Dclims[1]**3. * np.tan(thetalow*am_to_rad)**2.
-V2high = 1./3.*np.pi * Dclims[1]**3. * np.tan(thetahigh*am_to_rad)**2.
-V3high = 1./3.*np.pi * Dclims[2]**3. * np.tan(thetahigh*am_to_rad)**2.
+V1low = 1./3.*np.pi * Dclims[0]**3. * (thetalow*am_to_rad)**2.
+V2low = 1./3.*np.pi * Dclims[1]**3. * (thetalow*am_to_rad)**2.
+V2high = 1./3.*np.pi * Dclims[1]**3. * (thetahigh*am_to_rad)**2.
+V3high = 1./3.*np.pi * Dclims[2]**3. * (thetahigh*am_to_rad)**2.
 
 Vlow = V2low - V1low
 Vhigh = V3high - V2high
 
-print('Volume(low,high):', Vlow, Vhigh, 'Mpc^3')
+print('Cone volume(low):', Vlow, 'Mpc^3')
+print('Cone volume(high):', Vhigh, 'Mpc^3')
+print()
+print('Galaxy number(low,high):', Nlow, Nhigh)
+print('Volume(low,high):', Vclow, Vchigh, 'Mpc^3')
+print('Density(low):', Nlow/Vclow, Nhigh/Vchigh, 'Mpc^-3')
 
 quit()
 

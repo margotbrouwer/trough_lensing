@@ -81,30 +81,44 @@ path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%g_0p8_inf'%theta
                 for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
 
-
+"""
 
 # Weighted troughs: Redshifts
 
-Runit = 'Mpc'
 h=0.7
+Runit = 'Mpc'
+#Rlist = [0.82106757, 1.64213514, 2.46320271, 3.28427028]
+Rlist = [1.64213514]*4
+plotfit = False
+Nrows = 1
 
-thetalist = np.array(['10', '6p326'])
+
+thetalist = np.array(['10', '6p835'])
 samplelist = np.array(['lowZ', 'highZ'])
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
 
-path_lenssel = np.array([ ['No_bins_gama_%s_complex/Pmasktheta%s_0p8_1-delta%s_%s_lw-Wtheta%s'%(samplelist[i], thetalist[i], thetalist[i], delta, thetalist[i]) \
+path_lenssel = np.array([ ['No_bins_kids_%s_complex/Pmasktheta%s_0p8_inf-delta%s_%s_lw-Wtheta%s'%(samplelist[i], thetalist[i], thetalist[i], delta, thetalist[i]) \
                 for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
 
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins10_0p5_20_Mpc/shearcovariance'
+path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins10_0p5_20_Mpc/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
-datalabels = [r'$0.1<z<0.197$', r'$0.197<z<0.3$']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_redshifts_weighted'
+datatitles = [r'$0.1<z<0.198$', r'$0.198<z<0.3$']
+datalabels = ['Troughs', 'Ridges']
 
-path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%s_0p8_1'%theta
+plotfilename = '/data2/brouwer/shearprofile/trough_results_July/Plots/troughs_gama_redshifts_weighted'
+
+path_randoms = np.array([ ['No_bins_kids_randoms_complex/Pmasktheta%s_0p8_inf'%theta
                 for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
+path_mockdata = 'data2/brouwer/shearprofile/trough_results_July'
+path_mocksel = np.array([ ['No_bins_mice_%s_nomask-1/Pmasktheta%s_0p8_inf-delta%s_%s.txt'%(samplelist[i], thetalist[i], thetalist[i], delta) \
+                for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
+mocklabels = [r"MICE: $P(5')<0.2$"]
+
+
+"""
 
 # Randoms
 
@@ -122,7 +136,7 @@ plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gam
 
 ## KiDS vs GAMA
 
-"""
+
 
 # Troughs (with different sizes)
 
@@ -130,7 +144,7 @@ Runit = 'arcmin'
 plotfit = True
 thetalist = np.array([5., 5., 5.]) # in arcmin
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_June'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
 path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) \
 for theta in [thetalist[0]]] for cat in ['gama_mice_complex', 'kids_mice_complex'] ]
 
@@ -147,12 +161,11 @@ Nrows = 1
 path_randoms = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
                                         for cat in ['gama_randoms_complex', 'kids_randoms_complex'] ]
 
+path_mockdata = 'data2/brouwer/shearprofile/trough_results_July'
+path_mocksel = [ ['No_bins_mice_all_nomask-%g/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2.txt'%(cat, 5, 5) for cat in np.arange(16)+1 ] ]
+mocklabels = [r"MICE: $P(5')<0.2$"]
 
-path_mocksel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2.txt'%(cat,theta, theta) for theta in [thetalist[0]]] \
-                                        for cat in ['mice_all_nomask'] ]
-mocklabels = [r"MICE2: $P(5')<0.2$"]
 
-"""
 
 
 # Troughs (with different completeness)
@@ -218,33 +231,10 @@ Nbins = np.shape(path_lenssel)
 Nsize = np.size(path_lenssel)
 path_lenssel = np.reshape(path_lenssel, [Nsize])
 
-try:
-    path_mocksel = np.reshape(path_mocksel, np.size(path_mocksel))
-except:
-    pass
-
-try:
-    path_randoms = np.reshape(path_randoms, [Nsize])
-except:
-    print()
-    print('No randoms subtracted!')
-    print()
-    pass
-    
-Nlabels = np.size(datalabels)
-datalabels = np.reshape(datalabels, [Nlabels])
-
 print('Profiles, Bins:', Nbins)
-
 
 esdfiles = np.array([('/%s/%s/%s/%s'%(path_sheardata, path_lenssel[i], path_cosmo, path_filename)) \
            for i in range(len(path_lenssel))])
-
-try:
-    esdfiles_mock = np.array([('/%s/%s'%(path_sheardata, path_mocksel[i])) \
-           for i in range(len(path_mocksel))])
-except:
-    pass
 
 lensIDfiles = np.array([e.replace('_%s.txt'%blind, '_lensIDs.txt') for e in esdfiles])
 covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in esdfiles])
@@ -253,14 +243,32 @@ covfiles = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e
 data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
 lensIDs = np.array([np.loadtxt(x) for x in lensIDfiles])
 
-try:
-    # Importing the mock shearprofiles
-    data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
-except:
-    pass
+
+#try:
+# Importing the mock shearprofiles
+Nmocks = np.shape(path_mocksel)
+path_mocksel = np.reshape(path_mocksel, np.size(path_mocksel))
+
+if Nmocks[1] > 5:
+    valpha = 0.3
+else:
+    valpha = 1.
+
+esdfiles_mock = np.array([('/%s/%s'%(path_mockdata, path_mocksel[i])) \
+       for i in range(len(path_mocksel))])
+
+print(esdfiles_mock)
+
+data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
+
+#    print('Mocks shape:', Nmocks)
+#except:
+#    pass
 
 try:
     print('Import random signal:')
+    
+    path_randoms = np.reshape(path_randoms, [Nsize])
     random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
     random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
 
@@ -301,12 +309,13 @@ for n in range(Nsize):
     # Signal to noise of the first bin beyond the trough size
     thetaNlist = np.append(thetalist, thetalist)
     
-    if Runit == 'arcmin':
+    if 'arcmin' in Runit:
         xmin = thetalist[n]*1.2
         xmax = 70.
-    if Runit == 'Mpc':
+    if 'pc' in Runit:
         xmin = Rlist[n]*1.2
         xmax = 10.
+        thetalist = Rlist
 
     xmask = (xmin < datax) & (datax < xmax)
     xwhere = np.array(np.where(xmask))[0]
@@ -326,35 +335,39 @@ for n in range(Nsize):
     Alist_error = np.append(Alist_error, np.sqrt(Acov[0,0]))
     
     print
-    print(datalabels[n])
+    print((datatitles*Nbins[0])[n], datalabels[n/Nbins[1]])
     print('First bin S/N):', datay[xwhere[0]]/error[xwhere[0]])
     print('Amplitude fit S/N', A/np.sqrt(Acov[0,0]))
     print('Amplitude:', A)
     print
 
-# Fit to mock profile
-for m in range(len(path_mocksel)):
-    
-    datax_mock = data_x_mock[m]
-    datay_mock = data_y_mock[m]
-    
-    # Without covariance
-    Avals_mock, Acov_mock = optimization.curve_fit(f=mock_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0., -1.])
-    
-    A_mock = Avals_mock[0]
-    B_mock = Avals_mock[1]
-    
-    print('Mocks:')
-    print('Mock Amplitude:', A_mock)
-    print('Mock Index:', B_mock)
-    print
-    
-# Calculate the detection significance
-chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
+try:
+    mock_indices = []
+    # Fit to mock profile
+    for m in range(len(path_mocksel)):
+        
+        datax_mock = data_x_mock[m]
+        datay_mock = data_y_mock[m]
+        
+        # Without covariance
+        Avals_mock, Acov_mock = optimization.curve_fit(f=mock_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0., -1.])
+        
+        A_mock = Avals_mock[0]
+        B_mock = Avals_mock[1]
+        mock_indices = np.append(mock_indices, B_mock)
+        
+        print('Mocks:')
+        print('Mock Amplitude:', A_mock)
+        print('Mock Index:', B_mock)
+        print
+    print('Mean mock index:', np.mean(mock_indices))
+    # Calculate the detection significance
+    chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
 
-print('Chi2 (without covariance):', chi2list)
-print('Chi2 (with covariance):', chi2covlist)
-
+    print('Chi2 (without covariance):', chi2list)
+    print('Chi2 (with covariance):', chi2covlist)
+except:
+    pass
 
 # Create the plot
 
@@ -362,7 +375,7 @@ Ncolumns = int(Nbins[1]/Nrows)
 
 # Plotting the ueber matrix
 if Nbins[1] > 1:
-    fig = plt.figure(figsize=(Ncolumns*4.,Nrows*3.))
+    fig = plt.figure(figsize=(Ncolumns*4.,Nrows*3.5))
 else:
     fig = plt.figure(figsize=(5,4))
 canvas = FigureCanvas(fig)
@@ -390,41 +403,43 @@ for N1 in range(Nrows):
             
             # Plot the fit
             if plotfit:
-                
-                # Plot fitted model
-                if Runit == 'arcmin':
-                    xmin = thetalist[N]*1.2
-                    xmax = 70.
-                if Runit == 'Mpc':
-                    xmin = Rlist[N]*1.2
-                    xmax = 10.
-                    
+                xmin = 1.2*thetalist[N]
+
                 model_x = np.linspace(xmin, xmax, 50)
                 model_y = trough_model(model_x, Alist[Ndata])
-                ax_sub.plot(model_x, model_y, ls='--', color=colors[Nplot])
+                ax_sub.plot(model_x, model_y, ls='-', color=colors[Nplot])
 
             if Nsize==Nbins:
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
-                ls='', marker='.', color = colors[Nplot])
+                ls='', marker='.', color = colors[Nplot], zorder=3)
             else:
                 ax_sub.errorbar(data_x_plot, data_y[Ndata], yerr=[error_l[Ndata], error_h[Ndata]], \
-                ls='', marker='.', label=datalabels[Nplot], color = colors[Nplot])
+                ls='', marker='.', label=datalabels[Nplot], color = colors[Nplot], zorder=3)
         
         try:
             # Plot mock shearprofiles
-            ax_sub.plot(data_x_mock[0], data_y_mock[0], ls='-', color='black', label=mocklabels[0])
+            for Nmock in range(Nmocks[1]):
+
+                Ndata = N + Nmock*(Nbins[1])
+                    
+                if Ndata==0:
+                    ax_sub.plot(data_x_plot, data_y_mock[Ndata], marker='', ls='-', \
+                    color='red', label=mocklabels[0], alpha=valpha, zorder=1)
+                else:
+                    ax_sub.plot(data_x_plot, data_y_mock[Ndata], marker='', ls='-', \
+                    color='red', alpha=valpha, zorder=1)
         except:
             pass
 
-        # Negative troughs for comparison
-        #ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
+        #Negative troughs for comparison
+        ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
         
-        
+            
         # Plot the axes and title
     
         # Vertical lines
         ax_sub.axvline(x=1.2*thetalist[N], color='black', ls=':')
-        ax_sub.axvline(x=70, color='black', ls=':')
+        ax_sub.axvline(x=xmax, color='black', ls=':')
         
         ax_sub.axhline(y=0., ls=':', color='black')
         
@@ -482,7 +497,7 @@ handles, labels = ax_sub.get_legend_handles_labels()
 
 # Plot the legend
 if Nbins[1] > 1:
-    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(1.75, 1.15)) # side
+    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(1.45, 0.7)) # side
 else:
     plt.legend(handles[::-1], labels[::-1], loc='upper center')
 

@@ -39,33 +39,34 @@ gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 
 # Importing the GAMA coordinates
 galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
-galmask = (-24.9 < rmag_abs) & (rmag_abs < -12.)
+galmask = (-24.9 < rmag_abs) & (rmag_abs < -14.)
 
 
 # Path to the KiDS fields
-path_kidscat = '/data2/brouwer/MergedCatalogues'
-kidscatname = 'KiDS_DR3_GAMA-like_290317.fits'
+path_kidscat = '/data2/brouwer/KidsCatalogues'
+kidscatname = 'KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
 
 # Importing the KiDS coordinates
-kidsRA, kidsDEC, kidsZ, kidsTB, mag_auto, ODDS, umag_kids, gmag_kids, rmag_kids, imag_kids = \
+kidsRA, kidsDEC, kidsZB, kidsZ, kidsTB, mag_auto, ODDS, umag_kids, gmag_kids, rmag_kids, imag_kids = \
 utils.import_kidscat(path_kidscat, kidscatname)
 
 
 # Plot absmag-Z diagram of GAMA
 fig = plt.figure(figsize=(6,5))
 
-plt.axhline(y=-21, ls='--', linewidth=2., color='green', label = r'Volume limited $(M_{\rm r}<-21)$')
-plt.axhline(y=-19.7, ls='--', linewidth=2., color='blue', label= r'Fiducial $(M_{\rm r}<-19.7)$')
+plt.axhline(y=-19.67, ls='-', linewidth=2., color='black', label= r'Fiducial $(M_{\rm r}<-19.67)$', zorder=3)
+plt.axhline(y=-21, ls='-', linewidth=2., color='blue', label = r'Volume limited $(M_{\rm r}<-21)$', zorder=2)
 
-plt.axvline(x=0.1, ls='--', linewidth=2., color='black', label = r'$ \{ z_{\rm min}, z_{\rm lim}, z_{\rm max} \} $')
-plt.axvline(x=0.197, ls='--', linewidth=2., color='black')
-plt.axvline(x=0.3, ls='--', linewidth=2., color='black')
+plt.axvline(x=0.1, ls='-', linewidth=2., color='green', label = r'$ \{ z_{\rm min}, z_{\rm lim}, z_{\rm max} \} $', zorder=1)
+plt.axvline(x=0.198, ls='-', linewidth=2., color='green', zorder=1)
+plt.axvline(x=0.3, ls='-', linewidth=2., color='green', zorder=1)
+
 
 plt.hist2d(galZ[galmask], rmag_abs[galmask], bins=100, norm=LogNorm())
 plt.colorbar()
 
-plt.xlim(0,0.4)
-plt.ylim(-25,-13)
+plt.xlim(0,0.5)
+plt.ylim(-25,-14)
 
 plt.xlabel(r'Redshift $z$', fontsize=14)
 plt.ylabel(r'Absolute magnitude $M_{\rm r}$', fontsize=14)
@@ -75,13 +76,13 @@ plt.legend(loc='lower right')
 plt.gca().invert_yaxis()
 
 ext = 'pdf'
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/redshift_limit'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_July/Plots/redshift_limit'
 plotname = '%s.%s'%(plotfilename, ext)
 
 plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+plt.show()
 plt.close()
 
 

@@ -1,0 +1,2 @@
+# Total effective field area (in arcmin^2)
+9.209088000000000466e+05
