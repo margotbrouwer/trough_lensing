@@ -20,7 +20,6 @@ from matplotlib.colors import LogNorm
 from matplotlib import gridspec
 from matplotlib import rc, rcParams
 
-from scipy.stats import chi2
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -49,7 +48,7 @@ blues = ['#332288', '#44AA99', '#117733', '#88CCEE']
 reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
 #colors = np.array([reds,blues])
 
-colors = ['green', 'blue', 'red', 'orange']
+colors = ['green', 'blue', 'green', 'blue']
 
 # Defining the paths to the data
 blind = 'A'
@@ -61,42 +60,74 @@ thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 
 """
 
-# Weighted troughs: sizes
+
+# Fiducial troughs:sizes
 
 Runit = 'arcmin'
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_May'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
 
-path_lenssel = np.array([ ['No_bins_gama_absmag_complex/Pmasktheta%g_0p8_inf-delta%g_%s_lw-Wtheta%g'%(theta,theta,delta,theta) \
-                for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
+path_lenssel = np.array([ ['No_bins_kids_mice_complex/Pmasktheta%g_0p8_inf-Ptheta%g_%s'%(theta,theta,perc) \
+                for theta in thetalist ] for perc in ['0_0p2', '0p8_1'] ])
 
-path_cosmo = 'ZB_0p1_0p9-Om_0p315-Ol_0p685-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r'Troughs $(\delta<0)$', r'Ridges $(\delta>0)$']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_weighted'
+datalabels = [r'Troughs $(P(\theta_{\rm A}) < 0.2)$', r'Ridges $(P(\theta_{\rm A}) > 0.8)$']
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_fiducial'
 Nrows = 2
+plotfit = True
 
-path_randoms = np.array([ ['No_bins_gama_randoms/Pmasktheta%g_0p8_inf'%theta
+path_randoms = np.array([ ['No_bins_kids_randoms_complex/Pmasktheta%g_0p8_inf'%theta
+                for theta in thetalist ] for perc in ['0_0p2', '0p8_1'] ])
+
+thetalist = np.array([5., 10., 15., 20.]*2)
+
+
+
+# Weighted troughs: sizes
+
+Runit = 'arcmin'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
+
+path_lenssel = np.array([ ['No_bins_kids_mice_complex/Pmasktheta%g_0p8_inf-delta%g_%s_lw-Wtheta%g'%(thetalist[i], thetalist[i], delta, thetalist[i]) \
+                for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
+
+path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
+path_filename = 'No_bins_%s.txt'%(blind)
+
+datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
+datalabels = [r'Weighted troughs', r'Weighted ridges']
+plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_weighted'
+Nrows = 2
+plotfit = True
+
+path_randoms = np.array([ ['No_bins_kids_randoms_complex/Pmasktheta%g_0p8_inf'%theta
                 for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
+path_mockdata = 'data2/brouwer/shearprofile/trough_results_final'
+path_mocksel = np.array([ ['No_bins_mice_all_nomask-1/Pmasktheta%g_0p8_inf-delta%g_%s.txt'%(thetalist[i], thetalist[i], delta) \
+                for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
+mocklabels = [r"MICE"]
+thetalist = np.array([5., 10., 15., 20.]*2)
 
-"""
+
 
 # Weighted troughs: Redshifts
 
 h=0.7
 Runit = 'Mpc'
 #Rlist = [0.82106757, 1.64213514, 2.46320271, 3.28427028]
-Rlist = [1.64213514]*4
+Rlist = [1.64]*4
+
 plotfit = False
 Nrows = 1
 
 
-thetalist = np.array(['10', '6p835'])
+thetalist = np.array(['10', '6p826'])
 samplelist = np.array(['lowZ', 'highZ'])
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
 
 path_lenssel = np.array([ ['No_bins_kids_%s_complex/Pmasktheta%s_0p8_inf-delta%s_%s_lw-Wtheta%s'%(samplelist[i], thetalist[i], thetalist[i], delta, thetalist[i]) \
                 for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
@@ -107,18 +138,18 @@ path_filename = 'No_bins_%s.txt'%(blind)
 datatitles = [r'$0.1<z<0.198$', r'$0.198<z<0.3$']
 datalabels = ['Troughs', 'Ridges']
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_July/Plots/troughs_gama_redshifts_weighted'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_final/Plots/troughs_kids_redshifts_weighted'
 
 path_randoms = np.array([ ['No_bins_kids_randoms_complex/Pmasktheta%s_0p8_inf'%theta
                 for theta in thetalist ] for delta in ['minf_0', '0_inf'] ])
 
-path_mockdata = 'data2/brouwer/shearprofile/trough_results_July'
+path_mockdata = 'data2/brouwer/shearprofile/trough_results_final'
 path_mocksel = np.array([ ['No_bins_mice_%s_nomask-1/Pmasktheta%s_0p8_inf-delta%s_%s.txt'%(samplelist[i], thetalist[i], thetalist[i], delta) \
                 for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
-mocklabels = [r"MICE: $P(5')<0.2$"]
+mocklabels = [r"MICE"]
 
 
-"""
+
 
 # Randoms
 
@@ -136,36 +167,38 @@ plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gam
 
 ## KiDS vs GAMA
 
+"""
 
-
-# Troughs (with different sizes)
+# Fiducial troughs
 
 Runit = 'arcmin'
 plotfit = True
-thetalist = np.array([5., 5., 5.]) # in arcmin
+thetalist = np.array([5., 5., 5., 5.]) # in arcmin
 
-path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
-path_lenssel = [ ['No_bins_%s/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2'%(cat,theta,theta) \
-for theta in [thetalist[0]]] for cat in ['gama_mice_complex', 'kids_mice_complex'] ]
+path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
+path_lenssel = [ [ 'No_bins_%s/Pmasktheta5_0p8_inf-Ptheta5_%s'%(cat, perc) ] \
+    for perc in ['0_0p2', '0p8_1'] for cat in ['gama_mice_complex', 'kids_mice_complex'] ]
+print(path_lenssel)
+print(np.shape(path_lenssel))
 
 path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearcovariance'
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-#datalabels = [r"KiDS $(P(5')<0.2)$", r"GAMA $(P(5')<0.2)$"]
-datalabels = [r"GAMA: $P(5')<0.2$", r"KiDS: $P(5')<0.2$"]
+datalabels = [r"GAMA: $P(5')<0.2$", r"KiDS: $P(5')<0.2$", r"GAMA: $P(5')>0.8$", r"KiDS: $P(5')>0.8$"]
 
 plotfilename = '/%s/Plots/troughs_gama_kids_mocks_complex'%path_sheardata
 Nrows = 1
 
-path_randoms = [ ['No_bins_%s/Pmasktheta%g_0p8_inf'%(cat,theta) for theta in [thetalist[0]]] \
-                                        for cat in ['gama_randoms_complex', 'kids_randoms_complex'] ]
+path_randoms = [ ['No_bins_%s/Pmasktheta5_0p8_inf'%(cat) \
+    for perc in ['0_0p2', '0p8_1'] for cat in ['gama_randoms_complex', 'kids_randoms_complex'] ]]
 
-path_mockdata = 'data2/brouwer/shearprofile/trough_results_July'
-path_mocksel = [ ['No_bins_mice_all_nomask-%g/Pmasktheta%g_0p8_inf-Ptheta%g_0_0p2.txt'%(cat, 5, 5) for cat in np.arange(16)+1 ] ]
+path_mockdata = 'data2/brouwer/shearprofile/trough_results_final'
+path_mocksel = [ ['No_bins_mice_all_nomask-%g/Pmasktheta5_0p8_inf-Ptheta5_%s.txt'%(cat, perc) \
+    for cat in np.arange(16)+1 for perc in ['0_0p2', '0p8_1'] ]]
 mocklabels = [r"MICE: $P(5')<0.2$"]
 
-
+"""
 
 
 # Troughs (with different completeness)
@@ -244,44 +277,45 @@ data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
 lensIDs = np.array([np.loadtxt(x) for x in lensIDfiles])
 
 
-#try:
-# Importing the mock shearprofiles
-Nmocks = np.shape(path_mocksel)
-path_mocksel = np.reshape(path_mocksel, np.size(path_mocksel))
-
-if Nmocks[1] > 5:
-    valpha = 0.3
-else:
-    valpha = 1.
-
-esdfiles_mock = np.array([('/%s/%s'%(path_mockdata, path_mocksel[i])) \
-       for i in range(len(path_mocksel))])
-
-print(esdfiles_mock)
-
-data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
-
-#    print('Mocks shape:', Nmocks)
-#except:
-#    pass
-
 try:
-    print('Import random signal:')
-    
-    path_randoms = np.reshape(path_randoms, [Nsize])
-    random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
-    random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
+    # Importing the mock shearprofiles
+    Nmocks = np.shape(path_mocksel)
+    path_mocksel = np.reshape(path_mocksel, np.size(path_mocksel))
 
-    # Subtract random signal
-    data_y = data_y-random_data_y
-    error_h = np.sqrt(error_h**2. + random_error_h**2)
-    error_l = np.sqrt(error_l**2. + random_error_l**2)
+    if Nmocks[1] > 5:
+        valpha = 0.3
+    else:
+        valpha = 1.
+
+    esdfiles_mock = np.array([('/%s/%s'%(path_mockdata, path_mocksel[i])) \
+           for i in range(len(path_mocksel))])
+
+    data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
+
+    print(np.shape(data_y_mock))
+
+    print('Mocks shape:', Nmocks)
 
 except:
-    print()
-    print('No randoms subtracted!')
-    print()
     pass
+
+#try:
+print('Import random signal:')
+
+path_randoms = np.reshape(path_randoms, [Nsize])
+random_esdfile = np.array(['/%s/%s/%s/%s'%(path_sheardata, path_random, path_cosmo, path_filename) for path_random in path_randoms])
+random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
+
+# Subtract random signal
+data_y = data_y-random_data_y
+error_h = np.sqrt(error_h**2. + random_error_h**2)
+error_l = np.sqrt(error_l**2. + random_error_l**2)
+
+#except:
+#    print()
+#    print('No randoms subtracted!')
+#    print()
+#    pass
     
 
 
@@ -421,7 +455,7 @@ for N1 in range(Nrows):
             for Nmock in range(Nmocks[1]):
 
                 Ndata = N + Nmock*(Nbins[1])
-                    
+                
                 if Ndata==0:
                     ax_sub.plot(data_x_plot, data_y_mock[Ndata], marker='', ls='-', \
                     color='red', label=mocklabels[0], alpha=valpha, zorder=1)
@@ -431,7 +465,7 @@ for N1 in range(Nrows):
         except:
             pass
 
-        #Negative troughs for comparison
+        # Negative troughs for comparison
         ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
         
             
@@ -456,9 +490,8 @@ for N1 in range(Nrows):
         plt.autoscale(enable=False, axis='both', tight=None)
         
         # Define the labels for the plot
-        if Runit == 'Mpc':
-            plt.axis([0.5,20,-3,9])
-            plt.ylim(-3,9)
+        if 'pc' in Runit:
+            plt.axis([0.5,20,-2.5,7])
             
             xlabel = r'Radial distance $R$ (%s/h$_{%g}$)'%(Runit, h*100)
             ylabel = r'ESD $\langle\Delta\Sigma\rangle$ [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100)
@@ -466,8 +499,7 @@ for N1 in range(Nrows):
             ax.xaxis.set_label_coords(0.5, -0.15)
             ax.yaxis.set_label_coords(-0.05, 0.5)
         else:
-            plt.axis([2,100,-1.6e-3,1.5e-3])
-            plt.ylim(-1.5e-3,1.5e-3)
+            plt.axis([2,100,-1e-3,1.9e-3])
 
             xlabel = r'Separation angle $\theta$ (arcmin)'
             ylabel = r'Shear $\gamma$'
@@ -497,10 +529,10 @@ handles, labels = ax_sub.get_legend_handles_labels()
 
 # Plot the legend
 if Nbins[1] > 1:
-    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(1.45, 0.7)) # side
+    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(0.75*Ncolumns, 0.65*Nrows)) # side
 else:
-    plt.legend(handles[::-1], labels[::-1], loc='upper center')
-
+#    plt.legend(handles[::-1], labels[::-1], loc='upper center')
+    lgd = ax_sub.legend(handles[::-1], labels[::-1], bbox_to_anchor=(1., 0.65*Nrows)) # side
 
 """
 else:

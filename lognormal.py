@@ -33,41 +33,61 @@ def trough_model(x, A):
     model_y = A*x**-0.5
     return model_y
 
+show = False
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
 
-for ij in range(len(ijlist)):
-#for ij in range(1):
+#Nruns = len(ijlist) # Mock patches
+#Nruns = len(thetalist) # Theta
+Nruns = 5
+#Nruns = 1
 
-    i, j = ijlist[ij]
-    ijnum = i + 4.*j + 1.
-    print(i, j, ijnum)
+# Configuration
 
+for ij in np.arange(0, Nruns):
+    
+    # Number of the current run
+    ijnum = ij+1
+    
     # Defining the paths to the data
     blind = 'A'
 
     #selection = 'kids_mice_complex'
+    #selection = 'kids_lowZ_complex'
     #selection = 'mice_all_nomask-%g'%ijnum
-    selection = 'mice_highZ_nomask-%g'%ijnum
+    #selection = 'mice_highZ_nomask-%g'%ijnum
+    selection = 'mice_miceZ-%g_nomask-Z'%ijnum
     
-    mocksel = 'mice_all_nomask-%g'%ijnum
+    mocksel = 'mice_highZ_nomask-%g'%ijnum
     randomsel = 'kids_randoms_complex'
 
-    Runit = 'arcmin' # arcmin or Mpc
-    thetanum = 0
-
-    thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+    # Select unit (arcmin or Mpc)
+    if 'Z' in selection:
+        Runit = 'Mpc'
+    else:
+        Runit = 'arcmin'
+    
+    
+    if 'all' in selection:
+        thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+        thetanum = ij
+        
     if 'lowZ' in selection:
         thetalist = np.array([10.])
-        Runit = 'Mpc'
+        thetanum = 0
     if 'highZ' in selection:
-        thetalist = np.array([6.835])
-        Runit = 'Mpc'
+        thetalist = np.array([6.826])
+        thetanum = 0
 
+    if 'miceZ' in selection:
+        #thetalist = np.array([14.509, 10., 7.904, 6.697])
+        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])
+        thetanum = ij
+    
     theta = thetalist[thetanum]
-
+    
     if Runit == 'arcmin':
         Rmin = 2
         Rmax = 100
@@ -84,12 +104,12 @@ for ij in range(len(ijlist)):
         
         dperc = 0.1
         percnames = ['0','0p1','0p2','0p3','0p4','0p5','0p6','0p7','0p8','0p9','1']
-        Rlist = [1.90] # Physical size of the troughs (in Mpc)
+        Rlist = [1.64]*len(thetalist) # Physical size of the troughs (in Mpc)
 
     # Defining the percentile bins
     percmin = 0.
     percmax = 1.
-
+    
     perclist = np.arange(percmin, percmax, dperc)
     perccenters = perclist+dperc/2.
     perclist = np.append(perclist, percmax)
@@ -100,7 +120,7 @@ for ij in range(len(ijlist)):
 
     if ('kids' in selection) or ('gama' in selection):
         # Observed lensing profiles
-        path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
+        path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
         path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
             %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
         path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins%i_%s_%s_%s/shearcovariance'%(Nbins, ('%g'%Rmin).replace('.','p'), ('%g'%Rmax).replace('.','p'), Runit)
@@ -113,7 +133,7 @@ for ij in range(len(ijlist)):
         covariance_tot = np.array([ np.loadtxt(covfiles[c]).T for c in range(len(covfiles)) ])
 
         # Mock lensing profiles
-        path_mockdata = 'data2/brouwer/shearprofile/trough_results_July'
+        path_mockdata = 'data2/brouwer/shearprofile/trough_results_final'
         path_mocksel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
             %(mocksel, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
         mockfiles = np.array([('/%s/%s.txt'%(path_mockdata, path_mocksel[p])) \
@@ -121,7 +141,7 @@ for ij in range(len(ijlist)):
 
     else:
         # Mock lensing profiles
-        path_sheardata = 'data2/brouwer/shearprofile/trough_results_July'
+        path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
         path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
             %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
         esdfiles = np.array([('/%s/%s.txt'%(path_sheardata, path_lenssel[p])) \
@@ -129,10 +149,8 @@ for ij in range(len(ijlist)):
 
     path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
     
-    print(esdfiles)
-    
     # Importing the shearprofiles and lens IDs
-    print('Import shear signal:')
+    print('Import shear signal')
     data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
     data_x = data_x[0]
 
@@ -173,7 +191,7 @@ for ij in range(len(ijlist)):
     Nbins = Npercs
     Nrows = Nbins/5
     Ncolumns = int(Nbins/Nrows)
-
+    
     fig = plt.figure(figsize=(12,8))
     canvas = FigureCanvas(fig)
 
@@ -273,7 +291,8 @@ for ij in range(len(ijlist)):
         plt.savefig(plotname, format=ext, bbox_inches='tight')
         
     print('Written plot:', plotname)
-    #plt.show()
+    if show:
+        plt.show()
 
 
     # Import trough catalog

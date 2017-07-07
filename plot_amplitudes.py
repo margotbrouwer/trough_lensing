@@ -17,6 +17,7 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
+from scipy.stats import chi2, norm
 import scipy.optimize as optimization
 import trough_modules_all as utils
 
@@ -26,44 +27,70 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-#colors = ['red', 'orange', 'cyan', 'blue']
-colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
+colors = ['red', 'orange', 'cyan', 'blue', 'green']
+#colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
 
 h=0.7
 
-#"""
+show = True
 
-# Redshifts
-thetalist = np.array([10., 6.835]) # in arcmin
-
-Runit = 'Mpc'
-
-selection = ['kids_lowZ_complex', 'kids_highZ_complex']
-#selection = ['mice_lowZ_nomask', 'mice_highZ_nomask']
-
-labels = [r'$0.1<z<0.198$', r'$0.198<z<0.3$']
-
-mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
-#mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.],
-#                      ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
-
-mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.835]*(len(mocksel)/2) ) # in arcmin
-mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
-
-
+# Trough selection
 
 """
+"""
+# Mice redshifts
+
+#thetalist = np.array([14.509, 10., 7.904, 6.697]) # in arcmin
+thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934]) # in arcmin
+
+Runit = 'Mpc'
+valpha = 0.3
+
+selection = ['mice_miceZ-%i_nomask-Z'%(t+1) for t in range(len(thetalist))]
+selection_name = selection[0]
+
+#zlims = np.array([ 0.1, 0.193, 0.290, 0.392, 0.5])
+zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
+labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
+
+"""
+
+# highZ/lowZ
+
+thetalist = np.array([10., 6.826]) # in arcmin
+
+Runit = 'Mpc'
+valpha = 0.3
+
+selection = ['kids_lowZ_complex', 'kids_highZ_complex']
+#selection = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
+selection_name = selection[0]
+
+zlims = np.array([ 0.1, 0.198, 0.3])
+labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
+
+#mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
+#mockthetalist = thetalist
+#mockcolors = colors
+
+mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
+mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.826]*(len(mocksel)/2) ) # in arcmin
+mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
+
 
 # Sizes
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 #thetalist = np.array([5.]) # in arcmin
+
 Runit = 'arcmin'
+valpha = 1.
 
 selection = ['kids_mice_complex' for t in range(len(thetalist))]
+selection_name = selection[0]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
 
-mocksel = ['mice_all_nomask' for t in range(len(thetalist))]
+mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
 mockthetalist = thetalist
 mockcolors = colors
 
@@ -72,10 +99,9 @@ mockcolors = colors
 
 
 # Import observed amplitudes
-path_filename = '/data2/brouwer/shearprofile/trough_results_July/Plots'
+path_filename = '/data2/brouwer/shearprofile/trough_results_final/Plots'
 filenames = ['%s/trough_amplitudes_%s_%g%s.txt'%(path_filename, selection[s], thetalist[s], Runit) \
                                                 for s in range(len(selection))]
-selection_name = selection[0]
 
 amplitude_data = np.array([np.loadtxt(filename).T for filename in filenames])
 
@@ -89,7 +115,7 @@ Alist_error = amplitude_data[:,3]
 
 if ('kids' in selection_name) or ('gama' in selection_name):
     # Import mock amplitudes
-    path_filename_mock = path_filename
+    path_filename_mock = '/data2/brouwer/shearprofile/trough_results_final/Plots'
     filenames_mock = ['%s/trough_amplitudes_%s_%g%s.txt'%(path_filename_mock, mocksel[s], mockthetalist[s], Runit) \
                                                     for s in range(len(mocksel))]
 
@@ -99,6 +125,21 @@ if ('kids' in selection_name) or ('gama' in selection_name):
     deltacenters_mock = amplitude_data_mock[:, 1]
     Alist_mock = amplitude_data_mock[:,2]
     Alist_error_mock = amplitude_data_mock[:,3]
+
+
+# Compute significance of the difference
+
+diffAlist = abs(Alist[0] - Alist[1])
+diffAlist_error = np.sqrt(Alist_error[0]**2. + Alist_error[1]**2.)
+
+diffmodel = np.zeros(len(Alist[0]))
+diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
+
+diffprob = 1 - chi2.cdf(diffchi2, len(Alist[0]))
+diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
+
+print(diffchi2, diffprob, diffsigma)
+
 
 
 ## AMPLITUDE (Percentile)
@@ -117,17 +158,27 @@ for i in range(len(selection)):
   
 if ('kids' in selection_name) or ('gama' in selection_name):
     # Plot mock amplitudes
-    [plt.plot(perccenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=0.3, zorder=1) \
+    [plt.plot(perccenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=valpha, zorder=1) \
                 for i in range(len(mocksel))]
 
 # Plot observed amplitudes
 if ('kids' in selection_name) or ('gama' in selection_name):
-    [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i],\
-    label=labels[i], marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) \
-    for i in range(len(selection))]
+    
+    if 'Z' in selection_name:
+        [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i],\
+        label=labels[i], marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) \
+        for i in range(len(selection))]
+    else:
+        [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i],\
+        label=labels[i], marker='.', ls='', color=colors[i], zorder=3)
+        for i in range(len(selection))]
 else:
-    [plt.plot(perccenters[i], Alist[i], marker='', ls='-', alpha=0.5, zorder=3) \
-    for i in range(len(selection))]
+    if 'miceZ' in selection_name:
+        [plt.plot(perccenters[i], Alist[i], label=labels[i],  color=colors[i], \
+        marker='', ls='-', alpha=1., zorder=3) for i in range(len(selection))]
+    else:
+        [plt.plot(perccenters[i], Alist[i], marker='', ls='-', alpha=valpha, zorder=3) \
+        for i in range(len(selection))]
 
 plt.axhline(y=0., ls=':', color='black', zorder=2)
 plt.axvline(x=0.5, ls=':', color='black', zorder=2)
@@ -152,8 +203,12 @@ if 'arcmin' in Runit:
     ax2 = fig.add_axes([left, bottom, width, height])
 
     # Plot observed amplitudes
-    [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i], \
-    marker='o', ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    if 'Z' in selection_name:
+        [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i], \
+        marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    else:
+        [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i], \
+        marker='.', ls='', color=colors[i], zorder=3) for i in range(len(selection))]
     
     if ('kids' in selection_name) or ('gama' in selection_name):
         # Plot mock amplitudes
@@ -174,7 +229,8 @@ for ext in ['png', 'pdf']:
     plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+if show:
+    plt.show()
 plt.close()
 
 
@@ -198,8 +254,13 @@ if ('kids' in selection_name) or ('gama' in selection_name):
         model_y[i] = poly_func_weights(model_x)
         
         plt.plot(model_x, model_y[i], color=colors[i], zorder=1)
-        plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
-        label=labels[i], marker='o', ms='5', ls='', color=colors[i], ecolor='black', zorder=3)
+        
+        if 'Z' in selection_name:
+            plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
+            label=labels[i], marker='o', ms='5', ls='', color=colors[i], ecolor='black', zorder=3)
+        else: 
+            plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
+            label=labels[i], marker='.', ls='', color=colors[i], zorder=3)
 
     plt.axhline(y=0., ls=':', color='black', zorder=2)
     plt.axvline(x=0.5, ls=':', color='black', zorder=2)
@@ -218,27 +279,39 @@ if ('kids' in selection_name) or ('gama' in selection_name):
         plt.savefig(plotname, format=ext, bbox_inches='tight')
         
     print('Written plot:', plotname)
-    #plt.show()
+    if show:
+        plt.show()
     plt.close()
 
 
 ## AMPLITUDE (delta)
-fig = plt.figure(figsize=(5,4))
+if 'miceZ' in selection_name:
+    fig = plt.figure(figsize=(5.5,4))
+else:
+    fig = plt.figure(figsize=(5,4))
 ax1 = fig.add_subplot(111)
 
 # Plot observed amplitudes
 
 if ('kids' in selection_name) or ('gama' in selection_name):
     # Plot observed amplitudes
-    [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
-    label=labels[i], marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    if 'Z' in selection_name:
+        [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+        label=labels[i], marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    else:
+        [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+        label=labels[i], marker='.', ls='', color=colors[i], zorder=3) for i in range(len(selection))]
 
     # Plot mock amplitudes
-    [plt.plot(deltacenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=0.3, zorder=1) \
+    [plt.plot(deltacenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=valpha, zorder=1) \
     for i in range(len(mocksel))]
 else:
-    [plt.plot(deltacenters[i], Alist[i], marker='', ls='-', alpha=0.5, zorder=3) \
-                                    for i in range(len(selection))]
+    if 'miceZ' in selection_name:
+        [plt.plot(deltacenters[i], Alist[i], label=labels[i],  color=colors[i], \
+        marker='', ls='-', alpha=1., zorder=3) for i in range(len(selection))]
+    else:
+        [plt.plot(deltacenters[i], Alist[i], marker='', ls='-', alpha=valpha, zorder=3) \
+                                        for i in range(len(selection))]
 
 plt.axhline(y=0., ls=':', color='black', zorder=2)
 plt.axvline(x=0., ls=':', color='black', zorder=2)
@@ -249,6 +322,8 @@ plt.axvline(x=0., ls=':', color='black', zorder=2)
 if 'pc' in Runit:
     plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
     plt.axis([-1.,1.7,-5.,13.])
+    if 'miceZ' in selection_name:
+        plt.axis([-1.3,2.2,-5.,13.])
 if 'arcmin' in Runit:
     plt.ylabel(r'Shear Amplitude')
     plt.axis([-0.8,1.5,-0.007,0.012])
@@ -264,8 +339,12 @@ if 'arcmin' in Runit:
     ax2 = fig.add_axes([left, bottom, width, height])
 
     # Plot observed amplitudes
-    [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
-    label=labels[i], marker='o', ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    if 'Z' in selection_name:
+        [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+        label=labels[i], marker='o', ms=5, ls='', color=colors[i], ecolor='black', zorder=3) for i in range(len(selection))]
+    else:
+        [plt.errorbar(deltacenters[i], Alist[i], yerr=Alist_error[i], \
+        label=labels[i], marker='.', ls='', color=colors[i], zorder=3) for i in range(len(selection))]
 
     if ('kids' in selection_name) or ('gama' in selection_name):
         # Plot mock amplitudes
@@ -287,14 +366,16 @@ for ext in ['png', 'pdf']:
     plt.savefig(plotname, format=ext, bbox_inches='tight')
     
 print('Written plot:', plotname)
-#plt.show()
+if show:
+    plt.show()
 plt.close()
+
 
 # Write weight catalog for KiDS/GAMA and MICE
 if ('kids' in selection_name) or ('gama' in selection_name):
     
     selcat = np.array([selection, mocksel])
-    
+        
     for s in range(len(selcat)):
         
         sel = selcat[s]
@@ -318,10 +399,10 @@ if ('kids' in selection_name) or ('gama' in selection_name):
             
             # Write weight fits-file
             Ptheta = troughcat['Ptheta%g'%thetalist[theta]]
-        
+            
             poly_func_amps = np.poly1d(poly_param_amps[theta])
             poly_func_weights = np.poly1d(poly_param_weights[theta])
-        
+            
             Wtheta = poly_func_weights(Ptheta)
             Atheta = poly_func_amps(Ptheta)
             

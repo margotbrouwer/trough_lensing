@@ -34,18 +34,19 @@ rc('font',**{'family':'serif','serif':['Computer Modern']})
 
 # Radii theta of circular regions (in deg)
 thetalist = np.array([5., 10., 15., 20.])/60.
+#thetalist = np.array([5.])/60.
 
-selections = ['kids_mice_complex', 'mice_all_nomask']
+selections = ['kids_mice_complex', 'mice_all_nomask-1']
 #selections = ['kids_lowZ_complex', 'kids_highZ_complex', 'mice_lowZ_nomask', 'mice_highZ_nomask']
 
 
 if 'Z' in selections[0]:
     Nbins=23
     binrange=[0., 4.]
-    colors = ['#d7191c', '#fdae61']*2
+    colors = ['#d7191c', '#fdae61']*3
     xlabel = r'Galaxy number density $n_{\rm g}(\theta_{\rm A})$ ($ {h_{70}}^2 {\rm Mpc}^{-2} $)'
 else:
-    Nbins = 25
+    Nbins = 27
     binrange=[0., 0.7]
     colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
     xlabel = r'Galaxy number density $n_{\rm g}(\theta_{\rm A})$ (${\rm arcmin}^{-2}$)'
@@ -101,7 +102,7 @@ plt.ylabel(r'Normalized number of apertures', fontsize=14)
 #plt.yscale('log')
 plt.legend()
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_July/Plots/trough_density_distribution_%s'%selections[0]
+plotfilename = '/data2/brouwer/shearprofile/trough_results_final/Plots/trough_density_distribution_%s'%selections[0]
 
 plt.tight_layout()
 

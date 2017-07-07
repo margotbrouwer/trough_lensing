@@ -23,102 +23,139 @@ from matplotlib import rc, rcParams
 
 import trough_modules_all as utils
 
+
+h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
+micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
+
 # Defining the circle size and redshift bins
-thetalow = np.array([5., 10., 15., 20.]) # in arcmin
+#thetalow = np.array([5., 10., 15., 20.]) # in arcmin
+thetalow = np.array([10.]) # in arcmin
 thetamin, thetamax = np.array([2., 100.])
 
 am_to_rad = np.pi/(60.*180.)
-
 zmin = 0.1
-zmax = 0.3
 zgama = 0.5
 
-zlims = np.array([zmin, zmax])
+cat = 'mice'
 
 # Path to the GAMA fields
-path_gamacat = '/data2/brouwer/MergedCatalogues/'
-gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
+if cat == 'gama':
+    
+    # Select redshift binning
+    zmax = 0.3
+    Nbins = 2
+    
+    path_gamacat = '/data2/brouwer/MergedCatalogues/'
+    gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 
-# Importing the GAMA coordinates
-galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
+    # Importing the GAMA coordinates
+    galRA, galDEC, galZ, rmag, rmag_abs = \
+    utils.import_gamacat(path_gamacat, gamacatname)
+    
+    galDc = (cosmo.comoving_distance(galZ).to('Mpc')).value
+    gama_rlim = 19.8
 
-gamamask = (rmag_abs < -19.67)
+if cat == 'mice':
+
+    # Select redshift binning
+    #zmax = zgama
+    zmax = 0.6
+    Nbins = 5
+    
+    # Path to the Mice field
+    path_mockcat = '/data2/brouwer/MergedCatalogues'
+    mockcatname = 'mice_gama_highZ_catalog.fits'
+    
+    # Importing the Mice galaxies
+    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
+    utils.import_mockcat(path_mockcat, mockcatname)
+    rmag_abs = rmag_abs + micecor # Correct absolute magnitudes
+    
+    #gama_rlim = 20.2
+    gama_rlim = np.inf
+
+gamamask = (rmag_abs < -19.67) & (rmag < gama_rlim)
+
 zmean = np.mean(galZ[gamamask])
+Dcmean = np.mean(galDc[gamamask])
+Damean = np.mean((galDc/(1+galZ))[gamamask])
+#Damean = (cosmo.angular_diameter_distance(zmean).to('Mpc')).value
+
 print('Mean GAMA redshift:', zmean)
 
-galmask = (rmag_abs < -21.)& (zmin < galZ)&(galZ < zmax) & (rmag < 19.8)
-galRA, galDEC, galZ, rmag, rmag_abs = galRA[galmask], galDEC[galmask], galZ[galmask], rmag[galmask], rmag_abs[galmask]
+Dcmin, Dcmax, Dcgama = [ (cosmo.comoving_distance(z).to('Mpc')).value for z in [zmin, zmax, zgama] ] # Comoving distance to each bin limit
+Dclen = (Dcmax - Dcmin)/Nbins
 
-# Calculating the volume of the cone at each redshift bin
-cosmo = LambdaCDM(H0=70., Om0=0.25, Ode0=0.75)
+# Calculating the comoving length for each Z-bin
+zlims = np.array([zmin])
+Dclims = np.array([Dcmin])
 
-Dcmin, Dcmax, Dcgama, Dcmean = [ (cosmo.comoving_distance(z).to('Mpc')).value for z in [zmin, zmax, zgama, zmean] ] # Comoving distance to each bin limit
-Dclim = Dcmin + (Dcmax - Dcmin)/2
-zlim = z_at_value(cosmo.comoving_distance, Dclim*u.Mpc)
+for N in range(Nbins):
 
-zlims = [zmin, zlim, zmax]
-Dclims = [Dcmin, Dclim, Dcmax]
+    Dclim = Dcmin + (N+1.)*Dclen
+    zlim = z_at_value(cosmo.comoving_distance, Dclim*u.Mpc)
+
+    Dclims = np.append(Dclims, Dclim)
+    zlims = np.append(zlims, zlim)
 
 print()
-print('Z(min,lim,max):', zlims)
-print('Dc(min,lim,max):', Dclims, 'Mpc')
+print('Z-limits:', zlims)
+print('Dc-limits:', Dclims, 'Mpc')
 print('Dc(gama_max):', Dcgama, 'Mpc')
-print('L(low,high):', np.diff(Dclims), 'Mpc')
+print('L:', np.diff(Dclims), 'Mpc')
 
-# Equal volume
-#tanthetahigh = np.tan(thetalow*am_to_rad) * np.sqrt((Dclims[1]**3. - Dclims[0]**3.)/(Dclims[2]**3. - Dclims[1]**3.))
+Nhigh, Zhigh, Dchigh, Dahigh, Vchigh = [np.array([])]*5
+for N in range(Nbins):
 
-# Equal radius at Dlim/Dmax
-#tanthetahigh = np.tan(thetalow*am_to_rad) * (Dclims[1] / Dclims[2])
+    print(N+1)
+    
+    # Masking the GAMA galaxies
+    galmask = (rmag_abs < -21.) & (rmag < gama_rlim) & (zlims[N] < galZ) & (galZ < zlims[N+1])
+    Z = galZ[galmask]
+    
+    Nhigh = np.append( Nhigh, sum(galmask) )
+    Zhigh = np.append( Zhigh, np.mean(Z) )
 
-# Equal radius at the center of the sample
-lowmask = (galZ < zlims[1])
-highmask = (zlims[1] < galZ)
+    if 'mice' in cat:
+        Dc = galDc[galmask]
+    else:
+        Dc = (cosmo.comoving_distance(Z).to('Mpc')).value
+    
+    Dchigh = np.append( Dchigh, np.mean(Dc) )
+    Dahigh = np.append( Dahigh, np.mean(Dc/(1+Z)) )
 
-Nlow, Nhigh = [sum(lowmask), sum(highmask)]
 
-Zlow, Zhigh = np.array([ np.mean(galZ[mask]) for mask in [lowmask, highmask] ])
-Dclow, Dchigh = np.array([ np.mean((cosmo.comoving_distance(galZ[mask]).to('Mpc')).value) for mask in [lowmask, highmask] ])
-Dalow, Dahigh, Dagama, Damean = np.array([Dclow/(1+Zlow), Dchigh/(1+Zhigh), Dcgama/(1+zgama), Dcmean/(1+zmean)])
-Vclow, Vchigh = np.array([ np.mean((cosmo.comoving_volume(galZ[mask]).to('Mpc^3')).value) for mask in [lowmask, highmask] ])
+# Equal comoving projected radius at all redshifts
+Dalow = Dahigh[1]
+thetahigh = [thetalow * (Dalow / Dahigh[N]) for N in range(Nbins)]
 
-thetahigh = thetalow * (Dalow / Dahigh)
+Rlow = (thetalow*am_to_rad) * Dalow
+Rhigh = [(thetahigh[N]*am_to_rad) * Dahigh[N] for N in range(Nbins)]
 
-print('mean Z(low,high):', [Zlow, Zhigh])
-print('mean Dc(low,high):', [Dclow, Dchigh], 'Mpc')
-print('mean Da(low,high):', [Dalow, Dahigh], 'Mpc')
+print('mean Z:', Zhigh)
+print('mean Dc:', Dchigh, 'Mpc')
+print('mean Da:', Dahigh, 'Mpc')
 print()
 print('theta(low):', thetalow, 'arcmin')
 print('theta(high):', thetahigh, 'arcmin')
-print('R(low):', (thetalow*am_to_rad) * Dalow, 'Mpc')
-print('R(high):', (thetahigh*am_to_rad) * Dahigh, 'Mpc')
+print('R(low):', Rlow, 'Mpc')
+print('R(high):', Rhigh, 'Mpc')
+print()
 print('R(min,max):', (thetamin*am_to_rad) * Damean, (thetamax*am_to_rad) * Damean, 'Mpc')
 
-V1low = 1./3.*np.pi * Dclims[0]**3. * (thetalow*am_to_rad)**2.
-V2low = 1./3.*np.pi * Dclims[1]**3. * (thetalow*am_to_rad)**2.
-V2high = 1./3.*np.pi * Dclims[1]**3. * (thetahigh*am_to_rad)**2.
-V3high = 1./3.*np.pi * Dclims[2]**3. * (thetahigh*am_to_rad)**2.
-
-Vlow = V2low - V1low
-Vhigh = V3high - V2high
-
-print('Cone volume(low):', Vlow, 'Mpc^3')
-print('Cone volume(high):', Vhigh, 'Mpc^3')
-print()
-print('Galaxy number(low,high):', Nlow, Nhigh)
-print('Volume(low,high):', Vclow, Vchigh, 'Mpc^3')
-print('Density(low):', Nlow/Vclow, Nhigh/Vchigh, 'Mpc^-3')
 
 quit()
+for N in range(Nbins):
+    Vlow = 1./3.*np.pi * Dclims[0]**3. * (thetalow*am_to_rad)**2.
+    Vhigh = 1./3.*np.pi * Dclims[1]**3. * (thetahigh*am_to_rad)**2.
 
-Mpc_am = (cosmo.kpc_comoving_per_arcmin(zlims).to('Mpc/arcmin')).value # Comoving distance per arcmin at each bin limit
-areabins = np.pi * (theta * Mpc_am)**2. # Comoving area of the circle at each bin limit
-#covolbins = cosmo.comoving_volume(zbins).to('kpc3').value
+    Vlow = V2low - V1low
+    Vhigh = V3high - V2high
 
-covolbins = 1./3. * areabins * Dclims # Comoving cone volume below each bin limit
-covolbins_high = covolbins[-1] - covolbins # Comoving cone volume above each bin limit
-
-density = Ngals/covolbins # Density below the redshift limit
-density_high = Ngals_high/covolbins_high # Density above the redshift limit
-
-
+    print('Cone volume(low):', Vlow, 'Mpc^3')
+    print('Cone volume(high):', Vhigh, 'Mpc^3')
+    print()
+    print('Galaxy number(low,high):', Nlow, Nhigh)
+    print('Volume(low,high):', Vclow, Vchigh, 'Mpc^3')
+    print('Density(low):', Nlow/Vclow, Nhigh/Vchigh, 'Mpc^-3')

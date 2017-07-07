@@ -1,65 +1,109 @@
 Detection significance as function of size
 
-('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_weighted.pdf')
+Fiducial:
 
-Troughs:
+('$\\theta_{\\rm A} = 5$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
+('First bin S/N):', -7.3164181388166361)
+('Amplitude fit S/N', -12.307630210465298)
+('Amplitude:', -0.0022512866103667692)
 
-('First bin S/N):', -8.7661855155684609)
-('Amplitude fit S/N', array([-13.83016382]))
 
-('First bin S/N):', -9.9996984749439157)
-('Amplitude fit S/N', array([-11.56973516]))
+('$\\theta_{\\rm A} = 10$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
+('First bin S/N):', -9.244958610733903)
+('Amplitude fit S/N', -10.724914061487958)
+('Amplitude:', -0.0028149078562447511)
 
-('First bin S/N):', -8.1204040708575942)
-('Amplitude fit S/N', array([-8.77349022]))
 
-('First bin S/N):', -6.7954090532134144)
-('Amplitude fit S/N', array([-7.32757067]))
+('$\\theta_{\\rm A} = 15$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
+('First bin S/N):', -7.9238263397084019)
+('Amplitude fit S/N', -8.409031582518562)
+('Amplitude:', -0.0032413619008305784)
 
-Ridges:
 
-('First bin S/N):', 14.404591968360119)
-('Amplitude fit S/N', array([ 20.01299992]))
+('$\\theta_{\\rm A} = 20$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
+('First bin S/N):', -5.3756094121837439)
+('Amplitude fit S/N', -5.7323401143124419)
+('Amplitude:', -0.003346469603910857)
 
-('First bin S/N):', 14.237477736759951)
-('Amplitude fit S/N', array([ 15.41890904]))
 
-('First bin S/N):', 11.586510908732867)
-('Amplitude fit S/N', array([ 11.65912434]))
+('$\\theta_{\\rm A} = 5$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
+('First bin S/N):', 14.206119068817948)
+('Amplitude fit S/N', 20.93971085519582)
+('Amplitude:', 0.0040030324168646211)
 
-('First bin S/N):', 9.5426338936702386)
-('Amplitude fit S/N', array([ 10.11371041]))
+
+('$\\theta_{\\rm A} = 10$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
+('First bin S/N):', 14.138572848821649)
+('Amplitude fit S/N', 16.825011432164253)
+('Amplitude:', 0.0045980039317607638)
+
+
+('$\\theta_{\\rm A} = 15$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
+('First bin S/N):', 10.561800676509208)
+('Amplitude fit S/N', 11.459129120575811)
+('Amplitude:', 0.0045838556466651732)
+
+
+('$\\theta_{\\rm A} = 20$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
+('First bin S/N):', 8.4426236184169579)
+('Amplitude fit S/N', 9.0079546094954921)
+('Amplitude:', 0.0051210560113855337)
+
+
+## Weighted:
+
+('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_weighted.pdf')
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', 'Troughs')
+('First bin S/N):', -10.80339703350784)
+('Amplitude fit S/N', -17.124929858769367)
+('Amplitude:', -0.0018537451302400652)
+
+
+('$\\theta_{\\rm A} = 10$ arcmin', 'Troughs')
+('First bin S/N):', -12.168152078580821)
+('Amplitude fit S/N', -14.766312944977345)
+('Amplitude:', -0.0021245220286857909)
+
+
+('$\\theta_{\\rm A} = 15$ arcmin', 'Troughs')
+('First bin S/N):', -8.8242067175113039)
+('Amplitude fit S/N', -9.9591610104925454)
+('Amplitude:', -0.002293590582393255)
+
+
+('$\\theta_{\\rm A} = 20$ arcmin', 'Troughs')
+('First bin S/N):', -6.1130165134644336)
+('Amplitude fit S/N', -7.5479319307636521)
+('Amplitude:', -0.0026491852370585348)
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', 'Ridges')
+('First bin S/N):', 16.78389975606278)
+('Amplitude fit S/N', 23.615656085782934)
+('Amplitude:', 0.0038755865331614372)
+
+
+('$\\theta_{\\rm A} = 10$ arcmin', 'Ridges')
+('First bin S/N):', 17.103612755504681)
+('Amplitude fit S/N', 19.876912879481043)
+('Amplitude:', 0.0045297348219729824)
+
+
+('$\\theta_{\\rm A} = 15$ arcmin', 'Ridges')
+('First bin S/N):', 12.683049649378534)
+('Amplitude fit S/N', 13.662043224868857)
+('Amplitude:', 0.0045352793928894056)
+
+
+('$\\theta_{\\rm A} = 20$ arcmin', 'Ridges')
+('First bin S/N):', 9.8551742089116665)
+('Amplitude fit S/N', 10.984768286516559)
+('Amplitude:', 0.0054227025448837663)
+
 
 
 
 Detection significance of KiDS vs. GAMA
 
-('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_gama_all_complex.pdf')
-
-KiDS:
-
-('First bin S/N):', -7.8893625231422488)
-('Amplitude fit S/N', array([-10.46755569]))
-
-('First bin S/N):', -6.2924213833993274)
-('Amplitude fit S/N', array([-7.42082579]))
-
-('First bin S/N):', -6.3657106317526599)
-('Amplitude fit S/N', array([-6.58111346]))
-
-('First bin S/N):', -4.8803577637604985)
-('Amplitude fit S/N', array([-5.23040489]))
-
-GAMA:
-
-('First bin S/N):', -7.2467410195729816)
-('Amplitude fit S/N', array([-11.72858204]))
-
-('First bin S/N):', -7.6044574878640283)
-('Amplitude fit S/N', array([-8.97333668]))
-
-('First bin S/N):', -6.8355931946448596)
-('Amplitude fit S/N', array([-7.36301222]))
-
-('First bin S/N):', -5.7859048427553166)
-('Amplitude fit S/N', array([-6.13546135]))

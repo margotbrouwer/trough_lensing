@@ -27,171 +27,57 @@ h, O_matter, O_lambda = [0.7, 0.25, 0.75]
 cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
-# Radii theta of circular regions (in deg)
-#thetalist = np.array([5., 10., 15., 20.])/60.
-#thetalist = np.array([5., 10., 15., 20., 6.826])/60.
-#thetalist = np.array([5., 10., 6.826])/60.
-thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60.
-#thetalist = np.array([5.])/60.
-
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
-#Nruns = len(ijlist) # Mock patches
-#Nruns = len(thetalist) # Theta
-#Nruns = 1
-Nruns = 5
-
-for ij in np.arange(0, Nruns):
-
-    # Calculate i and j
-    i, j = ijlist[ij]
-    ijnum = ij+1
-    print(i, j, ijnum)
+#for ij in np.arange(0, len(ijlist)):
+for ij in range(1):
 
     ### 1) Defining the galaxy sample:
 
-    ## 1a) Importing the galaxy catalogue.
-
-    # Select the galaxy catalogue for trough selection (kids, gama or mice)
-    #cat = 'gama'
-    #cat = 'kids'
     cat = 'mice'
 
+    ## 1a) Importing the galaxy catalogue.
+
     # Name of the pre-defined galaxy selection
-    #selection = 'all'
-    #selection = 'mice'
-    #selection = 'lowZ'
-    #selection = 'highZ'
-    selection = 'miceZ-%g'%(ijnum)
-    
-    #selection = 'gama_all'
-    #selection = 'kids_all'
+    selection = 'miceZ'
     
     
     # Select mask type (nomask or complex)
-    if 'mice' in cat:
-
-        if 'miceZ' in selection:
-            masktype = 'nomask-Z'
-        if Nruns > 14:
-            masktype = 'nomask-%g'%(ijnum)
-            coordsM = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
-        else:
-            coordsM = [[0.,20.], [0.,20.]]
-
-    else:
-        masktype = 'complex'
-
-
-
+    i, j = ijlist[ij]
+    ijnum = i + 4.*j + 1.
+    print(i, j, ijnum)
+    
+    #masktype = 'nomask-%g'%(ijnum)
+    masktype = 'nomask-new'
+    
     # Spacing of the trough and mask grids (in degree)
     gridspace = 0.04
     mask_density = 1/(gridspace*60.)**2 # Density of mask gridpoints (in arcmin^-2)
-
-
-    # Redshift samples
-    zmin = 0.1
-    zlim = 0.198
-    zmax = 0.3
-
-
-
+    
+    
     # Import galaxy catalog
-    if 'kids' in cat:
-        
-        if 'gama' in selection:
-            # Names of the GAMA fields
-            fieldnames = ['G9', 'G12', 'G15']
-            
-            # Boundaries of the KiDS fields
-            coordsG9 = [[128.0,142.5], [-2.5,3.5]]
-            coordsG12 = [[155.0,190.0], [-3.5,3.5]]
-            coordsG15 = [[209.5,239.0], [-3.5,3.5]]
-            fieldboundaries = np.array([coordsG9,coordsG12,coordsG15]) # Boundaries of all fields
-        else:
-            # Names of the KiDS fields
-            fieldnames = ['G9', 'G12', 'G15', 'G23', 'GS']
-            
-            # Boundaries of the KiDS fields
-            coordsG9 = [[128.0,142.5], [-2.5,3.5]]
-            coordsG12 = [[155.0,190.0], [-3.5,3.5]]
-            coordsG15 = [[209.5,239.0], [-3.5,3.5]]
-            coordsG23 = [[328.0,361.0], [-35.0,-28.0]]
-            coordsGS = [[31.0,54.0], [-35.0,-29.0]]
-            fieldboundaries = np.array([coordsG9,coordsG12,coordsG15,coordsG23,coordsGS]) # Boundaries of all fields
-        
-        # Path to the KiDS fields
-        path_kidscat = '/data2/brouwer/KidsCatalogues'
-        if 'nomask' in masktype:
-            kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17-withNEWzANNz2.fits'
-        else:
-            kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
-        
-        # Importing the KiDS galaxies
-        galRA, galDEC, galZB, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
-        utils.import_kidscat(path_kidscat, kidscatname)
-        
-        # Calculating the absolute magnitudes
-        h, O_matter, O_lambda = [0.7, 0.25, 0.75]
-        rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
-        
-        gama_rlim = 20.2
-        
-        """
-        # Write test absmag_r catalogue
-        outputnames = ['RA', 'DEC', 'Z', 'mag_auto', 'mag_r', 'absmag_r']
-        output = [galRA, galDEC, galZ, mag_auto, rmag, rmag_abs]
-
-        testfilename = '/data2/brouwer/KidsCatalogues/absmag_test.fits'
-        print('Writing output catalogue...')
-        utils.write_catalog(testfilename, np.arange(len(galRA))+1, outputnames, output)
-        """
-
-    if 'gama' in cat:
-        
-        # Names of the GAMA fields
-        fieldnames = ['G9', 'G12', 'G15']
-        
-        # Boundaries of the GAMA fields
-        coordsG9 = [[129., 141.], [-2.,3.]]
-        coordsG12 = [[174., 186.], [-3.,2.]]
-        coordsG15 = [[211.5, 223.5], [-2.,3.]]
-        fieldboundaries = np.array([coordsG9,coordsG12,coordsG15])
-
-        # Path to the GAMA fields
-        path_gamacat = '/data2/brouwer/MergedCatalogues'
-        gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
-        
-        # Importing the GAMA galaxies
-        galRA, galDEC, galZ, rmag, rmag_abs = utils.import_gamacat(path_gamacat, gamacatname)
-        
-        gama_rlim = 19.8
-
-    # Import galaxy catalog
-    if 'mice' in cat:
-        
-        # Names of the GAMA fields
-        fieldnames = ['M']
-        
-        # Boundaries of the MICE field
-        fieldboundaries = np.array([coordsM]) # Boundaries of all fields
-        print(coordsM)
-        
-        # Path to the Mice field
-        path_mockcat = '/data2/brouwer/MergedCatalogues'
-        if 'miceZ' in selection:
-            mockcatname = 'mice_gama_highZ_catalog.fits'
-        else:
-            mockcatname = 'mice_gama_catalog.fits'
-        
-        # Importing the Mice galaxies
-        galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
-        utils.import_mockcat(path_mockcat, mockcatname)
-        rmag_abs = rmag_abs + micecor
-        
-        gama_rlim = 20.2
+    
+    # Names of the MICE fields
+    fieldnames = ['M']
+    
+    # Boundaries of the MICE field
+    coordsM = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
+    fieldboundaries = np.array([coordsM]) # Boundaries of all fields
+    
+    print(coordsM)
+    
+    # Path to the Mice field
+    path_mockcat = '/data2/brouwer/MergedCatalogues'
+    mockcatname = 'mice_gama_catalog.fits'
+    
+    # Importing the Mice galaxies
+    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
+    utils.import_mockcat(path_mockcat, mockcatname)
+    rmag_abs = rmag_abs + micecor
+    
+    gama_rlim = 20.2
 
 
     # Import maskfile if present
@@ -203,68 +89,31 @@ for ij in np.arange(0, Nruns):
     else:
         nomaskfile = True
         print('No mask file present')
-
-    print(maskfilename)
-
-
+    
 
     ## 1b) Select the galaxy sample to define the troughs
 
     # Defining the selection for the galaxy sample
-
-    if selection == 'all':
-        galmask = (galZ < 0.5) & (rmag < gama_rlim)
-    if selection == 'absmag':
-        galmask = (rmag_abs < -19.7) & (rmag < gama_rlim)
-    if 'mice' in selection:
-        galmask = (galZ < 0.5) & (rmag_abs < -18.9 + micecor) & (rmag < gama_rlim)
-
-    if 'lowZ' in selection:
-        galmask = (zmin < galZ)&(galZ < zlim) & (rmag_abs < -21.) & (rmag < gama_rlim)
-        #thetalist = np.array([5., 10., 15., 20.])/60.
-        thetalist = np.array([10.])/60.
-    
-    if 'highZ' in selection:
-        galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag < gama_rlim)
-        #thetalist = np.array([3.41290231, 6.82580462, 10.23870693, 13.65160924])/60.
-        thetalist = np.array([6.826])/60.
-
-    
+        
     if 'miceZ' in selection:
-        #zlims = np.array([ 0.1, 0.193, 0.290, 0.392, 0.5])
-        zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
-        galmask = (zlims[ij] < galZ)&(galZ < zlims[ij+1]) & (rmag_abs < -21.)
+        
+        #zlims = np.array([0.1, 0.198, 0.3])
+        #thetalist = np.array([10., 6.826])/60.
+        
+        zlims = np.array([ 0.1, 0.193, 0.290, 0.392, 0.5])
+        thetalist = np.array([10., 6.892, 5.447, 4.616])/60.
+        Ntheta = len(thetalist)
+        
+        galmask = [ (zlims[theta] < galZ)&(galZ < zlims[theta+1]) & (rmag_abs < -21.) & (rmag < gama_rlim) \
+                        for theta in range(Ntheta) ]
 
-        #miceZthetalist = np.array([14.509, 10., 7.904, 6.697])/60.
-        miceZthetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60.
-        thetalist = np.array([miceZthetalist[ij]])        
 
-
-
-
-        print('Zlims:', zlims[ij], zlims[ij+1], ', theta:', thetalist[0]*60.)
-
+    Ngalsel = np.array([ float(sum(galmask[theta])) for theta in range(Ntheta) ])
+    Ngaltot = np.array([ float(len(galmask[theta])) for theta in range(Ntheta) ])
     
-    if 'kids' in selection:
-        # Path to the KiDS fields
-        path_kidscat = '/data2/brouwer/KidsCatalogues'
-        kidscatname = '/KiDS_DR3_GAMA-like_Maciek_NOMASKING_01.06.17-withNEWzANNz2.fits'
-        
-        # Importing the KiDS coordinates
-        galRA, galDEC, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
-        utils.import_kidscat(path_kidscat, kidscatname)
-        
-        if 'all' in selection:
-            galmask = (galZ >= 0.)
-        if 'absmag' in selection:
-            rmag_abs = calc_absmag()
-            galmask = (rmag_abs < -19.7)
-
-    Ntheta = len(thetalist)
-
     print('Theta:', thetalist*60., 'arcmin')
     print()
-    print( 'Total galaxy selection: %i/%i = %g percent'%(np.sum(galmask), len(galmask), float(np.sum(galmask))/float(len(galmask))*100.) )
+    print('Total galaxy selection:', Ngalsel, Ngaltot, Ngalsel/Ngaltot*100., 'percent')
 
     # These lists will contain the full trough catalog (for all fields)
     gridRA_tot = []
@@ -285,42 +134,23 @@ for ij in np.arange(0, Nruns):
             
         # Selecting the galaxies lying within this field
         fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
+        field_galaxies = np.append(field_galaxies, np.sum(fieldmask))
         
         print()
-        print('%s field %s:'%(cat, fieldnames[field]))
-
-        # Applying the galaxy mask to the KiDS sample
-        fieldmask = galmask*fieldmask
-
-        # Coordinates of the galaxies
-        galRA_field = galRA[fieldmask]
-        galDEC_field = galDEC[fieldmask]
-        galcoords = SkyCoord(ra=galRA_field*u.deg, dec=galDEC_field*u.deg)
+        print('%s field %s: contains %g galaxies'%(cat, fieldnames[field], np.sum(fieldmask)))
         
-        print('Selected: %g galaxies'%np.sum(fieldmask))
-        field_galaxies = np.append(field_galaxies, np.sum(fieldmask))
-
         ### 2) Creating the grid:
         
         ## 2a) Creating a cartesian grid of narrowly spaced (2 arcmin) points.
        
         # Define the grid coordinates in this field
         
-        if 'mice' in cat:
-            # Creating the grid for each field
-            gridspace_mask = 0.04 # in degree
-            gridRA, gridDEC, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask, True)
+        # Creating the grid for each field
+        gridspace_mask = 0.04 # in degree
+        gridRA, gridDEC, gridcoords = utils.define_gridpoints(fieldRAs, fieldDECs, gridspace_mask, True)
 
-            Ngrid = len(gridcoords)    
-            catmask = np.ones(Ngrid)
-        else:
-            # Import the mask coordinates of this field
-            path_catmask = '/data2/brouwer/MergedCatalogues/Masks/%s_mask_%s_%gdeg.fits'%(cat, fieldnames[field], gridspace)
-            
-            maskcat = pyfits.open(path_catmask, memmap=True)[1].data
-            gridRA, gridDEC, catmask = [maskcat['RA'], maskcat['DEC'], maskcat['mask']]
-            gridcoords = SkyCoord(ra=gridRA*u.deg, dec=gridDEC*u.deg)
-            Ngrid = len(gridcoords)
+        Ngrid = len(gridcoords)    
+        catmask = np.ones(Ngrid)
         
         
         # Field area information for printing to text file
@@ -339,7 +169,15 @@ for ij in np.arange(0, Nruns):
         # Looping over different circle radius sizes (theta)
         for theta in range(Ntheta):
             print('Theta =', thetalist[theta]*60., 'arcmin')
-        
+            
+            # Applying the galaxy mask to the KiDS sample
+            sampmask = galmask[theta] * fieldmask
+            
+            # Coordinates of the galaxies
+            galRA_field = galRA[sampmask]
+            galDEC_field = galDEC[sampmask]
+            galcoords = SkyCoord(ra=galRA_field*u.deg, dec=galDEC_field*u.deg)
+            
             # Looping over the smaller samples of grid points (to avoid memory overload)
             for s in range(len(sampindex)-1):
             #for s in range(1):
@@ -437,24 +275,17 @@ for ij in np.arange(0, Nruns):
     # Density
     
     # Average redshift of the trough sample
-    Z = galZ[galmask]
-    troughZ_tot = np.array([np.mean(Z)]*Ngrid_tot)
-    
-    if 'Z' in selection:
-        if 'mice' in cat:
-            Dc = galDc[galmask]
-        else:
-            Dc = (cosmo.comoving_distance(Z).to('Mpc')).value
 
-        troughDa = np.mean( Dc/(1+Z) )
-        print(troughDa)
-        
-        am_to_rad = np.pi/(60.*180.)
-        Aefftheta_tot = (Nmasktheta_tot/mask_density) * (am_to_rad * troughDa)**2. # Effective area of each circle (in Mpc^2)
-        field_density = field_density / (am_to_rad * troughDa)**2.
+    troughZ = np.array([ np.mean(galZ[(galmask[theta])]) for theta in range(Ntheta) ])
+    troughZ_tot = np.array([ [troughZ[theta]]*Ngrid_tot for theta in range(Ntheta) ])
     
-    else:
-        Aefftheta_tot = Nmasktheta_tot/mask_density # Effective area of each circle (in arcmin^2)
+    troughDc = np.array([ np.mean(galDc[(galmask[theta])]) for theta in range(Ntheta) ])
+    troughDa = np.array([ np.mean( galDc[(galmask[theta])] / (1 + galZ[(galmask[theta])]) ) for theta in range(Ntheta) ])
+    
+    am_to_rad = np.pi/(60.*180.)
+    Aefftheta_tot = (Nmasktheta_tot/mask_density) * (am_to_rad * troughDa)**2. # Effective area of each circle (in Mpc^2)
+    field_density = field_density / (am_to_rad * troughDa)**2.
+
 
     rhotheta_tot = Ngaltheta_tot/Aefftheta_tot
 
@@ -462,7 +293,7 @@ for ij in np.arange(0, Nruns):
     sort_rho = np.array([np.argsort(rhotheta_tot[theta]) for theta in range(Ntheta)])
     Ptheta_tot = np.array([np.argsort(gridID_tot[sort_rho[theta]])/float(Ngrid_tot) for theta in range(Ntheta)])
     delta_tot = (rhotheta_tot - field_density[-1]) / field_density[-1]
-    
+
     # Following the definition from DES, we usually define the 20% of all circles with the lowest density to be the troughs.
     # The 20% of all circles with the highest density are defined as overdensities ("ridges").
 
@@ -480,7 +311,8 @@ for ij in np.arange(0, Nruns):
     # percentage of circles below its density (Ptheta), and non-overlapping selection flag (Stheta).
 
     # Defining the names of the columns
-    outputnames = ['RA', 'DEC', 'Z']
+    outputnames = ['RA', 'DEC']
+    
     [outputnames.append('Ngaltheta%g'%(theta*60)) for theta in thetalist]
     [outputnames.append('Aefftheta%g'%(theta*60)) for theta in thetalist]
     [outputnames.append('Pmasktheta%g'%(theta*60)) for theta in thetalist]
@@ -490,7 +322,8 @@ for ij in np.arange(0, Nruns):
     #[outputnames.append('Stheta%g'%(theta*60)) for theta in thetalist]
 
     # Defining the output
-    output = [gridRA_tot, gridDEC_tot, troughZ_tot]
+    output = [gridRA_tot, gridDEC_tot]
+    
     [output.append(Ngaltheta_tot[theta,:]) for theta in range(Ntheta)]
     [output.append(Aefftheta_tot[theta,:]) for theta in range(Ntheta)]
     [output.append(Pmasktheta_tot[theta,:]) for theta in range(Ntheta)]

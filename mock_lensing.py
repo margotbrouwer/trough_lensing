@@ -32,24 +32,48 @@ inf = np.inf
 h, O_matter, O_lambda = [0.7, 0.25, 0.75]
 cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 
+
+# Defining the trough radii
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+#thetalist = np.array([5.]) # in arcmin
+
+# Defining mock patches
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
+#Nruns = len(ijlist) # Mock patches
+#Nruns = len(thetalist) # Theta
+Nruns = 5
+#Nruns = 1
+
 # Configuration
 
-cat = 'mice' # Select the galaxy catalogue for trough selection (kids, gama or mice)
-selection = 'highZ' # Name of the pre-defined galaxy selection
+for ij in np.arange(0, Nruns):
+    
+    # Number of the current run
+    ijnum = ij+1
 
-# Select mask type (nomask or complex)
-
-#for ij in range(len(ijlist)):
-for ij in range(1):
-
-    i, j = ijlist[ij]
-    ijnum = i + 4.*j + 1.
-
-    #masktype = 'nomask' # Select mask type
-    masktype = 'nomask-%g'%ijnum
+    # Select the galaxy catalogue for trough selection
+    cat = 'mice'
+    
+    # Name of the pre-defined galaxy selection
+    #selection = 'all'
+    #selection = 'lowZ'
+    selection = 'miceZ-%g'%ijnum
+    
+    masktype = 'nomask-1'
+    
+    # Select mask type
+    if Nruns > 14:
+        masktype = 'nomask-%g'%ijnum
+        i, j = ijlist[ij]
+        thetanum = 0
+    else:
+        masktype = 'nomask-1'
+        thetanum = ij
+    if 'miceZ' in selection:
+        masktype = 'nomask-Z'
+    
     
     # Import trough catalog
     path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
@@ -62,18 +86,23 @@ for ij in range(1):
     # Weights of the troughs
     troughweights = np.ones(len(troughRA))
     
-    # Defining the trough radii
-    thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-    #thetalist = np.array([5.]) # in arcmin
     
-    Runit = 'arcmin'
+    
     # Redshift samples
     if 'lowZ' in selection:
         thetalist = np.array([10.])
-        Runit = 'Mpc'
     if 'highZ' in selection:
-        thetalist = np.array([6.835])
+        thetalist = np.array([6.826])
+        
+    if 'miceZ' in selection:
+        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])
+    
+   
+    # Select unit (arcmin or Mpc)
+    if 'Z' in selection:
         Runit = 'Mpc'
+    else:
+        Runit = 'arcmin'
     
     if 'arcmin' in Runit:
         Rmin = 2
@@ -99,13 +128,12 @@ for ij in range(1):
         Rarcmax = Rmax
     
     
-    # Trough selection
+    ### Trough selection
 
     """
+    """
     
-    # Percentiles
-    thetanum = 0
-
+    ## Percentiles
     if 'arcmin' in Runit:
         
         ymin, ymax = [-1.4e-3,1.5e-3]
@@ -135,36 +163,50 @@ for ij in range(1):
     theta = thetalist[thetanum]
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(Npercs) ])
     maskvals_tot = np.array([ [[0.8, np.inf], [perclist[p], perclist[p+1]]] for p in range(Npercs) ])
-
-
+    
+    """
+    
+    ## Fiducial troughs
     
     # Sizes
     
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for theta in thetalist])
     maskvals_tot = np.array([ [[0.8, np.inf], [0., 0.2]] for theta in thetalist ])
-
-    """
     
-    # Weighted profiles
+
+    
+    # Troughs/ridges
+    
+    perclist = [ [0., 0.2], [0.8, 1.] ]
+    perclist = [ [0.8, 1.] ]
+    theta = thetalist[thetanum]
+    
+    paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(len(perclist)) ])
+    maskvals_tot = np.array([ [[0.8, np.inf], perclist[p] ] for p in range(len(perclist)) ])
+    
+
+    
+    ## Weighted profiles
     
     # Redshifts
+    #weightcatname = 'amplitude_trough_weights_%s_lowZ_%s.fits'%(cat, masktype)
     
-    # Full directory & name of the corresponding KiDS catalogue
-    weightcatname = 'amplitude_trough_weights_%s_lowZ_%s.fits'%(cat, masktype)
-    weightfile = '%s/%s'%(path_troughcat, weightcatname)
-    weightcat = pyfits.open(weightfile, memmap=True)[1].data
+    # Sizes
+    weightcatname = 'amplitude_trough_weights_%s_%s_%s.fits'%(cat, selection, masktype)
     
     perclist = [ [-inf , 0.], [0., inf] ]
-    #perclist = [ [0. , 0.2], [0.8, 1.] ]
-    theta = thetalist[0]
+    theta = thetalist[thetanum]
     
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'delta%g'%theta] for p in range(len(perclist)) ])
     maskvals_tot = np.array([ [[0.8, np.inf], perclist[p] ] for p in range(len(perclist)) ])
-    
-    troughweights = weightcat['Wtheta%g'%theta]
+
+    weightfile = '%s/%s'%(path_troughcat, weightcatname)
     print('Weighted by:', weightfile, theta)
     
-    """
+    weightcat = pyfits.open(weightfile, memmap=True)[1].data
+    troughweights = weightcat['Wtheta%g'%theta]
+    
+
     
     """
     
@@ -182,11 +224,13 @@ for ij in range(1):
     utils.import_mockcat(path_mockcat, mockcatname)
 
     # Boundaries of the field
-    fieldRAs = [i*20.,(i+1)*20.]
-    fieldDECs = [j*20.,(j+1)*20.]
+
+    if Nruns > 14:
+        fieldRAs, fieldDECs = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
+    else:
+        fieldRAs, fieldDECs =  [[0.,20.], [0.,20.]]
     
-    print(i, j, ijnum)
-    print(fieldRAs, fieldDECs)
+    print(ijnum, fieldRAs, fieldDECs)
     
     # Selecting the galaxies lying within this field
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
@@ -242,7 +286,7 @@ for ij in range(1):
         
         print()
         print(filename_var)
-        print('Selected:', len(RA), len(weights), 'of', len(troughRA), 'lenses', '(', float(len(RA))/float(len(troughRA))*100., 'percent )')
+        print('Selected:', len(RA), 'of', len(troughRA), 'lenses', '(', float(len(RA))/float(len(troughRA))*100., 'percent )')
         print()
         
         if 'pc' in Runit:
@@ -260,14 +304,14 @@ for ij in range(1):
         ng = treecorr.NGCorrelation(config)
         ng.process(troughcat,galcat)   # Compute the cross-correlation.
 
-        output_temp = 'treecorr_temp.txt'
+        output_temp = 'temp_treecor.txt'
         ng.write(output_temp)     # Write out to a file.
         shearfile = np.loadtxt(output_temp).T
 
         Rbins, gamma_t, gamma_x, gamma_error, Nsrc = \
         [shearfile[0], shearfile[3], shearfile[4], np.sqrt(shearfile[5]), shearfile[7]]
 
-        path_output = '/data2/brouwer/shearprofile/trough_results_July/No_bins_%s_%s_%s'%(cat, selection, masktype)
+        path_output = '/data2/brouwer/shearprofile/trough_results_final/No_bins_%s_%s_%s'%(cat, selection, masktype)
         filename_output = '%s/%s.txt'%(path_output, filename_var)
 
         if not os.path.isdir(path_output):
