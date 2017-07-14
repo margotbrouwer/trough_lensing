@@ -28,6 +28,7 @@ h, O_matter, O_lambda = [0.7, 0.25, 0.75]
 cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
+
 # Defining the circle size and redshift bins
 #thetalow = np.array([5., 10., 15., 20.]) # in arcmin
 thetalow = np.array([10.]) # in arcmin
@@ -128,7 +129,10 @@ for N in range(Nbins):
 
 # Equal comoving projected radius at all redshifts
 Dalow = Dahigh[1]
+Alow = 20.*40.
+
 thetahigh = [thetalow * (Dalow / Dahigh[N]) for N in range(Nbins)]
+Ahigh = np.array([Alow * (Dalow / Dahigh[N])**2 for N in range(Nbins)])
 
 Rlow = (thetalow*am_to_rad) * Dalow
 Rhigh = [(thetahigh[N]*am_to_rad) * Dahigh[N] for N in range(Nbins)]
@@ -141,6 +145,8 @@ print('theta(low):', thetalow, 'arcmin')
 print('theta(high):', thetahigh, 'arcmin')
 print('R(low):', Rlow, 'Mpc')
 print('R(high):', Rhigh, 'Mpc')
+print('A(high):', Ahigh, 'degree^2')
+print('W(high):', Ahigh/20., 'degree')
 print()
 print('R(min,max):', (thetamin*am_to_rad) * Damean, (thetamax*am_to_rad) * Damean, 'Mpc')
 

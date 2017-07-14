@@ -10,6 +10,6 @@ FROM micecatv1_0_hpix
 WHERE (0.1 < `z` AND `z` < 0.9) AND (`abs_mag_r` > -19.3) AND (`r_sdss_true` > 20.)
 
 HighZ galaxies:
-SELECT `id`, `ra`, `dec`, `z`, `d_c`, `abs_mag_r`, `r_sdss_true`, `gamma1`, `gamma2` 
+SELECT `id`, `ra`, `dec`, `z`, `d_c`, `abs_mag_r`, `r_sdss_true`, `log_m`, `gr_restframe` 
 FROM micecatv1_0_hpix 
-WHERE (`z` < 0.6) AND (abs_mag_r < -21)
+WHERE (`z` < 0.6)

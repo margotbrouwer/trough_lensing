@@ -27,8 +27,8 @@ rc('text',usetex=True)
 # Change all fonts to 'Computer Modern'
 rc('font',**{'family':'serif','serif':['Computer Modern']})
 
-colors = ['red', 'orange', 'cyan', 'blue', 'green']
-#colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0']
+#colors = ['red', 'orange', 'cyan', 'blue', 'green']
+colors = ['#d7191c', '#fdae61', '#92c5de', '#0571b0', '#0ba52d']
 
 h=0.7
 
@@ -38,29 +38,34 @@ show = True
 
 """
 """
+
 # Mice redshifts
 
-#thetalist = np.array([14.509, 10., 7.904, 6.697]) # in arcmin
 thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934]) # in arcmin
+zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
+
+#thetalist = np.array([15.56, 10., 7.353, 5.792]) #, 4.777]) # Dc
+#zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489]) #, 0.6])
 
 Runit = 'Mpc'
 valpha = 0.3
+linestyle = '-'
 
 selection = ['mice_miceZ-%i_nomask-Z'%(t+1) for t in range(len(thetalist))]
+#selection = ['mice_miceZa_nomask-Za-%i'%(t+1) for t in range(len(thetalist))]
 selection_name = selection[0]
 
-#zlims = np.array([ 0.1, 0.193, 0.290, 0.392, 0.5])
-zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
 """
 
-# highZ/lowZ
+# lowZ/highZ
 
 thetalist = np.array([10., 6.826]) # in arcmin
 
 Runit = 'Mpc'
 valpha = 0.3
+linestyle = '-'
 
 selection = ['kids_lowZ_complex', 'kids_highZ_complex']
 #selection = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
@@ -69,13 +74,14 @@ selection_name = selection[0]
 zlims = np.array([ 0.1, 0.198, 0.3])
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
-#mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
-#mockthetalist = thetalist
-#mockcolors = colors
+mocksel = ['mice_lowZ_nomask-5', 'mice_highZ_nomask-5']
+mockthetalist = thetalist
+mockcolors = colors
 
-mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
-mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.826]*(len(mocksel)/2) ) # in arcmin
-mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
+#mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
+#mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.826]*(len(mocksel)/2) ) # in arcmin
+#mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
+
 
 
 # Sizes
@@ -84,6 +90,7 @@ thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 
 Runit = 'arcmin'
 valpha = 1.
+linestyle = '--'
 
 selection = ['kids_mice_complex' for t in range(len(thetalist))]
 selection_name = selection[0]
@@ -131,15 +138,13 @@ if ('kids' in selection_name) or ('gama' in selection_name):
 
 diffAlist = abs(Alist[0] - Alist[1])
 diffAlist_error = np.sqrt(Alist_error[0]**2. + Alist_error[1]**2.)
-
 diffmodel = np.zeros(len(Alist[0]))
-diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
 
-diffprob = 1 - chi2.cdf(diffchi2, len(Alist[0]))
+diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
+diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
 diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
 
 print(diffchi2, diffprob, diffsigma)
-
 
 
 ## AMPLITUDE (Percentile)
@@ -158,7 +163,7 @@ for i in range(len(selection)):
   
 if ('kids' in selection_name) or ('gama' in selection_name):
     # Plot mock amplitudes
-    [plt.plot(perccenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=valpha, zorder=1) \
+    [plt.plot(perccenters_mock[i], Alist_mock[i], ls=linestyle, color=mockcolors[i], alpha=valpha, zorder=1) \
                 for i in range(len(mocksel))]
 
 # Plot observed amplitudes
@@ -187,6 +192,8 @@ plt.axvline(x=0.5, ls=':', color='black', zorder=2)
 if 'pc' in Runit:
     plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
     plt.axis([0.,1.,-5.,13.])
+    if 'miceZ' in selection_name:
+        plt.axis([0.,1.,-5.,9.])        
 if 'arcmin' in Runit:
     plt.ylabel(r'Shear Amplitude')
     plt.axis([0.,1.,-0.008,0.012])
@@ -212,7 +219,7 @@ if 'arcmin' in Runit:
     
     if ('kids' in selection_name) or ('gama' in selection_name):
         # Plot mock amplitudes
-        [plt.plot(perccenters_mock[i], Alist_mock[i], ls='-', color=colors[i], zorder=1) \
+        [plt.plot(perccenters_mock[i], Alist_mock[i], ls=linestyle, color=colors[i], zorder=1) \
         for i in range(len(mocksel))]
 
     plt.axhline(y=0., ls=':', color='black', zorder=2)
@@ -285,10 +292,7 @@ if ('kids' in selection_name) or ('gama' in selection_name):
 
 
 ## AMPLITUDE (delta)
-if 'miceZ' in selection_name:
-    fig = plt.figure(figsize=(5.5,4))
-else:
-    fig = plt.figure(figsize=(5,4))
+fig = plt.figure(figsize=(5,4))
 ax1 = fig.add_subplot(111)
 
 # Plot observed amplitudes
@@ -303,7 +307,7 @@ if ('kids' in selection_name) or ('gama' in selection_name):
         label=labels[i], marker='.', ls='', color=colors[i], zorder=3) for i in range(len(selection))]
 
     # Plot mock amplitudes
-    [plt.plot(deltacenters_mock[i], Alist_mock[i], ls='-', color=mockcolors[i], alpha=valpha, zorder=1) \
+    [plt.plot(deltacenters_mock[i], Alist_mock[i], ls=linestyle, color=mockcolors[i], alpha=valpha, zorder=1) \
     for i in range(len(mocksel))]
 else:
     if 'miceZ' in selection_name:
@@ -323,7 +327,7 @@ if 'pc' in Runit:
     plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
     plt.axis([-1.,1.7,-5.,13.])
     if 'miceZ' in selection_name:
-        plt.axis([-1.3,2.2,-5.,13.])
+        plt.axis([-1.2,1.9,-5.,13.])
 if 'arcmin' in Runit:
     plt.ylabel(r'Shear Amplitude')
     plt.axis([-0.8,1.5,-0.007,0.012])
@@ -348,7 +352,7 @@ if 'arcmin' in Runit:
 
     if ('kids' in selection_name) or ('gama' in selection_name):
         # Plot mock amplitudes
-        [plt.plot(deltacenters_mock[i], Alist_mock[i], ls='-', color=colors[i], zorder=1) \
+        [plt.plot(deltacenters_mock[i], Alist_mock[i], ls=linestyle, color=colors[i], zorder=1) \
         for i in range(len(mocksel))]
 
     plt.axhline(y=0., ls=':', color='black', zorder=2)

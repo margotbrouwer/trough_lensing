@@ -76,7 +76,7 @@ plt.legend(loc='lower right')
 plt.gca().invert_yaxis()
 
 ext = 'pdf'
-plotfilename = '/data2/brouwer/shearprofile/trough_results_July/Plots/redshift_limit'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_final/Plots/redshift_limit'
 plotname = '%s.%s'%(plotfilename, ext)
 
 plt.savefig(plotname, format=ext, bbox_inches='tight')
@@ -108,7 +108,7 @@ plt.ylim(0.,1.)
 #plt.yscale('log')
 plt.legend(loc='upper left')
 
-plotfilename = '/data2/brouwer/shearprofile/trough_results_Apr/Plots/magnitude_distribution'
+plotfilename = '/data2/brouwer/shearprofile/trough_results_final/Plots/magnitude_distribution'
 
 plt.tight_layout()
 

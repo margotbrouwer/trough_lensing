@@ -29,9 +29,10 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-#thetalist = np.array([5., 10., 15., 20., 6.826])/60.
+thetalist = np.array([5., 10., 15., 20., 6.826])/60.
 #thetalist = np.array([5., 10., 6.826])/60.
-thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60.
+#thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60. # Da
+#thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])/60. # Dc
 #thetalist = np.array([5.])/60.
 
 
@@ -64,6 +65,7 @@ for ij in np.arange(0, Nruns):
     #selection = 'mice'
     #selection = 'lowZ'
     #selection = 'highZ'
+    #selection = 'miceZa'
     selection = 'miceZ-%g'%(ijnum)
     
     #selection = 'gama_all'
@@ -73,14 +75,23 @@ for ij in np.arange(0, Nruns):
     # Select mask type (nomask or complex)
     if 'mice' in cat:
 
-        if 'miceZ' in selection:
-            masktype = 'nomask-Z'
         if Nruns > 14:
             masktype = 'nomask-%g'%(ijnum)
             coordsM = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
         else:
             coordsM = [[0.,20.], [0.,20.]]
 
+        if 'miceZ' in selection:
+            masktype = 'nomask-Z'
+        if 'miceZc' in selection:
+            masktype = 'nomask-Zc'
+        if 'miceZa' in selection:
+            masktype = 'nomask-Za-%g'%(ijnum)
+            
+            Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
+            highW = Wlist[ij]
+            coordsM = [[0.,highW], [0.,20.]]
+        
     else:
         masktype = 'complex'
 
@@ -187,7 +198,7 @@ for ij in np.arange(0, Nruns):
             mockcatname = 'mice_gama_catalog.fits'
         
         # Importing the Mice galaxies
-        galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
+        galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2, galmass = \
         utils.import_mockcat(path_mockcat, mockcatname)
         rmag_abs = rmag_abs + micecor
         
@@ -231,17 +242,26 @@ for ij in np.arange(0, Nruns):
 
     
     if 'miceZ' in selection:
-        #zlims = np.array([ 0.1, 0.193, 0.290, 0.392, 0.5])
-        zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
-        galmask = (zlims[ij] < galZ)&(galZ < zlims[ij+1]) & (rmag_abs < -21.)
-
-        #miceZthetalist = np.array([14.509, 10., 7.904, 6.697])/60.
+        zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])
+        zmask = (zlims[ij] < galZ)&(galZ < zlims[ij+1])
+        
+        # AbsMag cut
+        galmask = zmask * (rmag_abs < -21.)
+        
+        # DM halo mass
+        #galmask = zmask * (galmass > 12.5)
+        
+        # AbsMag cut with Luminosity evolution
+        #Z = np.mean(galZ[zmask])
+        #dM = -2.5*np.log10(1+Z)
+        #galmask = zmask * (rmag_abs < (-21.+dM))
+        #print('Abs. Magnitude limit:', -21.+dM)
+        
         miceZthetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60.
+        if 'miceZc' in selection:
+            miceZthetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])/60.
         thetalist = np.array([miceZthetalist[ij]])        
-
-
-
-
+        
         print('Zlims:', zlims[ij], zlims[ij+1], ', theta:', thetalist[0]*60.)
 
     
@@ -261,7 +281,7 @@ for ij in np.arange(0, Nruns):
             galmask = (rmag_abs < -19.7)
 
     Ntheta = len(thetalist)
-
+    
     print('Theta:', thetalist*60., 'arcmin')
     print()
     print( 'Total galaxy selection: %i/%i = %g percent'%(np.sum(galmask), len(galmask), float(np.sum(galmask))/float(len(galmask))*100.) )
@@ -437,17 +457,17 @@ for ij in np.arange(0, Nruns):
     # Density
     
     # Average redshift of the trough sample
-    Z = galZ[galmask]
-    troughZ_tot = np.array([np.mean(Z)]*Ngrid_tot)
+    
+    troughZ = galZ[galmask]
+    troughZ_tot = np.array([np.mean(troughZ)] * Ngrid_tot)
     
     if 'Z' in selection:
         if 'mice' in cat:
-            Dc = galDc[galmask]
+            troughDc = galDc[galmask]
         else:
-            Dc = (cosmo.comoving_distance(Z).to('Mpc')).value
+            troughDc = (cosmo.comoving_distance(troughZ).to('Mpc')).value
 
-        troughDa = np.mean( Dc/(1+Z) )
-        print(troughDa)
+        troughDa = np.mean( troughDc/(1+troughZ) )
         
         am_to_rad = np.pi/(60.*180.)
         Aefftheta_tot = (Nmasktheta_tot/mask_density) * (am_to_rad * troughDa)**2. # Effective area of each circle (in Mpc^2)

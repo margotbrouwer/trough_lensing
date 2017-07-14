@@ -107,3 +107,27 @@ Fiducial:
 
 Detection significance of KiDS vs. GAMA
 
+('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_final/Plots/troughs_gama_kids_mocks_complex.pdf')
+
+('$\\theta_{\\rm A} = 5$ arcmin', "GAMA: $P(5')<0.2$")
+('First bin S/N):', -7.1141806422271427)
+('Amplitude fit S/N', -11.949186767317515)
+('Amplitude:', -0.002793598638674605)
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', "KiDS: $P(5')<0.2$")
+('First bin S/N):', -7.3164181388166361)
+('Amplitude fit S/N', -12.307630210465298)
+('Amplitude:', -0.0022512866103667692)
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', "GAMA: $P(5')>0.8$")
+('First bin S/N):', 12.805237729122267)
+('Amplitude fit S/N', 18.964449293436658)
+('Amplitude:', 0.0044307269530053876)
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', "KiDS: $P(5')>0.8$")
+('First bin S/N):', 14.206119068817948)
+('Amplitude fit S/N', 20.93971085519582)
+('Amplitude:', 0.0040030324168646211)

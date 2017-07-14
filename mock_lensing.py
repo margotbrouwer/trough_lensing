@@ -60,8 +60,7 @@ for ij in np.arange(0, Nruns):
     #selection = 'all'
     #selection = 'lowZ'
     selection = 'miceZ-%g'%ijnum
-    
-    masktype = 'nomask-1'
+    #selection = 'miceZa'
     
     # Select mask type
     if Nruns > 14:
@@ -73,6 +72,10 @@ for ij in np.arange(0, Nruns):
         thetanum = ij
     if 'miceZ' in selection:
         masktype = 'nomask-Z'
+    if 'miceZc' in selection:
+        masktype = 'nomask-Zc'
+    if 'miceZa' in selection:
+        masktype = 'nomask-Za-%g'%ijnum
     
     
     # Import trough catalog
@@ -82,6 +85,8 @@ for ij in np.arange(0, Nruns):
     troughZ = troughZ[0]
     troughDc = (cosmo.comoving_distance(troughZ).to('pc')).value
     troughDa = troughDc / (1+troughZ)
+    
+    print('Troughs:', len(troughRA))
     
     # Weights of the troughs
     troughweights = np.ones(len(troughRA))
@@ -95,7 +100,9 @@ for ij in np.arange(0, Nruns):
         thetalist = np.array([6.826])
         
     if 'miceZ' in selection:
-        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])
+        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934]) # Da
+    if 'miceZc' in selection:
+        thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777]) # Dc
     
    
     # Select unit (arcmin or Mpc)
@@ -189,10 +196,10 @@ for ij in np.arange(0, Nruns):
     ## Weighted profiles
     
     # Redshifts
-    #weightcatname = 'amplitude_trough_weights_%s_lowZ_%s.fits'%(cat, masktype)
+    weightcatname = 'amplitude_trough_weights_%s_lowZ_%s.fits'%(cat, masktype)
     
     # Sizes
-    weightcatname = 'amplitude_trough_weights_%s_%s_%s.fits'%(cat, selection, masktype)
+    #weightcatname = 'amplitude_trough_weights_%s_%s_%s.fits'%(cat, selection, masktype)
     
     perclist = [ [-inf , 0.], [0., inf] ]
     theta = thetalist[thetanum]
@@ -205,6 +212,7 @@ for ij in np.arange(0, Nruns):
     
     weightcat = pyfits.open(weightfile, memmap=True)[1].data
     troughweights = weightcat['Wtheta%g'%theta]
+    weightPthetas = weightcat['Ptheta%g'%theta]
     
 
     
@@ -220,7 +228,7 @@ for ij in np.arange(0, Nruns):
     mockcatname = 'mice_source_catalog_dc.fits'
 
     # Importing the Mice sources
-    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
+    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2, galmass = \
     utils.import_mockcat(path_mockcat, mockcatname)
 
     # Boundaries of the field
@@ -229,6 +237,10 @@ for ij in np.arange(0, Nruns):
         fieldRAs, fieldDECs = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
     else:
         fieldRAs, fieldDECs =  [[0.,20.], [0.,20.]]
+    if 'miceZa' in selection:
+        Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
+        highW = Wlist[ij]
+        fieldRAs, fieldDECs =  [[0.,highW], [0.,20.]]
     
     print(ijnum, fieldRAs, fieldDECs)
     
@@ -236,9 +248,11 @@ for ij in np.arange(0, Nruns):
     fieldmask = (fieldRAs[0] < galRA)&(galRA < fieldRAs[1]) & (fieldDECs[0] < galDEC)&(galDEC < fieldDECs[1])
 
     # Masking the sources
-    srcmask = (0.1 < galZ) & (galZ < 0.9) & (rmag > 20.) & (rmag_abs > -19.3)
+    #srcmask = (0.1 < galZ) & (galZ < 0.9) & (rmag > 20.) & (rmag_abs > -19.3)
+    srcmask = (troughZ+0.2 < galZ) & (galZ < 0.9) & (rmag > 20.) & (rmag_abs > -19.3)
+    #srcmask = (0.6 < galZ) & (galZ < 0.7) & (rmag > 20.)# & (rmag_abs > -19.3)
     srcmask = srcmask*fieldmask
-
+    
     if 'pc' in Runit:
         # Only use sources behind the lens
         zmask = (galZ > troughZ)
@@ -248,12 +262,12 @@ for ij in np.arange(0, Nruns):
     galRA[srcmask], galDEC[srcmask], galZ[srcmask], galDc[srcmask], rmag[srcmask], e1[srcmask], e2[srcmask]
     galDc = galDc*1e6 # Convert distances from Mpc to pc
     print('Number of sources:', len(galZ))
-
+    
     # Calculate Sigma_crit for every source (there is only one lens distance)
     DlsoDs = (galDc - troughDc)/galDc
     Sigma_crit = (c.value**2)/(4*np.pi*G.value) * 1/(troughDa*DlsoDs)
     
-   
+  
     for p in range(len(paramnames_tot)):
 
         paramnames = paramnames_tot[p]
@@ -293,7 +307,7 @@ for ij in np.arange(0, Nruns):
             
             # Calculating the ESD profile
             galcat = treecorr.Catalog(ra=galRA, dec=galDEC, ra_units='deg', dec_units='deg', g1=e1*Sigma_crit, g2=e2*Sigma_crit, w=1/Sigma_crit**2.)
-            
+        
         else:
             # Calculating the shear profile
             galcat = treecorr.Catalog(ra=galRA, dec=galDEC, ra_units='deg', dec_units='deg', g1=e1, g2=e2)

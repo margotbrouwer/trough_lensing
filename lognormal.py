@@ -59,8 +59,9 @@ for ij in np.arange(0, Nruns):
     #selection = 'mice_all_nomask-%g'%ijnum
     #selection = 'mice_highZ_nomask-%g'%ijnum
     selection = 'mice_miceZ-%g_nomask-Z'%ijnum
+    #selection = 'mice_miceZa_nomask-Za-%g'%ijnum
     
-    mocksel = 'mice_highZ_nomask-%g'%ijnum
+    mocksel = 'mice_lowZ_nomask-%g'%ijnum
     randomsel = 'kids_randoms_complex'
 
     # Select unit (arcmin or Mpc)
@@ -82,9 +83,13 @@ for ij in np.arange(0, Nruns):
         thetanum = 0
 
     if 'miceZ' in selection:
-        #thetalist = np.array([14.509, 10., 7.904, 6.697])
         thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])
         thetanum = ij
+    
+    if 'miceZc' in selection:
+        thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])
+        thetanum = ij
+    
     
     theta = thetalist[thetanum]
     
@@ -138,7 +143,9 @@ for ij in np.arange(0, Nruns):
             %(mocksel, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
         mockfiles = np.array([('/%s/%s.txt'%(path_mockdata, path_mocksel[p])) \
                    for p in range(len(path_mocksel))])
-
+        
+        print(mockfiles)
+        
     else:
         # Mock lensing profiles
         path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'

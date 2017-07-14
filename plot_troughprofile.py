@@ -48,7 +48,7 @@ blues = ['#332288', '#44AA99', '#117733', '#88CCEE']
 reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
 #colors = np.array([reds,blues])
 
-colors = ['green', 'blue', 'green', 'blue']
+colors = ['green', 'blue', '#0ba52d', '#0571b0']
 
 # Defining the paths to the data
 blind = 'A'
@@ -98,7 +98,7 @@ path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
 datalabels = [r'Weighted troughs', r'Weighted ridges']
-plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_weighted'
+plotfilename = '/%s/Plots/troughs_kids_weighted'%path_sheardata
 Nrows = 2
 plotfit = True
 
@@ -111,7 +111,7 @@ path_mocksel = np.array([ ['No_bins_mice_all_nomask-1/Pmasktheta%g_0p8_inf-delta
 mocklabels = [r"MICE"]
 thetalist = np.array([5., 10., 15., 20.]*2)
 
-
+"""
 
 # Weighted troughs: Redshifts
 
@@ -136,7 +136,7 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins10_0p5_20_Mpc/shearcova
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$0.1<z<0.198$', r'$0.198<z<0.3$']
-datalabels = ['Troughs', 'Ridges']
+datalabels = ['Weighted troughs', 'Weighted ridges']
 
 plotfilename = '/data2/brouwer/shearprofile/trough_results_final/Plots/troughs_kids_redshifts_weighted'
 
@@ -148,6 +148,7 @@ path_mocksel = np.array([ ['No_bins_mice_%s_nomask-1/Pmasktheta%s_0p8_inf-delta%
                 for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
 mocklabels = [r"MICE"]
 
+"""
 
 
 
@@ -165,9 +166,9 @@ datalabels = [r'GAMA ($A_{\rm eff} > %g$)'%n for n in np.arange(0.6, 1.0, 0.1)]
 plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_randoms'
 
 
-## KiDS vs GAMA
 
-"""
+
+## KiDS vs GAMA
 
 # Fiducial troughs
 
@@ -196,9 +197,9 @@ path_randoms = [ ['No_bins_%s/Pmasktheta5_0p8_inf'%(cat) \
 path_mockdata = 'data2/brouwer/shearprofile/trough_results_final'
 path_mocksel = [ ['No_bins_mice_all_nomask-%g/Pmasktheta5_0p8_inf-Ptheta5_%s.txt'%(cat, perc) \
     for cat in np.arange(16)+1 for perc in ['0_0p2', '0p8_1'] ]]
-mocklabels = [r"MICE: $P(5')<0.2$"]
+mocklabels = [r"MICE-GC mocks"]
 
-"""
+
 
 
 # Troughs (with different completeness)
@@ -292,8 +293,7 @@ try:
 
     data_x_mock, data_y_mock, error_h_mock, error_l_mock = utils.read_esdfiles(esdfiles_mock)
 
-    print(np.shape(data_y_mock))
-
+    print(esdfiles_mock)
     print('Mocks shape:', Nmocks)
 
 except:
@@ -499,7 +499,7 @@ for N1 in range(Nrows):
             ax.xaxis.set_label_coords(0.5, -0.15)
             ax.yaxis.set_label_coords(-0.05, 0.5)
         else:
-            plt.axis([2,100,-1e-3,1.9e-3])
+            plt.axis([2,100,-1.3e-3,1.9e-3])
 
             xlabel = r'Separation angle $\theta$ (arcmin)'
             ylabel = r'Shear $\gamma$'
@@ -529,10 +529,10 @@ handles, labels = ax_sub.get_legend_handles_labels()
 
 # Plot the legend
 if Nbins[1] > 1:
-    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(0.75*Ncolumns, 0.65*Nrows)) # side
+    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(0.88*Ncolumns, 0.55*Nrows)) # side
 else:
 #    plt.legend(handles[::-1], labels[::-1], loc='upper center')
-    lgd = ax_sub.legend(handles[::-1], labels[::-1], bbox_to_anchor=(1., 0.65*Nrows)) # side
+    lgd = ax_sub.legend(handles[::-1], labels[::-1], bbox_to_anchor=(0.85, 1.55)) # top
 
 """
 else:

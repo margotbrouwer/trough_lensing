@@ -120,10 +120,6 @@ def import_mockcat(path_mockcat, mockcatname):
     galRA = mockcat['ra']
     galDEC = mockcat['dec']
     galZ = mockcat['z']
-    try:
-        galDc = mockcat['d_c']
-    except:
-        galDc = np.ones(len(galZ))
     
     rmag = mockcat['r_sdss_true']
     rmag_abs = mockcat['abs_mag_r']
@@ -131,7 +127,16 @@ def import_mockcat(path_mockcat, mockcatname):
     e1 = -mockcat['gamma1']
     e2 = mockcat['gamma2']
     
-    return galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2
+    try:
+        galDc = mockcat['d_c']/0.7
+    except:
+        galDc = np.ones(len(galZ))
+    try:
+        galmass = mockcat['log_m']
+    except:
+        galmass = np.ones(len(galZ))
+    
+    return galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2, galmass
     
 def import_troughcat(path_troughcat, troughcatname, paramnames):
     
