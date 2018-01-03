@@ -37,15 +37,13 @@ show = True
 # Trough selection
 
 """
-"""
+
 
 # Mice redshifts
 
-thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934]) # in arcmin
+thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
 zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489, 0.6])      
 
-#thetalist = np.array([15.56, 10., 7.353, 5.792]) #, 4.777]) # Dc
-#zlims = np.array([0.1, 0.191, 0.286, 0.385, 0.489]) #, 0.6])
 
 Runit = 'Mpc'
 valpha = 0.3
@@ -57,7 +55,7 @@ selection_name = selection[0]
 
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
-"""
+
 
 # lowZ/highZ
 
@@ -82,17 +80,17 @@ mockcolors = colors
 #mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.826]*(len(mocksel)/2) ) # in arcmin
 #mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
 
-
+"""
 
 # Sizes
-thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-#thetalist = np.array([5.]) # in arcmin
+#thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+thetalist = np.array([5.]) # in arcmin
 
 Runit = 'arcmin'
 valpha = 1.
 linestyle = '--'
 
-selection = ['kids_mice_complex' for t in range(len(thetalist))]
+selection = ['kids_absmag_complex' for t in range(len(thetalist))]
 selection_name = selection[0]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
@@ -101,6 +99,7 @@ mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
 mockthetalist = thetalist
 mockcolors = colors
 
+"""
 
 """
 

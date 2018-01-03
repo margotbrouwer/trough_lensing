@@ -41,8 +41,8 @@ ijlist = np.reshape(ijlist, [16,2])
 
 #Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
-Nruns = 5
-#Nruns = 1
+#Nruns = 5
+Nruns = 1
 
 # Configuration
 
@@ -55,13 +55,14 @@ for ij in np.arange(0, Nruns):
     blind = 'A'
 
     #selection = 'kids_mice_complex'
+    selection = 'kids_absmag_complex'
     #selection = 'kids_lowZ_complex'
     #selection = 'mice_all_nomask-%g'%ijnum
     #selection = 'mice_highZ_nomask-%g'%ijnum
-    selection = 'mice_miceZ-%g_nomask-Z'%ijnum
+    #selection = 'mice_miceZ-%g_nomask-Z'%ijnum
     #selection = 'mice_miceZa_nomask-Za-%g'%ijnum
     
-    mocksel = 'mice_lowZ_nomask-%g'%ijnum
+    mocksel = 'mice_all_nomask-%g'%ijnum
     randomsel = 'kids_randoms_complex'
 
     # Select unit (arcmin or Mpc)
@@ -71,7 +72,7 @@ for ij in np.arange(0, Nruns):
         Runit = 'arcmin'
     
     
-    if 'all' in selection:
+    if ('all' in selection) or ('absmag' in selection) or ('mice' in selection):
         thetalist = np.array([5., 10., 15., 20.]) # in arcmin
         thetanum = ij
         
@@ -83,13 +84,9 @@ for ij in np.arange(0, Nruns):
         thetanum = 0
 
     if 'miceZ' in selection:
-        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])
+        thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
         thetanum = ij
-    
-    if 'miceZc' in selection:
-        thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])
-        thetanum = ij
-    
+       
     
     theta = thetalist[thetanum]
     
@@ -157,7 +154,7 @@ for ij in np.arange(0, Nruns):
     path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
     
     # Importing the shearprofiles and lens IDs
-    print('Import shear signal')
+    print('Import shear signal:', esdfiles[0])
     data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
     data_x = data_x[0]
 

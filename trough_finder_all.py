@@ -29,11 +29,10 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-thetalist = np.array([5., 10., 15., 20., 6.826])/60.
+#thetalist = np.array([5., 10., 15., 20., 6.303, 6.288])/60.
 #thetalist = np.array([5., 10., 6.826])/60.
-#thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60. # Da
-#thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])/60. # Dc
-#thetalist = np.array([5.])/60.
+#thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])
+thetalist = np.array([5.])/60.
 
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
@@ -41,8 +40,8 @@ ijlist = np.reshape(ijlist, [16,2])
 
 #Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
-#Nruns = 1
-Nruns = 5
+Nruns = 1
+#Nruns = 5
 
 for ij in np.arange(0, Nruns):
 
@@ -61,12 +60,12 @@ for ij in np.arange(0, Nruns):
     cat = 'mice'
 
     # Name of the pre-defined galaxy selection
-    #selection = 'all'
+    selection = 'all'
+    #selection = 'absmag'
     #selection = 'mice'
     #selection = 'lowZ'
     #selection = 'highZ'
-    #selection = 'miceZa'
-    selection = 'miceZ-%g'%(ijnum)
+    #selection = 'miceZ-%g'%(ijnum)
     
     #selection = 'gama_all'
     #selection = 'kids_all'
@@ -83,19 +82,14 @@ for ij in np.arange(0, Nruns):
 
         if 'miceZ' in selection:
             masktype = 'nomask-Z'
-        if 'miceZc' in selection:
-            masktype = 'nomask-Zc'
-        if 'miceZa' in selection:
-            masktype = 'nomask-Za-%g'%(ijnum)
+        else:
+            masktype = 'nomask-1'
             
-            Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
-            highW = Wlist[ij]
-            coordsM = [[0.,highW], [0.,20.]]
-        
+            #Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
+            #highW = Wlist[ij]
+            #coordsM = [[0.,highW], [0.,20.]]
     else:
         masktype = 'complex'
-
-
 
     # Spacing of the trough and mask grids (in degree)
     gridspace = 0.04
@@ -106,7 +100,6 @@ for ij in np.arange(0, Nruns):
     zmin = 0.1
     zlim = 0.198
     zmax = 0.3
-
 
 
     # Import galaxy catalog
@@ -226,9 +219,10 @@ for ij in np.arange(0, Nruns):
     if selection == 'all':
         galmask = (galZ < 0.5) & (rmag < gama_rlim)
     if selection == 'absmag':
-        galmask = (rmag_abs < -19.7) & (rmag < gama_rlim)
+        galmask = (galZ < 0.5) & (rmag_abs < -19.7) & (rmag < gama_rlim)
     if 'mice' in selection:
         galmask = (galZ < 0.5) & (rmag_abs < -18.9 + micecor) & (rmag < gama_rlim)
+        print('rmag_abs(MICE) =', -18.9 + micecor)
 
     if 'lowZ' in selection:
         galmask = (zmin < galZ)&(galZ < zlim) & (rmag_abs < -21.) & (rmag < gama_rlim)
@@ -238,7 +232,7 @@ for ij in np.arange(0, Nruns):
     if 'highZ' in selection:
         galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag < gama_rlim)
         #thetalist = np.array([3.41290231, 6.82580462, 10.23870693, 13.65160924])/60.
-        thetalist = np.array([6.826])/60.
+        thetalist = np.array([6.303, 6.288])/60.
 
     
     if 'miceZ' in selection:
@@ -257,10 +251,8 @@ for ij in np.arange(0, Nruns):
         #galmask = zmask * (rmag_abs < (-21.+dM))
         #print('Abs. Magnitude limit:', -21.+dM)
         
-        miceZthetalist = np.array([14.45, 10., 7.908, 6.699, 5.934])/60.
-        if 'miceZc' in selection:
-            miceZthetalist = np.array([15.56, 10., 7.353, 5.792, 4.777])/60.
-        thetalist = np.array([miceZthetalist[ij]])        
+        miceZthetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])/60.
+        thetalist = np.array([miceZthetalist[ij]])
         
         print('Zlims:', zlims[ij], zlims[ij+1], ', theta:', thetalist[0]*60.)
 

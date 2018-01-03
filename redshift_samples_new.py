@@ -29,24 +29,44 @@ cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 
+# Select catalog and redshift binning
+cat = 'mice'
+zmax = 0.6
+Nbins = 5
+
+
 # Defining the circle size and redshift bins
-#thetalow = np.array([5., 10., 15., 20.]) # in arcmin
-thetalow = np.array([10.]) # in arcmin
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+if 'mice' in cat:
+    thetalow = np.array([thetalist[3]]) # in arcmin
+else:
+    thetalow = np.array([thetalist[2]]) # in arcmin
+
 thetamin, thetamax = np.array([2., 100.])
 
 am_to_rad = np.pi/(60.*180.)
 zmin = 0.1
 zgama = 0.5
 
-cat = 'mice'
+
+# Path to the KiDS fields
+if cat == 'kids':
+
+    # Path to the KiDS fields
+    path_kidscat = '/data2/brouwer/KidsCatalogues'
+    kidscatname = '/KiDS_DR3_GAMA-like_Maciek_revised_1905.fits'
+
+    # Importing the KiDS galaxies
+    galRA, galDEC, galZB, galZ, galTB, mag_auto, ODDS, umag, gmag, rmag, imag = \
+    utils.import_kidscat(path_kidscat, kidscatname)
+    rmag_abs = utils.calc_absmag(rmag, galZ, gmag, imag, h, O_matter, O_lambda)
+    
+    galDc = (cosmo.comoving_distance(galZ).to('Mpc')).value
+    gama_rlim = 20.2
 
 # Path to the GAMA fields
 if cat == 'gama':
-    
-    # Select redshift binning
-    zmax = 0.3
-    Nbins = 2
-    
+
     path_gamacat = '/data2/brouwer/MergedCatalogues/'
     gamacatname = 'ShearMergedCatalogueAll_sv0.8.fits'
 
@@ -59,24 +79,19 @@ if cat == 'gama':
 
 if cat == 'mice':
 
-    # Select redshift binning
-    #zmax = zgama
-    zmax = 0.6
-    Nbins = 5
-    
     # Path to the Mice field
     path_mockcat = '/data2/brouwer/MergedCatalogues'
     mockcatname = 'mice_gama_highZ_catalog.fits'
     
     # Importing the Mice galaxies
-    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2 = \
+    galRA, galDEC, galZ, galDc, rmag, rmag_abs, e1, e2, galmass = \
     utils.import_mockcat(path_mockcat, mockcatname)
     rmag_abs = rmag_abs + micecor # Correct absolute magnitudes
     
     #gama_rlim = 20.2
     gama_rlim = np.inf
 
-gamamask = (rmag_abs < -19.67) & (rmag < gama_rlim)
+gamamask = (rmag_abs < -19.7) & (rmag < gama_rlim)
 
 zmean = np.mean(galZ[gamamask])
 Dcmean = np.mean(galDc[gamamask])
@@ -128,14 +143,14 @@ for N in range(Nbins):
 
 
 # Equal comoving projected radius at all redshifts
-Dalow = Dahigh[1]
+Dclow = Dchigh[0]
 Alow = 20.*40.
 
-thetahigh = [thetalow * (Dalow / Dahigh[N]) for N in range(Nbins)]
-Ahigh = np.array([Alow * (Dalow / Dahigh[N])**2 for N in range(Nbins)])
+thetahigh = [thetalow * (Dclow / Dchigh[N]) for N in range(Nbins)]
+Ahigh = np.array([Alow * (Dclow / Dchigh[N])**2 for N in range(Nbins)])
 
-Rlow = (thetalow*am_to_rad) * Dalow
-Rhigh = [(thetahigh[N]*am_to_rad) * Dahigh[N] for N in range(Nbins)]
+Rlow = (thetalow*am_to_rad) * Dclow
+Rhigh = [(thetahigh[N]*am_to_rad) * Dchigh[N] for N in range(Nbins)]
 
 print('mean Z:', Zhigh)
 print('mean Dc:', Dchigh, 'Mpc')
@@ -148,7 +163,7 @@ print('R(high):', Rhigh, 'Mpc')
 print('A(high):', Ahigh, 'degree^2')
 print('W(high):', Ahigh/20., 'degree')
 print()
-print('R(min,max):', (thetamin*am_to_rad) * Damean, (thetamax*am_to_rad) * Damean, 'Mpc')
+print('R(min,max):', (thetamin*am_to_rad) * Dcmean, (thetamax*am_to_rad) * Dcmean, 'Mpc')
 
 
 quit()

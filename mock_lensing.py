@@ -43,8 +43,8 @@ ijlist = np.reshape(ijlist, [16,2])
 
 #Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
-Nruns = 5
-#Nruns = 1
+#Nruns = 5
+Nruns = 1
 
 # Configuration
 
@@ -57,10 +57,9 @@ for ij in np.arange(0, Nruns):
     cat = 'mice'
     
     # Name of the pre-defined galaxy selection
-    #selection = 'all'
+    selection = 'all'
     #selection = 'lowZ'
-    selection = 'miceZ-%g'%ijnum
-    #selection = 'miceZa'
+    #selection = 'miceZ-%g'%ijnum
     
     # Select mask type
     if Nruns > 14:
@@ -72,10 +71,6 @@ for ij in np.arange(0, Nruns):
         thetanum = ij
     if 'miceZ' in selection:
         masktype = 'nomask-Z'
-    if 'miceZc' in selection:
-        masktype = 'nomask-Zc'
-    if 'miceZa' in selection:
-        masktype = 'nomask-Za-%g'%ijnum
     
     
     # Import trough catalog
@@ -100,11 +95,8 @@ for ij in np.arange(0, Nruns):
         thetalist = np.array([6.826])
         
     if 'miceZ' in selection:
-        thetalist = np.array([14.45, 10., 7.908, 6.699, 5.934]) # Da
-    if 'miceZc' in selection:
-        thetalist = np.array([15.56, 10., 7.353, 5.792, 4.777]) # Dc
+        thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
     
-   
     # Select unit (arcmin or Mpc)
     if 'Z' in selection:
         Runit = 'Mpc'
@@ -217,9 +209,6 @@ for ij in np.arange(0, Nruns):
 
     
     """
-    
-
-
 
     # Import source catalog
 
@@ -237,10 +226,6 @@ for ij in np.arange(0, Nruns):
         fieldRAs, fieldDECs = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
     else:
         fieldRAs, fieldDECs =  [[0.,20.], [0.,20.]]
-    if 'miceZa' in selection:
-        Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
-        highW = Wlist[ij]
-        fieldRAs, fieldDECs =  [[0.,highW], [0.,20.]]
     
     print(ijnum, fieldRAs, fieldDECs)
     
@@ -324,6 +309,10 @@ for ij in np.arange(0, Nruns):
 
         Rbins, gamma_t, gamma_x, gamma_error, Nsrc = \
         [shearfile[0], shearfile[3], shearfile[4], np.sqrt(shearfile[5]), shearfile[7]]
+
+        # Translate to comoving ESD
+        Rbins = Rbins*(1+troughZ)
+        gamma_t, gamma_x, gamma_error = np.array([gamma_t, gamma_x, gamma_error])/(1+troughZ)**2
 
         path_output = '/data2/brouwer/shearprofile/trough_results_final/No_bins_%s_%s_%s'%(cat, selection, masktype)
         filename_output = '%s/%s.txt'%(path_output, filename_var)
