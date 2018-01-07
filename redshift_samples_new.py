@@ -30,9 +30,9 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 
 # Select catalog and redshift binning
-cat = 'mice'
-zmax = 0.6
-Nbins = 5
+cat = 'gama'
+zmax = 0.3
+Nbins = 2
 
 
 # Defining the circle size and redshift bins
@@ -40,7 +40,7 @@ thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 if 'mice' in cat:
     thetalow = np.array([thetalist[3]]) # in arcmin
 else:
-    thetalow = np.array([thetalist[2]]) # in arcmin
+    thetalow = np.array([thetalist[1]]) # in arcmin
 
 thetamin, thetamax = np.array([2., 100.])
 

@@ -19,7 +19,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import scipy.optimize as optimization
 import trough_modules_all as utils
 
-# Make use of TeX
+# Make use of TeXm
 rc('text',usetex=True)
 
 # Change all fonts to 'Computer Modern'
@@ -33,11 +33,11 @@ def trough_model(x, A):
     model_y = A*x**-0.5
     return model_y
 
-show = False
+show = True
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
-
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 
 #Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
@@ -55,15 +55,15 @@ for ij in np.arange(0, Nruns):
     blind = 'A'
 
     #selection = 'kids_mice_complex'
-    selection = 'kids_absmag_complex'
-    #selection = 'kids_lowZ_complex'
+    #selection = 'kids_absmag_complex'
+    selection = 'kids_highZ_complex'
     #selection = 'mice_all_nomask-%g'%ijnum
     #selection = 'mice_highZ_nomask-%g'%ijnum
     #selection = 'mice_miceZ-%g_nomask-Z'%ijnum
     #selection = 'mice_miceZa_nomask-Za-%g'%ijnum
     
-    mocksel = 'mice_all_nomask-%g'%ijnum
-    randomsel = 'kids_randoms_complex'
+    mocksel = 'mice_highZ_nomask-%g'%ijnum
+    randomsel = 'kids_highZ_complex'
 
     # Select unit (arcmin or Mpc)
     if 'Z' in selection:
@@ -80,7 +80,7 @@ for ij in np.arange(0, Nruns):
         thetalist = np.array([10.])
         thetanum = 0
     if 'highZ' in selection:
-        thetalist = np.array([6.826])
+        thetalist = np.array([6.288])
         thetanum = 0
 
     if 'miceZ' in selection:
@@ -118,9 +118,16 @@ for ij in np.arange(0, Nruns):
 
     Npercs = len(percnames)-1
 
+    # Import trough catalog
+    path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
+    troughcatname = 'trough_catalog_%s.fits'%(selection)
+    troughRA, troughDEC, troughZ, paramlists = utils.import_troughcat(path_troughcat, troughcatname, [])
+    troughZ = troughZ[0]
+
     # Import lensing profiles
 
     if ('kids' in selection) or ('gama' in selection):
+      
         # Observed lensing profiles
         path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
         path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
@@ -157,11 +164,22 @@ for ij in np.arange(0, Nruns):
     print('Import shear signal:', esdfiles[0])
     data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
     data_x = data_x[0]
-
+    
+    if 'pc' in Runit:
+        # Translate to comoving ESD
+        data_x = data_x*(1+troughZ)
+        data_y, error_h, error_l = np.array([data_y, error_h, error_l])/(1+troughZ)**2
+    
     try:
         print('Import mock signal:')
         mock_x, mock_y, mock_error_h, mock_error_l = utils.read_esdfiles(mockfiles)
         mock_x = mock_x[0]
+
+        if 'pc' in Runit:
+            # Translate to comoving ESD
+            mock_x = mock_x*(1+troughZ)
+            mock_y, mock_error_h, mock_error_l = np.array([mock_y, mock_error_h, mock_error_l])/(1+troughZ)**2
+
     except:
         pass
 

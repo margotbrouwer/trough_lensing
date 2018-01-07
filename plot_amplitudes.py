@@ -55,11 +55,11 @@ selection_name = selection[0]
 
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
-
+"""
 
 # lowZ/highZ
 
-thetalist = np.array([10., 6.826]) # in arcmin
+thetalist = np.array([10., 6.288]) # in arcmin
 
 Runit = 'Mpc'
 valpha = 0.3
@@ -72,7 +72,7 @@ selection_name = selection[0]
 zlims = np.array([ 0.1, 0.198, 0.3])
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
-mocksel = ['mice_lowZ_nomask-5', 'mice_highZ_nomask-5']
+mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
 mockthetalist = thetalist
 mockcolors = colors
 
@@ -90,16 +90,18 @@ Runit = 'arcmin'
 valpha = 1.
 linestyle = '--'
 
-selection = ['kids_absmag_complex' for t in range(len(thetalist))]
+selection = ['kids_mice_complex' for t in range(len(thetalist))]
 selection_name = selection[0]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
 
-mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
+#mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
+mocksel = ['vasiliy_gama_mocks' for t in range(len(thetalist))]
+
 mockthetalist = thetalist
 mockcolors = colors
 
-"""
+
 
 """
 
@@ -132,18 +134,19 @@ if ('kids' in selection_name) or ('gama' in selection_name):
     Alist_mock = amplitude_data_mock[:,2]
     Alist_error_mock = amplitude_data_mock[:,3]
 
+if 'lowZ' in selection_name:
 
-# Compute significance of the difference
+    # Compute significance of the difference
 
-diffAlist = abs(Alist[0] - Alist[1])
-diffAlist_error = np.sqrt(Alist_error[0]**2. + Alist_error[1]**2.)
-diffmodel = np.zeros(len(Alist[0]))
+    diffAlist = abs(Alist[0] - Alist[1])
+    diffAlist_error = np.sqrt(Alist_error[0]**2. + Alist_error[1]**2.)
+    diffmodel = np.zeros(len(Alist[0]))
 
-diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
-diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
-diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
+    diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
+    diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
+    diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
 
-print(diffchi2, diffprob, diffsigma)
+    print(diffchi2, diffprob, diffsigma)
 
 
 ## AMPLITUDE (Percentile)
@@ -267,6 +270,11 @@ if ('kids' in selection_name) or ('gama' in selection_name):
         else: 
             plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
             label=labels[i], marker='.', ls='', color=colors[i], zorder=3)
+
+        if 'vasiliy' in mocksel[0]:
+            mockweightlist = Alist_mock/Alist_error_mock
+            plt.plot(perccenters[i], mockweightlist[i],\
+            label=labels[i], ls = '--', color=colors[i], zorder=2)
 
     plt.axhline(y=0., ls=':', color='black', zorder=2)
     plt.axvline(x=0.5, ls=':', color='black', zorder=2)

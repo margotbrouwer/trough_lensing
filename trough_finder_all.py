@@ -30,17 +30,17 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
 #thetalist = np.array([5., 10., 15., 20., 6.303, 6.288])/60.
-#thetalist = np.array([5., 10., 6.826])/60.
+thetalist = np.array([5., 10., 6.303, 6.288])/60.
 #thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])
-thetalist = np.array([5.])/60.
+#thetalist = np.array([5.])/60.
 
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
-#Nruns = len(ijlist) # Mock patches
+Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
-Nruns = 1
+#Nruns = 1
 #Nruns = 5
 
 for ij in np.arange(0, Nruns):
@@ -60,11 +60,11 @@ for ij in np.arange(0, Nruns):
     cat = 'mice'
 
     # Name of the pre-defined galaxy selection
-    selection = 'all'
+    #selection = 'all'
     #selection = 'absmag'
     #selection = 'mice'
     #selection = 'lowZ'
-    #selection = 'highZ'
+    selection = 'highZ'
     #selection = 'miceZ-%g'%(ijnum)
     
     #selection = 'gama_all'
@@ -74,16 +74,16 @@ for ij in np.arange(0, Nruns):
     # Select mask type (nomask or complex)
     if 'mice' in cat:
 
+        if 'miceZ' in selection:
+            masktype = 'nomask-Z'
+        else:
+            masktype = 'nomask-1'
+
         if Nruns > 14:
             masktype = 'nomask-%g'%(ijnum)
             coordsM = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
         else:
             coordsM = [[0.,20.], [0.,20.]]
-
-        if 'miceZ' in selection:
-            masktype = 'nomask-Z'
-        else:
-            masktype = 'nomask-1'
             
             #Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
             #highW = Wlist[ij]

@@ -41,10 +41,10 @@ thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
-#Nruns = len(ijlist) # Mock patches
+Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
 #Nruns = 5
-Nruns = 1
+#Nruns = 1
 
 # Configuration
 
@@ -57,8 +57,8 @@ for ij in np.arange(0, Nruns):
     cat = 'mice'
     
     # Name of the pre-defined galaxy selection
-    selection = 'all'
-    #selection = 'lowZ'
+    #selection = 'all'
+    selection = 'lowZ'
     #selection = 'miceZ-%g'%ijnum
     
     # Select mask type
@@ -92,7 +92,7 @@ for ij in np.arange(0, Nruns):
     if 'lowZ' in selection:
         thetalist = np.array([10.])
     if 'highZ' in selection:
-        thetalist = np.array([6.826])
+        thetalist = np.array([6.288])
         
     if 'miceZ' in selection:
         thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
@@ -309,11 +309,14 @@ for ij in np.arange(0, Nruns):
 
         Rbins, gamma_t, gamma_x, gamma_error, Nsrc = \
         [shearfile[0], shearfile[3], shearfile[4], np.sqrt(shearfile[5]), shearfile[7]]
-
-        # Translate to comoving ESD
-        Rbins = Rbins*(1+troughZ)
-        gamma_t, gamma_x, gamma_error = np.array([gamma_t, gamma_x, gamma_error])/(1+troughZ)**2
-
+        
+        """
+        if 'pc' in Runit:
+            # Translate to comoving ESD
+            Rbins = Rbins*(1+troughZ)
+            gamma_t, gamma_x, gamma_error = np.array([gamma_t, gamma_x, gamma_error])/(1+troughZ)**2
+        """
+        
         path_output = '/data2/brouwer/shearprofile/trough_results_final/No_bins_%s_%s_%s'%(cat, selection, masktype)
         filename_output = '%s/%s.txt'%(path_output, filename_var)
 
