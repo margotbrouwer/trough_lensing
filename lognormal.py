@@ -18,6 +18,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import scipy.optimize as optimization
 import trough_modules_all as utils
+from astropy.cosmology import LambdaCDM
+
+h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
+am_to_rad = np.pi/(60.*180.)
 
 # Make use of TeXm
 rc('text',usetex=True)
@@ -61,6 +66,8 @@ for ij in np.arange(0, Nruns):
     #selection = 'mice_highZ_nomask-%g'%ijnum
     #selection = 'mice_miceZ-%g_nomask-Z'%ijnum
     #selection = 'mice_miceZa_nomask-Za-%g'%ijnum
+    #selection = 'slics_mocks_nomask'
+    #selection = 'slics_mockZ_nomask'
     
     mocksel = 'mice_highZ_nomask-%g'%ijnum
     randomsel = 'kids_highZ_complex'
@@ -72,13 +79,14 @@ for ij in np.arange(0, Nruns):
         Runit = 'arcmin'
     
     
-    if ('all' in selection) or ('absmag' in selection) or ('mice' in selection):
+    if ('all' in selection) or ('absmag' in selection) or ('mice' in selection) or ('slics' in selection):
         thetalist = np.array([5., 10., 15., 20.]) # in arcmin
         thetanum = ij
         
     if 'lowZ' in selection:
         thetalist = np.array([10.])
         thetanum = 0
+        
     if 'highZ' in selection:
         thetalist = np.array([6.288])
         thetanum = 0
@@ -86,8 +94,14 @@ for ij in np.arange(0, Nruns):
     if 'miceZ' in selection:
         thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
         thetanum = ij
-       
-    
+
+    if 'mockZ' in selection:
+        thetalist = np.array([15., 9.554, 7.283, 5.770]) # Dc
+        thetanum = ij
+        h, O_matter, O_lambda = [0.7, 0.29, 0.71]
+        cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
+        
+        
     theta = thetalist[thetanum]
     
     if Runit == 'arcmin':
@@ -106,7 +120,6 @@ for ij in np.arange(0, Nruns):
         
         dperc = 0.1
         percnames = ['0','0p1','0p2','0p3','0p4','0p5','0p6','0p7','0p8','0p9','1']
-        Rlist = [1.64]*len(thetalist) # Physical size of the troughs (in Mpc)
 
     # Defining the percentile bins
     percmin = 0.
@@ -119,10 +132,14 @@ for ij in np.arange(0, Nruns):
     Npercs = len(percnames)-1
 
     # Import trough catalog
-    path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
-    troughcatname = 'trough_catalog_%s.fits'%(selection)
-    troughRA, troughDEC, troughZ, paramlists = utils.import_troughcat(path_troughcat, troughcatname, [])
-    troughZ = troughZ[0]
+    if 'slics' in selection:
+        mean_zs = np.array([0.1539674, 0.24719192, 0.33112174, 0.42836386])
+        troughZ = mean_zs[ij]
+    else:
+        path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
+        troughcatname = 'trough_catalog_%s.fits'%(selection)
+        troughRA, troughDEC, troughZ, paramlists = utils.import_troughcat(path_troughcat, troughcatname, [])
+        troughZ = troughZ[0]
 
     # Import lensing profiles
 
@@ -148,27 +165,65 @@ for ij in np.arange(0, Nruns):
         mockfiles = np.array([('/%s/%s.txt'%(path_mockdata, path_mocksel[p])) \
                    for p in range(len(path_mocksel))])
         
-        print(mockfiles)
-        
     else:
-        # Mock lensing profiles
-        path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
-        path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
-            %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
-        esdfiles = np.array([('/%s/%s.txt'%(path_sheardata, path_lenssel[p])) \
-                   for p in range(len(path_lenssel))])
+        if 'mice' in selection:
+            # Mock lensing profiles
+            path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
+            path_lenssel = ['No_bins_%s/Pmasktheta%s_0p8_inf-Ptheta%s_%s_%s'\
+                %(selection, ('%g'%theta).replace('.','p'), ('%g'%theta).replace('.','p'), percnames[p], percnames[p+1]) for p in range(Npercs)]
+            esdfiles = np.array([('/%s/%s.txt'%(path_sheardata, path_lenssel[p])) \
+                       for p in range(len(path_lenssel))])
+                       
+        if 'slics' in selection:
 
+            path_sheardata = 'data2/brouwer/shearprofile/trough_results_final'
+            path_lenssel = '%s'%(selection)
+
+            if 'mockZ' in selection:
+                esdfiles = 'Redshift_bins_covariance.npy'
+                data=np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, esdfiles))
+                
+                error_factor = 100./15000.
+                covariance_tot = 0.7 * error_factor * np.array((data[2][ijnum]).values())
+                
+                theta_x = np.array(data[0][ijnum][0])
+                data_x = [theta_x*am_to_rad * (cosmo.angular_diameter_distance(troughZ).to('Mpc')).value] # Physical radial distance
+                
+                data_y = 0.7 * np.array(data[1][ijnum].values()) # Convert h100 to h70
+
+            else:
+                esdfiles = 'Ptheta%s.npy'%(('%g'%theta).replace('.','p'))
+                data=np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, esdfiles))
+
+                error_factor = 100./360.3                
+                covfiles = 'Ptheta%s_cov.npy'%(('%g'%theta).replace('.','p'))
+                covariance_tot = error_factor *\
+                    np.array((np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, covfiles))[0]).values())
+                
+                data_x = data[0]
+                data_y = np.array(data[1].values())
+
+                
     path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
     
     # Importing the shearprofiles and lens IDs
-    print('Import shear signal:', esdfiles[0])
-    data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
+    if 'slics' in selection:
+        
+        errors = [np.sqrt(np.diag(covariance_tot[x])) for x in range(len(covariance_tot))]
+        error_h = np.array(errors)
+        error_l = np.array(errors)
+        
+    else:
+        print('Import shear signal:', esdfiles[0])
+        data_x, data_y, error_h, error_l = utils.read_esdfiles(esdfiles)
+
     data_x = data_x[0]
     
     if 'pc' in Runit:
         # Translate to comoving ESD
         data_x = data_x*(1+troughZ)
         data_y, error_h, error_l = np.array([data_y, error_h, error_l])/(1+troughZ)**2
+        covariance_tot = covariance_tot/(1+troughZ)**4
     
     try:
         print('Import mock signal:')
@@ -203,9 +258,11 @@ for ij in np.arange(0, Nruns):
         xmin = theta*1.2
         xmax = 70.
     if Runit == 'Mpc':
-        xmin = Rlist[thetanum]*1.2
-        xmax = 10.
-
+        Rlist = theta*am_to_rad * (cosmo.comoving_distance(troughZ).to('Mpc')).value #2.77797224336
+        print(Rlist)
+        xmin = Rlist*1.2
+        xmax = 14.
+    
     xmask = (xmin < data_x) & (data_x < xmax)
     xwhere = np.where(xmask)[0]
 
@@ -229,6 +286,7 @@ for ij in np.arange(0, Nruns):
         for N2 in range(Ncolumns):
         
             N = np.int(N1*Ncolumns + N2)
+            print(N)
             ax_sub = fig.add_subplot(gs[N1, N2])
           
             if ('kids' in selection) or ('gama' in selection):
@@ -241,9 +299,22 @@ for ij in np.arange(0, Nruns):
                 A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
                 sigma=covmatrix, absolute_sigma=True)
             else:
-                # Without covariance
-                A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
-                #sigma=(error_h[N])[xmask], absolute_sigma=True)
+                if 'slics' in selection:
+                    covariance = np.array(covariance_tot[N])
+                    covmatrix = covariance[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
+                    
+                    A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+                    sigma=covmatrix, absolute_sigma=True)
+                    
+                    #A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+                    #sigma=(error_h[N])[xmask], absolute_sigma=True)
+                    
+                    #A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
+                    
+                else:
+                    # Without covariance
+                    A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
+                    #sigma=(error_h[N])[xmask], absolute_sigma=True)
             A = A[0]
                 
             print('%g < P(x) < %g: Amplitude = %g'%(perclist[N], perclist[N+1], A))
@@ -320,6 +391,7 @@ for ij in np.arange(0, Nruns):
     # Import trough catalog
     path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
     troughcatname = 'trough_catalog_%s_%s_%s.fits'%(selection.split('_')[0], selection.split('_')[1], selection.split('_')[2])
+    print(troughcatname)
 
     # Full directory & name of the trough catalogue
     troughcatfile = '%s/%s'%(path_troughcat, troughcatname)

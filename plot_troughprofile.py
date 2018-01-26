@@ -48,7 +48,7 @@ blues = ['#332288', '#44AA99', '#117733', '#88CCEE']
 reds = ['#CC6677', '#882255', '#CC99BB', '#AA4499']
 #colors = np.array([reds,blues])
 
-colors = ['green', 'blue', '#0ba52d', '#0571b0']
+colors = ['#0571b0', '#92c5de', '#d7191c', '#fdae61']
 
 # Defining the paths to the data
 blind = 'A'
@@ -97,7 +97,7 @@ path_cosmo = 'ZB_0p1_0p9-Om_0p25-Ol_0p75-Ok_0-h_0p7/Rbins20_2_100_arcmin/shearco
 path_filename = 'No_bins_%s.txt'%(blind)
 
 datatitles = [r'$\theta_{\rm A} = %g$ arcmin'%theta for theta in thetalist]
-datalabels = [r'Weighted troughs', r'Weighted ridges']
+datalabels = [r'Weighted trough profile', r'Weighted ridge profile']
 plotfilename = '/%s/Plots/troughs_kids_weighted'%path_sheardata
 Nrows = 2
 plotfit = True
@@ -111,7 +111,6 @@ path_mocksel = np.array([ ['No_bins_mice_all_nomask-1/Pmasktheta%g_0p8_inf-delta
 mocklabels = [r"MICE"]
 thetalist = np.array([5., 10., 15., 20.]*2)
 
-"""
 
 # Weighted troughs: Redshifts
 
@@ -148,7 +147,7 @@ path_mocksel = np.array([ ['No_bins_mice_%s_nomask-1/Pmasktheta%s_0p8_inf-delta%
                 for i in range(len(thetalist)) ] for delta in ['minf_0', '0_inf'] ])
 mocklabels = [r"MICE"]
 
-"""
+
 
 
 
@@ -166,7 +165,7 @@ datalabels = [r'GAMA ($A_{\rm eff} > %g$)'%n for n in np.arange(0.6, 1.0, 0.1)]
 plotfilename = '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_gama_randoms'
 
 
-
+"""
 
 ## KiDS vs GAMA
 
@@ -199,7 +198,7 @@ path_mocksel = [ ['No_bins_mice_all_nomask-%g/Pmasktheta5_0p8_inf-Ptheta5_%s.txt
     for cat in np.arange(16)+1 for perc in ['0_0p2', '0p8_1'] ]]
 mocklabels = [r"MICE-GC mocks"]
 
-
+"""
 
 
 # Troughs (with different completeness)
@@ -375,33 +374,46 @@ for n in range(Nsize):
     print('Amplitude:', A)
     print
 
-try:
-    mock_indices = []
-    # Fit to mock profile
-    for m in range(len(path_mocksel)):
-        
-        datax_mock = data_x_mock[m]
-        datay_mock = data_y_mock[m]
-        
-        # Without covariance
-        Avals_mock, Acov_mock = optimization.curve_fit(f=mock_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0., -1.])
-        
-        A_mock = Avals_mock[0]
-        B_mock = Avals_mock[1]
-        mock_indices = np.append(mock_indices, B_mock)
-        
-        print('Mocks:')
-        print('Mock Amplitude:', A_mock)
-        print('Mock Index:', B_mock)
-        print
-    print('Mean mock index:', np.mean(mock_indices))
-    # Calculate the detection significance
-    chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
+#try:
+mock_indices = []
+mock_amplitudes = []
+# Fit to mock profile
+for m in range(len(path_mocksel)):
+    
+    datax_mock = data_x_mock[m]
+    datay_mock = data_y_mock[m]
+    
+    # Without covariance
+    #Avals_mock, Acov_mock = optimization.curve_fit(f=mock_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0., -1.])
+    Avals_mock, Acov_mock = optimization.curve_fit(f=trough_model, xdata=datax_mock[xmask], ydata=datay_mock[xmask], p0=[0.])
+            
+    A_mock = Avals_mock[0]
+    #B_mock = Avals_mock[1]
+    #mock_indices = np.append(mock_indices, B_mock)
+    mock_amplitudes = np.append(mock_amplitudes, A_mock)
+    
+mock_troughs = mock_amplitudes[mock_amplitudes < 0.]
+mock_ridges =  mock_amplitudes[mock_amplitudes > 0.]
 
-    print('Chi2 (without covariance):', chi2list)
-    print('Chi2 (with covariance):', chi2covlist)
-except:
-    pass
+
+print('Mock troughs:')
+print(np.sort(mock_troughs))
+print(np.argsort(mock_troughs))
+print
+print('Mock ridges:')
+print(np.sort(mock_ridges))
+print(np.argsort(mock_ridges))
+
+
+#print('Mean mock index:', np.mean(mock_indices))
+
+# Calculate the detection significance
+chilist, chicovlist = np.sqrt(chi2list), np.sqrt(chi2covlist)
+
+print('Chi2 (without covariance):', chi2list)
+print('Chi2 (with covariance):', chi2covlist)
+#except:
+#    pass
 
 # Create the plot
 
@@ -458,17 +470,18 @@ for N1 in range(Nrows):
                 
                 if Ndata==0:
                     ax_sub.plot(data_x_plot, data_y_mock[Ndata], marker='', ls='-', \
-                    color='red', label=mocklabels[0], alpha=valpha, zorder=1)
+                    color='grey', label=mocklabels[0], alpha=valpha, zorder=1)
                 else:
                     ax_sub.plot(data_x_plot, data_y_mock[Ndata], marker='', ls='-', \
-                    color='red', alpha=valpha, zorder=1)
+                    color='grey', alpha=valpha, zorder=1)
         except:
             pass
-
-        # Negative troughs for comparison
-        ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', alpha=0.5, color='blue')
         
-            
+        if 'gama' not in path_lenssel[0]:
+            # Negative troughs for comparison
+            ax_sub.plot(data_x[N], -data_y[N], ls='', marker='.', label='Flipped trough profile',\
+            alpha=0.5, color='green')
+        
         # Plot the axes and title
     
         # Vertical lines
@@ -499,7 +512,7 @@ for N1 in range(Nrows):
             ax.xaxis.set_label_coords(0.5, -0.15)
             ax.yaxis.set_label_coords(-0.05, 0.5)
         else:
-            plt.axis([2,100,-1.3e-3,1.9e-3])
+            plt.axis([2,110,-1.5e-3,2.e-3])
 
             xlabel = r'Separation angle $\theta$ (arcmin)'
             ylabel = r'Shear $\gamma$'
@@ -529,7 +542,7 @@ handles, labels = ax_sub.get_legend_handles_labels()
 
 # Plot the legend
 if Nbins[1] > 1:
-    lgd = ax_sub.legend(handles, labels, bbox_to_anchor=(0.88*Ncolumns, 0.55*Nrows)) # side
+    lgd = ax_sub.legend(handles[::-1], labels[::-1], bbox_to_anchor=(0.95*Ncolumns, 0.6*Nrows)) # side
 else:
 #    plt.legend(handles[::-1], labels[::-1], loc='upper center')
     lgd = ax_sub.legend(handles[::-1], labels[::-1], bbox_to_anchor=(0.85, 1.55)) # top

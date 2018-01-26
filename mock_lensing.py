@@ -34,8 +34,8 @@ cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 
 
 # Defining the trough radii
-thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-#thetalist = np.array([5.]) # in arcmin
+#thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+thetalist = np.array([5.]) # in arcmin
 
 # Defining mock patches
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
@@ -57,8 +57,8 @@ for ij in np.arange(0, Nruns):
     cat = 'mice'
     
     # Name of the pre-defined galaxy selection
-    #selection = 'all'
-    selection = 'lowZ'
+    selection = 'all'
+    #selection = 'lowZ'
     #selection = 'miceZ-%g'%ijnum
     
     # Select mask type
@@ -158,12 +158,12 @@ for ij in np.arange(0, Nruns):
 
     Npercs = len(percnames)-1
     
-    
+    """
     theta = thetalist[thetanum]
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(Npercs) ])
     maskvals_tot = np.array([ [[0.8, np.inf], [perclist[p], perclist[p+1]]] for p in range(Npercs) ])
     
-    """
+    
     
     ## Fiducial troughs
     
@@ -172,18 +172,18 @@ for ij in np.arange(0, Nruns):
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for theta in thetalist])
     maskvals_tot = np.array([ [[0.8, np.inf], [0., 0.2]] for theta in thetalist ])
     
-
+    """
     
     # Troughs/ridges
     
     perclist = [ [0., 0.2], [0.8, 1.] ]
-    perclist = [ [0.8, 1.] ]
+    #perclist = [ [0.8, 1.] ]
     theta = thetalist[thetanum]
     
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(len(perclist)) ])
     maskvals_tot = np.array([ [[0.8, np.inf], perclist[p] ] for p in range(len(perclist)) ])
     
-
+    """
     
     ## Weighted profiles
     

@@ -24,23 +24,25 @@ from matplotlib import rc, rcParams
 import trough_modules_all as utils
 
 
-h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+#h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+h, O_matter, O_lambda = [0.68, 0.29, 0.71]
+
 cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 
 # Select catalog and redshift binning
 cat = 'gama'
-zmax = 0.3
-Nbins = 2
+zmax = 0.5
+Nbins = 4
 
 
 # Defining the circle size and redshift bins
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+if ('kids' in cat) or ('gama' in cat):
+    thetalow = np.array([thetalist[2]]) # in arcmin
 if 'mice' in cat:
     thetalow = np.array([thetalist[3]]) # in arcmin
-else:
-    thetalow = np.array([thetalist[1]]) # in arcmin
 
 thetamin, thetamax = np.array([2., 100.])
 
@@ -141,7 +143,6 @@ for N in range(Nbins):
     Dchigh = np.append( Dchigh, np.mean(Dc) )
     Dahigh = np.append( Dahigh, np.mean(Dc/(1+Z)) )
 
-
 # Equal comoving projected radius at all redshifts
 Dclow = Dchigh[0]
 Alow = 20.*40.
@@ -151,6 +152,7 @@ Ahigh = np.array([Alow * (Dclow / Dchigh[N])**2 for N in range(Nbins)])
 
 Rlow = (thetalow*am_to_rad) * Dclow
 Rhigh = [(thetahigh[N]*am_to_rad) * Dchigh[N] for N in range(Nbins)]
+Rphys = [(thetahigh[N]*am_to_rad) * Dahigh[N] for N in range(Nbins)]
 
 print('mean Z:', Zhigh)
 print('mean Dc:', Dchigh, 'Mpc')
@@ -159,7 +161,8 @@ print()
 print('theta(low):', thetalow, 'arcmin')
 print('theta(high):', thetahigh, 'arcmin')
 print('R(low):', Rlow, 'Mpc')
-print('R(high):', Rhigh, 'Mpc')
+print('R(comoving):', Rhigh, 'Mpc')
+print('R(physical):', Rphys, 'Mpc')
 print('A(high):', Ahigh, 'degree^2')
 print('W(high):', Ahigh/20., 'degree')
 print()

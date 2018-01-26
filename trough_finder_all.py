@@ -30,8 +30,9 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
 #thetalist = np.array([5., 10., 15., 20., 6.303, 6.288])/60.
-thetalist = np.array([5., 10., 6.303, 6.288])/60.
-#thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])
+#thetalist = np.array([5., 10., 6.303, 6.288])/60.
+#thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])/60.
+thetalist = np.array([15., 9.554, 7.283, 5.770])/60.
 #thetalist = np.array([5.])/60.
 
 
@@ -55,16 +56,16 @@ for ij in np.arange(0, Nruns):
     ## 1a) Importing the galaxy catalogue.
 
     # Select the galaxy catalogue for trough selection (kids, gama or mice)
-    #cat = 'gama'
+    cat = 'gama'
     #cat = 'kids'
-    cat = 'mice'
+    #cat = 'mice'
 
     # Name of the pre-defined galaxy selection
     #selection = 'all'
-    #selection = 'absmag'
     #selection = 'mice'
+    selection = 'slics'
     #selection = 'lowZ'
-    selection = 'highZ'
+    #selection = 'highZ'
     #selection = 'miceZ-%g'%(ijnum)
     
     #selection = 'gama_all'
@@ -218,10 +219,13 @@ for ij in np.arange(0, Nruns):
 
     if selection == 'all':
         galmask = (galZ < 0.5) & (rmag < gama_rlim)
-    if selection == 'absmag':
-        galmask = (galZ < 0.5) & (rmag_abs < -19.7) & (rmag < gama_rlim)
+
     if 'mice' in selection:
         galmask = (galZ < 0.5) & (rmag_abs < -18.9 + micecor) & (rmag < gama_rlim)
+        print('rmag_abs(MICE) =', -18.9 + micecor)
+
+    if 'slics' in selection:
+        galmask = (galZ < 0.5) & (rmag_abs < -19.7) & (rmag < gama_rlim)
         print('rmag_abs(MICE) =', -18.9 + micecor)
 
     if 'lowZ' in selection:

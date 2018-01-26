@@ -72,19 +72,18 @@ selection_name = selection[0]
 zlims = np.array([ 0.1, 0.198, 0.3])
 labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
-mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
-mockthetalist = thetalist
-mockcolors = colors
+#mocksel = ['mice_lowZ_nomask-1', 'mice_highZ_nomask-1']
+#mockthetalist = thetalist
+#mockcolors = colors
 
-#mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
-#mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.826]*(len(mocksel)/2) ) # in arcmin
-#mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
+mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
+mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.288]*(len(mocksel)/2) ) # in arcmin
+mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
 
 """
 
 # Sizes
-#thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-thetalist = np.array([5.]) # in arcmin
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 
 Runit = 'arcmin'
 valpha = 1.
@@ -96,10 +95,27 @@ selection_name = selection[0]
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
 
 #mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
-mocksel = ['vasiliy_gama_mocks' for t in range(len(thetalist))]
+mocksel = ['slics_mocks_nomask' for t in range(len(thetalist))]
 
 mockthetalist = thetalist
 mockcolors = colors
+
+
+
+# SLICS mock redshifts
+
+thetalist = np.array([15., 9.554, 7.283, 5.770]) # Dc
+zlims = np.array( [0.1, 0.192, 0.289, 0.391, 0.5])
+
+Runit = 'Mpc'
+valpha = 0.3
+linestyle = '-'
+labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
+
+selection = ['slics_mockZ_nomask' for t in range(len(thetalist))]
+selection_name = selection[0]
+
+labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
 
 
@@ -146,6 +162,7 @@ if 'lowZ' in selection_name:
     diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
     diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
 
+    print('chi^2:', 'Prob:', 'Sigma')
     print(diffchi2, diffprob, diffsigma)
 
 
@@ -155,7 +172,6 @@ ax1 = fig.add_subplot(111)
 
 Npoly = 5
 model_x = np.linspace(0., 1., 100)
-model_y = np.zeros([len(selection), len(model_x)])
 poly_param_amps = []
 
 for i in range(len(selection)):
@@ -182,10 +198,12 @@ if ('kids' in selection_name) or ('gama' in selection_name):
 else:
     if 'miceZ' in selection_name:
         [plt.plot(perccenters[i], Alist[i], label=labels[i],  color=colors[i], \
-        marker='', ls='-', alpha=1., zorder=3) for i in range(len(selection))]
-    else:
-        [plt.plot(perccenters[i], Alist[i], marker='', ls='-', alpha=valpha, zorder=3) \
-        for i in range(len(selection))]
+            marker='', ls='-', alpha=1., zorder=3) for i in range(len(selection))]
+    if 'slics' in selection_name:
+        [plt.errorbar(perccenters[i], Alist[i], yerr=Alist_error[i], label=labels[i], color=colors[i], \
+            marker='.', ls='--', alpha=1., zorder=3) for i in range(len(selection))]
+        #[plt.fill_between(perccenters[i], Alist[i]-Alist_error[i]/2., Alist[i]+Alist_error[i]/2., \
+        #color=colors[i], alpha=valpha)  for i in range(len(selection))]
 
 plt.axhline(y=0., ls=':', color='black', zorder=2)
 plt.axvline(x=0.5, ls=':', color='black', zorder=2)
@@ -193,7 +211,7 @@ plt.axvline(x=0.5, ls=':', color='black', zorder=2)
 # Define the labels for the plot
 if 'pc' in Runit:
     plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
-    plt.axis([0.,1.,-5.,13.])
+    plt.axis([0.,1.,-3.,9.])
     if 'miceZ' in selection_name:
         plt.axis([0.,1.,-5.,9.])        
 if 'arcmin' in Runit:
@@ -247,35 +265,43 @@ if ('kids' in selection_name) or ('gama' in selection_name):
 
     ## WEIGHT (Percentile)
 
-    # Calculating the weight corresponding to Amplitude/error
-    weightlist = Alist/Alist_error
-    weightlist_error = abs(1/Alist_error) * (Alist_error)
-
     fig = plt.figure(figsize=(5,4))
 
+    # Calculating the weight corresponding to Amplitude/error
+    weightlist = Alist/Alist_error
+    model_y = np.zeros([len(selection), len(model_x)])
     poly_param_weights = []
-    for i in range(len(selection)):
 
-        # Fitting a polynomial curve to the weight a.f.o. percentile
-        poly_param_weights.append( np.polyfit(perccenters[i], weightlist[i], Npoly, w=1/weightlist_error[i]) )
-        poly_func_weights = np.poly1d(poly_param_weights[i])
+    # Calculating the weight corresponding to the mock Amplitude/error
+    weightlist_mock = Alist_mock/Alist_error_mock
+    model_y_mock = np.zeros([len(selection), len(model_x)])
+    poly_param_weights_mock = []
+
+    for i in range(len(selection)):
         
+        # Fitting a polynomial curve to the data weight a.f.o. percentile
+        poly_param_weights.append( np.polyfit(perccenters[i], weightlist[i], Npoly) )
+        poly_func_weights = np.poly1d(poly_param_weights[i])
         model_y[i] = poly_func_weights(model_x)
         
-        plt.plot(model_x, model_y[i], color=colors[i], zorder=1)
-        
-        if 'Z' in selection_name:
-            plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
-            label=labels[i], marker='o', ms='5', ls='', color=colors[i], ecolor='black', zorder=3)
-        else: 
-            plt.errorbar(perccenters[i], weightlist[i], yerr=weightlist_error[i],\
-            label=labels[i], marker='.', ls='', color=colors[i], zorder=3)
+        # Fitting a polynomial curve to the mock weight a.f.o. percentile
+        poly_param_weights_mock.append( np.polyfit(perccenters[i], weightlist_mock[i], Npoly) )
+        poly_func_weights_mock = np.poly1d(poly_param_weights_mock[i])
+        model_y_mock[i] = poly_func_weights_mock(model_x)
 
-        if 'vasiliy' in mocksel[0]:
-            mockweightlist = Alist_mock/Alist_error_mock
-            plt.plot(perccenters[i], mockweightlist[i],\
-            label=labels[i], ls = '--', color=colors[i], zorder=2)
+        if 'slics' in mocksel[0]:
+            plt.plot(perccenters[i], weightlist_mock[i],\
+            label=labels[i], marker='o', ms='5', ls='', color=colors[i], zorder=3)
 
+            #plt.plot(perccenters[i], weightlist[i], color=colors[i], zorder=1)
+            
+            plt.plot(model_x, model_y_mock[i], ls='--', color=colors[i], zorder=1)
+        else:
+            plt.plot(perccenters[i], weightlist[i],\
+            label=labels[i], marker='o', ms='5', ls='', color=colors[i], zorder=3)
+
+            plt.plot(model_x, model_y[i], color=colors[i], zorder=1)
+ 
     plt.axhline(y=0., ls=':', color='black', zorder=2)
     plt.axvline(x=0.5, ls=':', color='black', zorder=2)
 
@@ -332,7 +358,7 @@ plt.axvline(x=0., ls=':', color='black', zorder=2)
 # Define the labels for the plot
 if 'pc' in Runit:
     plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
-    plt.axis([-1.,1.7,-5.,13.])
+    plt.axis([-1.,1.7,-3.,10.])
     if 'miceZ' in selection_name:
         plt.axis([-1.2,1.9,-5.,13.])
 if 'arcmin' in Runit:
@@ -386,14 +412,17 @@ plt.close()
 if ('kids' in selection_name) or ('gama' in selection_name):
     
     selcat = np.array([selection, mocksel])
-        
+    poly_params = np.array([poly_param_weights, poly_param_weights_mock])
+    
     for s in range(len(selcat)):
-        
-        sel = selcat[s]
-        
+
         # Import observed trough catalog
         path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
         
+        # Select catalogue and data/mock fitted polynomial
+        sel = selcat[s]
+        poly_param_weights = poly_params[s]
+       
         # Write weight catalog
         outputnames = []
         output = []
@@ -408,22 +437,21 @@ if ('kids' in selection_name) or ('gama' in selection_name):
             
             print('Creating weight catalog for:', troughcatfile)
             
+#            Atheta = poly_func_amps(Ptheta)
+#            poly_func_amps = np.poly1d(poly_param_amps[theta])
+#            outputnames.append('Atheta%g'%thetalist[theta])
+#            output.append(np.abs(Atheta))
+
             # Write weight fits-file
             Ptheta = troughcat['Ptheta%g'%thetalist[theta]]
-            
-            poly_func_amps = np.poly1d(poly_param_amps[theta])
             poly_func_weights = np.poly1d(poly_param_weights[theta])
-            
             Wtheta = poly_func_weights(Ptheta)
-            Atheta = poly_func_amps(Ptheta)
             
             outputnames.append('Ptheta%g'%thetalist[theta])
             outputnames.append('Wtheta%g'%thetalist[theta])
-            outputnames.append('Atheta%g'%thetalist[theta])
             
             output.append(np.abs(Ptheta))
             output.append(np.abs(Wtheta))
-            output.append(np.abs(Atheta))
 
         weightcatname = '%s/amplitude_trough_weights_%s.fits'%(path_troughcat, sel[0])
         utils.write_catalog(weightcatname, np.arange(len(Ptheta)), outputnames, output)

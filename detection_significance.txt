@@ -131,3 +131,56 @@ Detection significance of KiDS vs. GAMA
 ('First bin S/N):', 14.206119068817948)
 ('Amplitude fit S/N', 20.93971085519582)
 ('Amplitude:', 0.0040030324168646211)
+
+
+Weighted using SLICS mocks:
+
+('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_final/Plots/troughs_kids_weighted.pdf')
+
+('$\\theta_{\\rm A} = 5$ arcmin', 'Weighted trough profile')
+('First bin S/N):', -10.689743531865721)
+('Amplitude fit S/N', -16.763914751037333)
+('Amplitude:', -0.0019085980237130091)
+
+
+('$\\theta_{\\rm A} = 10$ arcmin', 'Weighted trough profile')
+('First bin S/N):', -12.354025562942374)
+('Amplitude fit S/N', -14.893759009765741)
+('Amplitude:', -0.0021818498221101708)
+
+
+('$\\theta_{\\rm A} = 15$ arcmin', 'Weighted trough profile')
+('First bin S/N):', -8.9614963963541658)
+('Amplitude fit S/N', -10.130549517514313)
+('Amplitude:', -0.0022806916534949175)
+
+
+('$\\theta_{\\rm A} = 20$ arcmin', 'Weighted trough profile')
+('First bin S/N):', -6.0986179482821674)
+('Amplitude fit S/N', -7.5457318673598763)
+('Amplitude:', -0.002619179387618712)
+
+
+('$\\theta_{\\rm A} = 5$ arcmin', 'Weighted ridge profile')
+('First bin S/N):', 14.813933888924694)
+('Amplitude fit S/N', 21.647705480781333)
+('Amplitude:', 0.0031822945503242211)
+
+
+('$\\theta_{\\rm A} = 10$ arcmin', 'Weighted ridge profile')
+('First bin S/N):', 15.059520560325499)
+('Amplitude fit S/N', 17.925181707803876)
+('Amplitude:', 0.0036602248705819656)
+
+
+('$\\theta_{\\rm A} = 15$ arcmin', 'Weighted ridge profile')
+('First bin S/N):', 11.164599273910756)
+('Amplitude fit S/N', 12.288388225340473)
+('Amplitude:', 0.003554641716122341)
+
+
+('$\\theta_{\\rm A} = 20$ arcmin', 'Weighted ridge profile')
+('First bin S/N):', 8.6503612474851952)
+('Amplitude fit S/N', 9.9385920437148627)
+('Amplitude:', 0.0040938866828414047)
+
