@@ -34,22 +34,22 @@ cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 
 
 # Defining the trough radii
-#thetalist = np.array([5., 10., 15., 20.]) # in arcmin
-thetalist = np.array([5.]) # in arcmin
+thetalist = np.array([5., 10., 15., 20.]) # in arcmin
+#thetalist = np.array([5.]) # in arcmin
 
 # Defining mock patches
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
-Nruns = len(ijlist) # Mock patches
-#Nruns = len(thetalist) # Theta
+#Nruns = len(ijlist) # Mock patches
+Nruns = len(thetalist) # Theta
 #Nruns = 5
 #Nruns = 1
 
 # Configuration
 
 for ij in np.arange(0, Nruns):
-    
+  
     # Number of the current run
     ijnum = ij+1
 
@@ -67,11 +67,11 @@ for ij in np.arange(0, Nruns):
         i, j = ijlist[ij]
         thetanum = 0
     else:
-        masktype = 'nomask-1'
+        masktype = 'nomask'
         thetanum = ij
     if 'miceZ' in selection:
         masktype = 'nomask-Z'
-    
+
     
     # Import trough catalog
     path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
@@ -92,7 +92,7 @@ for ij in np.arange(0, Nruns):
     if 'lowZ' in selection:
         thetalist = np.array([10.])
     if 'highZ' in selection:
-        thetalist = np.array([6.288])
+        thetalist = np.array([6.303])
         
     if 'miceZ' in selection:
         thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14]) # Dc
@@ -130,7 +130,7 @@ for ij in np.arange(0, Nruns):
     ### Trough selection
 
     """
-    """
+    
     
     ## Percentiles
     if 'arcmin' in Runit:
@@ -158,13 +158,13 @@ for ij in np.arange(0, Nruns):
 
     Npercs = len(percnames)-1
     
-    """
+
     theta = thetalist[thetanum]
+    print('Theta =', theta)
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(Npercs) ])
     maskvals_tot = np.array([ [[0.8, np.inf], [perclist[p], perclist[p+1]]] for p in range(Npercs) ])
     
-    
-    
+        
     ## Fiducial troughs
     
     # Sizes
@@ -176,9 +176,9 @@ for ij in np.arange(0, Nruns):
     
     # Troughs/ridges
     
-    perclist = [ [0., 0.2], [0.8, 1.] ]
-    #perclist = [ [0.8, 1.] ]
     theta = thetalist[thetanum]
+    print('Theta =', theta)
+    perclist = [ [0., 0.2], [0.8, 1.] ]
     
     paramnames_tot = np.array([ ['Pmasktheta%g'%theta, 'Ptheta%g'%theta] for p in range(len(perclist)) ])
     maskvals_tot = np.array([ [[0.8, np.inf], perclist[p] ] for p in range(len(perclist)) ])
@@ -225,7 +225,8 @@ for ij in np.arange(0, Nruns):
     if Nruns > 14:
         fieldRAs, fieldDECs = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
     else:
-        fieldRAs, fieldDECs =  [[0.,20.], [0.,20.]]
+        fieldRAs, fieldDECs = [[0., 90.], [0., 90.]]
+        #fieldRAs, fieldDECs = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
     
     print(ijnum, fieldRAs, fieldDECs)
     

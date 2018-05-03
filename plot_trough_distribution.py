@@ -36,7 +36,8 @@ rc('font',**{'family':'serif','serif':['Computer Modern']})
 thetalist = np.array([5., 10., 15., 20.])/60.
 #thetalist = np.array([5.])/60.
 
-selections = ['mice_all_nomask-1', 'kids_mice_complex']
+selections = ['kids_mice_complex']
+#selections = ['mice_all_nomask-1', 'kids_mice_complex']
 #selections = ['kids_lowZ_complex', 'kids_highZ_complex', 'mice_lowZ_nomask', 'mice_highZ_nomask']
 
 

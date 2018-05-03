@@ -16,6 +16,9 @@ from matplotlib import rc, rcParams
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+import matplotlib.style
+matplotlib.style.use('classic')
+
 import scipy.optimize as optimization
 import trough_modules_all as utils
 from astropy.cosmology import LambdaCDM
@@ -38,7 +41,7 @@ def trough_model(x, A):
     model_y = A*x**-0.5
     return model_y
 
-show = True
+show = False
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
@@ -59,18 +62,19 @@ for ij in np.arange(0, Nruns):
     # Defining the paths to the data
     blind = 'A'
 
-    #selection = 'kids_mice_complex'
+    selection = 'kids_mice_complex'
     #selection = 'kids_absmag_complex'
-    selection = 'kids_highZ_complex'
-    #selection = 'mice_all_nomask-%g'%ijnum
-    #selection = 'mice_highZ_nomask-%g'%ijnum
-    #selection = 'mice_miceZ-%g_nomask-Z'%ijnum
-    #selection = 'mice_miceZa_nomask-Za-%g'%ijnum
+    #selection = 'kids_highZ_complex'
+    #selection = 'mice_all_nomask-%i'%ijnum
+    #selection = 'mice_all_nomask'
+    #selection = 'mice_lowZ_nomask-%i'%ijnum
+    #selection = 'mice_miceZ-%i_nomask-Z'%ijnum
+    #selection = 'mice_miceZa_nomask-Za-%i'%ijnum
     #selection = 'slics_mocks_nomask'
     #selection = 'slics_mockZ_nomask'
     
-    mocksel = 'mice_highZ_nomask-%g'%ijnum
-    randomsel = 'kids_highZ_complex'
+    mocksel = 'mice_all_nomask'
+    randomsel = 'kids_randoms_complex'
 
     # Select unit (arcmin or Mpc)
     if 'Z' in selection:
@@ -88,7 +92,7 @@ for ij in np.arange(0, Nruns):
         thetanum = 0
         
     if 'highZ' in selection:
-        thetalist = np.array([6.288])
+        thetalist = np.array([6.303])
         thetanum = 0
 
     if 'miceZ' in selection:
@@ -183,11 +187,11 @@ for ij in np.arange(0, Nruns):
                 esdfiles = 'Redshift_bins_covariance.npy'
                 data=np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, esdfiles))
                 
-                error_factor = 100./15000.
+                error_factor = 100./1000.
                 covariance_tot = 0.7 * error_factor * np.array((data[2][ijnum]).values())
                 
                 theta_x = np.array(data[0][ijnum][0])
-                data_x = [theta_x*am_to_rad * (cosmo.angular_diameter_distance(troughZ).to('Mpc')).value] # Physical radial distance
+                data_x = [theta_x*am_to_rad * (cosmo.angular_diameter_distance(troughZ).to('Mpc')).value] # Physical transverse distance
                 
                 data_y = 0.7 * np.array(data[1][ijnum].values()) # Convert h100 to h70
 
@@ -195,7 +199,7 @@ for ij in np.arange(0, Nruns):
                 esdfiles = 'Ptheta%s.npy'%(('%g'%theta).replace('.','p'))
                 data=np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, esdfiles))
 
-                error_factor = 100./360.3                
+                error_factor = 100./360.3
                 covfiles = 'Ptheta%s_cov.npy'%(('%g'%theta).replace('.','p'))
                 covariance_tot = error_factor *\
                     np.array((np.load('/%s/%s/%s'%(path_sheardata, path_lenssel, covfiles))[0]).values())
@@ -203,9 +207,13 @@ for ij in np.arange(0, Nruns):
                 data_x = data[0]
                 data_y = np.array(data[1].values())
 
-                
-    path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
-    
+    # Importing the shearprofiles and lens IDs
+    if 'slics' in selection:
+        
+        errors = [np.sqrt(np.diag(covariance_tot[x])) for x in range(len(covariance_tot))]
+        error_h = np.array(errors)
+        error_l = np.array(errors)
+
     # Importing the shearprofiles and lens IDs
     if 'slics' in selection:
         
@@ -221,9 +229,11 @@ for ij in np.arange(0, Nruns):
     
     if 'pc' in Runit:
         # Translate to comoving ESD
+        print('Translate to comoving ESD')
         data_x = data_x*(1+troughZ)
         data_y, error_h, error_l = np.array([data_y, error_h, error_l])/(1+troughZ)**2
-        covariance_tot = covariance_tot/(1+troughZ)**4
+        if ('kids' in selection) or ('gama' in selection) or ('slics' in selection):
+            covariance_tot = covariance_tot/(1+troughZ)**4
     
     try:
         print('Import mock signal:')
@@ -252,16 +262,41 @@ for ij in np.arange(0, Nruns):
         error_h = np.sqrt(error_h**2. + random_error_h**2)
         error_l = np.sqrt(error_l**2. + random_error_l**2)
 
+    
+    ######
+    #"""
+    # Temporary addition of SLICS
 
+    path_slics = 'slics_mocks_nomask'
+
+    slicsfiles = 'Ptheta%s.npy'%(('%g'%theta).replace('.','p'))
+    slicsdata = np.load('/%s/%s/%s'%(path_sheardata, path_slics, slicsfiles))
+
+    error_factor = 100./360.3
+    covfiles_slics = 'Ptheta%s_cov.npy'%(('%g'%theta).replace('.','p'))
+    covariance_slics = error_factor * np.array((np.load('/%s/%s/%s'%(path_sheardata, path_slics, covfiles_slics))[0]).values())
+    
+    slicsdata_x = slicsdata[0]
+    slicsdata_y = np.array(slicsdata[1].values())
+
+    slicserrors = [np.sqrt(np.diag(covariance_slics[x])) for x in range(len(covariance_slics))]
+    slicserror_h = np.array(slicserrors)
+    slicserror_l = np.array(slicserrors)
+    
+    #"""
+    ######
+    
+    path_plots = '/%s/Plots/%s'%(path_sheardata, selection)
+    
     # Define the part of the trough profile that contributes to the fit
     if Runit == 'arcmin':
         xmin = theta*1.2
         xmax = 70.
     if Runit == 'Mpc':
         Rlist = theta*am_to_rad * (cosmo.comoving_distance(troughZ).to('Mpc')).value #2.77797224336
-        print(Rlist)
+        
         xmin = Rlist*1.2
-        xmax = 14.
+        xmax = 20.
     
     xmask = (xmin < data_x) & (data_x < xmax)
     xwhere = np.where(xmask)[0]
@@ -286,7 +321,6 @@ for ij in np.arange(0, Nruns):
         for N2 in range(Ncolumns):
         
             N = np.int(N1*Ncolumns + N2)
-            print(N)
             ax_sub = fig.add_subplot(gs[N1, N2])
           
             if ('kids' in selection) or ('gama' in selection):
@@ -298,6 +332,7 @@ for ij in np.arange(0, Nruns):
                 
                 A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
                 sigma=covmatrix, absolute_sigma=True)
+                
             else:
                 if 'slics' in selection:
                     covariance = np.array(covariance_tot[N])
@@ -325,18 +360,28 @@ for ij in np.arange(0, Nruns):
             model_x = np.linspace(xmin, xmax, 10)
             model_y = trough_model(model_x, A)
 
+            # Plot observed profile
+            ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], ls='', marker='.', \
+            color='black', label=r'GL-KiDS measurement', zorder=4)
+            
+            #####
+            #"""
+            # Temporarily plot SLICS results
+            
+            ax_sub.plot(slicsdata_x[N], slicsdata_y[N], ls='-', color='green', label=r'SLICS mocks')
+            #"""
+            #####
+        
             # Plot mock profile
             try:
-                ax_sub.plot(mock_x, mock_y[N], ls='-', color='black', zorder=1)
+                ax_sub.plot(mock_x, mock_y[N], ls='-', color='blue', label=r'MICE mocks', zorder=1)
             except:
                 pass
             
             # Plot fitted model
-            ax_sub.plot(model_x, model_y, ls='-', color='red', label=r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), zorder=6)
-            
-            # Plot observed profile
-            ax_sub.errorbar(data_x, data_y[N], yerr=error_h[N], ls='', marker='.', color=colors[3], zorder=4)
-            
+            ax_sub.plot(model_x, model_y, ls='-', color='red', label=r'Power law fit', zorder=6)
+        
+        
             # Plot lines
             ax_sub.axvline(x=xmin, ls=':', color='black', zorder=1)
             ax_sub.axvline(x=xmax, ls=':', color='black', zorder=2)
@@ -347,7 +392,11 @@ for ij in np.arange(0, Nruns):
 
             ax.tick_params(labelleft='off', labelbottom='off', top='off', bottom='off', left='off', right='off')
             
-            plt.legend(loc='best', handlelength=0, handletextpad=0, numpoints=1)
+            if N1 < Nrows-1:
+                plt.title(r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), x = 0.43, y = 0.8, fontsize=14)
+            else:
+                plt.title(r'$%g < P \leq %g$'%(perclist[N], perclist[N+1]), x = 0.43, y = 0.01, fontsize=14)
+            #plt.legend(loc='best', handlelength=0, handletextpad=0, numpoints=1)
             
             # Last row
             if N1 != Nrows-1:
@@ -366,11 +415,13 @@ for ij in np.arange(0, Nruns):
             
             plt.xscale('log')
 
+    lgd = ax_sub.legend(bbox_to_anchor=(-0.6, 5.), fontsize=16) # side
+
     if Runit == 'arcmin':
-        ax.set_xlabel(r'Radial separation $\theta$ (arcmin)', fontsize=14)
+        ax.set_xlabel(r'Angular separation $\theta$ (arcmin)', fontsize=14)
         ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
     if Runit == 'Mpc':
-        ax.set_xlabel(r'Radial distance $R ({\rm Mpc} \, {h_{70}}^{-1})$', fontsize=14)
+        ax.set_xlabel(r'Radius $R ({\rm Mpc} \, {h_{70}}^{-1})$', fontsize=14)
         ax.set_ylabel(r'Shear $\gamma$', fontsize=14)
         
     ax.xaxis.set_label_coords(0.5, -0.07)

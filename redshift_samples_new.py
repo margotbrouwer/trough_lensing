@@ -24,8 +24,8 @@ from matplotlib import rc, rcParams
 import trough_modules_all as utils
 
 
-#h, O_matter, O_lambda = [0.7, 0.25, 0.75]
-h, O_matter, O_lambda = [0.68, 0.29, 0.71]
+h, O_matter, O_lambda = [0.7, 0.25, 0.75]
+#h, O_matter, O_lambda = [0.68, 0.29, 0.71]
 
 cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
@@ -33,14 +33,14 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 # Select catalog and redshift binning
 cat = 'gama'
-zmax = 0.5
-Nbins = 4
+zmax = 0.3
+Nbins = 2
 
 
 # Defining the circle size and redshift bins
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 if ('kids' in cat) or ('gama' in cat):
-    thetalow = np.array([thetalist[2]]) # in arcmin
+    thetalow = np.array([thetalist[3]]) # in arcmin
 if 'mice' in cat:
     thetalow = np.array([thetalist[3]]) # in arcmin
 
@@ -92,7 +92,11 @@ if cat == 'mice':
     
     #gama_rlim = 20.2
     gama_rlim = np.inf
-
+    
+    coordmask = (galRA < 90.) & (galDEC < 90.)
+    galZ, galDc, rmag, rmag_abs = \
+    [galZ[coordmask], galDc[coordmask], rmag[coordmask], rmag_abs[coordmask]]
+    
 gamamask = (rmag_abs < -19.7) & (rmag < gama_rlim)
 
 zmean = np.mean(galZ[gamamask])

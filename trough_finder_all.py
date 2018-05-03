@@ -29,19 +29,19 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 # Radii theta of circular regions (in deg)
 #thetalist = np.array([5., 10., 15., 20.])/60.
-#thetalist = np.array([5., 10., 15., 20., 6.303, 6.288])/60.
-#thetalist = np.array([5., 10., 6.303, 6.288])/60.
+#thetalist = np.array([5., 10., 15., 20., 6.303])/60.
+thetalist = np.array([5., 10., 6.303])/60.
 #thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])/60.
-thetalist = np.array([15., 9.554, 7.283, 5.770])/60.
+#thetalist = np.array([15., 9.554, 7.283, 5.770])/60.
 #thetalist = np.array([5.])/60.
 
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
 
-Nruns = len(ijlist) # Mock patches
+#Nruns = len(ijlist) # Mock patches
 #Nruns = len(thetalist) # Theta
-#Nruns = 1
+Nruns = 1
 #Nruns = 5
 
 for ij in np.arange(0, Nruns):
@@ -56,42 +56,42 @@ for ij in np.arange(0, Nruns):
     ## 1a) Importing the galaxy catalogue.
 
     # Select the galaxy catalogue for trough selection (kids, gama or mice)
-    cat = 'gama'
-    #cat = 'kids'
+    #cat = 'gama'
+    cat = 'kids'
     #cat = 'mice'
 
     # Name of the pre-defined galaxy selection
     #selection = 'all'
     #selection = 'mice'
-    selection = 'slics'
-    #selection = 'lowZ'
+    #selection = 'slics'
+    selection = 'lowZ'
     #selection = 'highZ'
     #selection = 'miceZ-%g'%(ijnum)
-    
     #selection = 'gama_all'
     #selection = 'kids_all'
     
     
     # Select mask type (nomask or complex)
     if 'mice' in cat:
-
+    
+        fid_patch = 1
         if 'miceZ' in selection:
             masktype = 'nomask-Z'
         else:
-            masktype = 'nomask-1'
+            masktype = 'nomask' # Closest G16 trough amplitude to the mean
 
         if Nruns > 14:
             masktype = 'nomask-%g'%(ijnum)
             coordsM = [[i*20.,(i+1)*20.], [j*20.,(j+1)*20.]]
         else:
-            coordsM = [[0.,20.], [0.,20.]]
+            coordsM = [[0., 90.], [0., 90.]]
             
             #Wlist = np.array([83.539, 40., 25.015, 17.948, 14.086])
             #highW = Wlist[ij]
             #coordsM = [[0.,highW], [0.,20.]]
     else:
         masktype = 'complex'
-
+    
     # Spacing of the trough and mask grids (in degree)
     gridspace = 0.04
     mask_density = 1/(gridspace*60.)**2 # Density of mask gridpoints (in arcmin^-2)
@@ -236,7 +236,7 @@ for ij in np.arange(0, Nruns):
     if 'highZ' in selection:
         galmask = (zlim < galZ)&(galZ < zmax) & (rmag_abs < -21.) & (rmag < gama_rlim)
         #thetalist = np.array([3.41290231, 6.82580462, 10.23870693, 13.65160924])/60.
-        thetalist = np.array([6.303, 6.288])/60.
+        thetalist = np.array([6.303])/60.
 
     
     if 'miceZ' in selection:

@@ -6,51 +6,51 @@ Fiducial:
 ('First bin S/N):', -7.3164181388166361)
 ('Amplitude fit S/N', -12.307630210465298)
 ('Amplitude:', -0.0022512866103667692)
-
+('Error(A):', 0.18291795998e3)
 
 ('$\\theta_{\\rm A} = 10$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
 ('First bin S/N):', -9.244958610733903)
 ('Amplitude fit S/N', -10.724914061487958)
 ('Amplitude:', -0.0028149078562447511)
-
+('Error(A):', 0.26246437408e3)
 
 ('$\\theta_{\\rm A} = 15$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
 ('First bin S/N):', -7.9238263397084019)
 ('Amplitude fit S/N', -8.409031582518562)
 ('Amplitude:', -0.0032413619008305784)
-
+('Error(A):', 0.38546197252e3)
 
 ('$\\theta_{\\rm A} = 20$ arcmin', 'Troughs $(P(\\theta_{\\rm A}) < 0.2)$')
 ('First bin S/N):', -5.3756094121837439)
 ('Amplitude fit S/N', -5.7323401143124419)
 ('Amplitude:', -0.003346469603910857)
-
+('Error(A):', 0.58378769179e3)
 
 ('$\\theta_{\\rm A} = 5$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
 ('First bin S/N):', 14.206119068817948)
 ('Amplitude fit S/N', 20.93971085519582)
 ('Amplitude:', 0.0040030324168646211)
-
+('Error(A):', 0.1911694218e3)
 
 ('$\\theta_{\\rm A} = 10$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
 ('First bin S/N):', 14.138572848821649)
 ('Amplitude fit S/N', 16.825011432164253)
 ('Amplitude:', 0.0045980039317607638)
-
+('Error(A):', 0.27328385185e3)
 
 ('$\\theta_{\\rm A} = 15$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
 ('First bin S/N):', 10.561800676509208)
 ('Amplitude fit S/N', 11.459129120575811)
 ('Amplitude:', 0.0045838556466651732)
-
+('Error(A):', 0.40001780226e3)
 
 ('$\\theta_{\\rm A} = 20$ arcmin', 'Ridges $(P(\\theta_{\\rm A}) > 0.8)$')
 ('First bin S/N):', 8.4426236184169579)
 ('Amplitude fit S/N', 9.0079546094954921)
 ('Amplitude:', 0.0051210560113855337)
+('Error(A):', 0.568503754e3)
 
-
-## Weighted:
+## Weighted using KiDS:
 
 ('Written: ESD profile plot:', '/data2/brouwer/shearprofile/trough_results_May/Plots/troughs_kids_weighted.pdf')
 
@@ -141,46 +141,46 @@ Weighted using SLICS mocks:
 ('First bin S/N):', -10.689743531865721)
 ('Amplitude fit S/N', -16.763914751037333)
 ('Amplitude:', -0.0019085980237130091)
-
+('Error(A):', 0.11385157059e3)
 
 ('$\\theta_{\\rm A} = 10$ arcmin', 'Weighted trough profile')
 ('First bin S/N):', -12.354025562942374)
 ('Amplitude fit S/N', -14.893759009765741)
 ('Amplitude:', -0.0021818498221101708)
-
+('Error(A):', 0.1464942343e3)
 
 ('$\\theta_{\\rm A} = 15$ arcmin', 'Weighted trough profile')
 ('First bin S/N):', -8.9614963963541658)
 ('Amplitude fit S/N', -10.130549517514313)
 ('Amplitude:', -0.0022806916534949175)
-
+('Error(A):', 0.22513010272e3)
 
 ('$\\theta_{\\rm A} = 20$ arcmin', 'Weighted trough profile')
 ('First bin S/N):', -6.0986179482821674)
 ('Amplitude fit S/N', -7.5457318673598763)
 ('Amplitude:', -0.002619179387618712)
-
+('Error(A):', 0.34710740239e3)
 
 ('$\\theta_{\\rm A} = 5$ arcmin', 'Weighted ridge profile')
 ('First bin S/N):', 14.813933888924694)
 ('Amplitude fit S/N', 21.647705480781333)
 ('Amplitude:', 0.0031822945503242211)
-
+('Error(A):', 0.14700378075e3)
 
 ('$\\theta_{\\rm A} = 10$ arcmin', 'Weighted ridge profile')
 ('First bin S/N):', 15.059520560325499)
 ('Amplitude fit S/N', 17.925181707803876)
 ('Amplitude:', 0.0036602248705819656)
-
+('Error(A):', 0.20419457555e3)
 
 ('$\\theta_{\\rm A} = 15$ arcmin', 'Weighted ridge profile')
 ('First bin S/N):', 11.164599273910756)
 ('Amplitude fit S/N', 12.288388225340473)
 ('Amplitude:', 0.003554641716122341)
-
+('Error(A):', 0.2892683443e3)
 
 ('$\\theta_{\\rm A} = 20$ arcmin', 'Weighted ridge profile')
 ('First bin S/N):', 8.6503612474851952)
 ('Amplitude fit S/N', 9.9385920437148627)
 ('Amplitude:', 0.0040938866828414047)
-
+('Error(A):', 0.4119181736e3)

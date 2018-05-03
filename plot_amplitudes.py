@@ -17,6 +17,9 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
+import matplotlib.style
+matplotlib.style.use('classic')
+
 from scipy.stats import chi2, norm
 import scipy.optimize as optimization
 import trough_modules_all as utils
@@ -37,7 +40,7 @@ show = True
 # Trough selection
 
 """
-
+"""
 
 # Mice redshifts
 
@@ -59,7 +62,7 @@ labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 
 # lowZ/highZ
 
-thetalist = np.array([10., 6.288]) # in arcmin
+thetalist = np.array([10., 6.303]) # in arcmin
 
 Runit = 'Mpc'
 valpha = 0.3
@@ -77,10 +80,10 @@ labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 #mockcolors = colors
 
 mocksel = np.append(['mice_lowZ_nomask-%g'%ij for ij in np.arange(16)+1.], ['mice_highZ_nomask-%g'%ij for ij in np.arange(16)+1.])
-mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.288]*(len(mocksel)/2) ) # in arcmin
+mockthetalist = np.append( [10.]*(len(mocksel)/2), [6.303]*(len(mocksel)/2) ) # in arcmin
 mockcolors = np.append( ['#d7191c']*(len(mocksel)/2), ['#fdae61']*(len(mocksel)/2) )
 
-"""
+
 
 # Sizes
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
@@ -94,7 +97,7 @@ selection_name = selection[0]
 
 labels = np.array([r"$\theta_{\rm A} = %g'$"%theta for theta in thetalist])
 
-#mocksel = ['mice_all_nomask-1' for t in range(len(thetalist))]
+#mocksel = ['mice_all_nomask' for t in range(len(thetalist))]
 mocksel = ['slics_mocks_nomask' for t in range(len(thetalist))]
 
 mockthetalist = thetalist
@@ -126,6 +129,7 @@ labels = [r'$%g<z<%g$'%(zlims[t], zlims[t+1]) for t in range(len(thetalist))]
 path_filename = '/data2/brouwer/shearprofile/trough_results_final/Plots'
 filenames = ['%s/trough_amplitudes_%s_%g%s.txt'%(path_filename, selection[s], thetalist[s], Runit) \
                                                 for s in range(len(selection))]
+print('Imported:', filenames)
 
 amplitude_data = np.array([np.loadtxt(filename).T for filename in filenames])
 
@@ -165,6 +169,31 @@ if 'lowZ' in selection_name:
     print('chi^2:', 'Prob:', 'Sigma')
     print(diffchi2, diffprob, diffsigma)
 
+if 'mockZ' in selection_name:
+
+    # Compute significance of the difference
+    for x in range(len(Alist)-1):
+        diffAlist = abs(Alist[x] - Alist[x+1])
+        diffAlist_error = np.sqrt(Alist_error[x]**2. + Alist_error[x+1]**2.)
+        diffmodel = np.zeros(len(Alist[0]))
+
+        diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
+        diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
+        diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
+
+        print('chi^2:', 'Prob:', 'Sigma')
+        print(diffchi2, diffprob, diffsigma)
+
+    diffAlist = abs(Alist[0] - Alist[len(thetalist)-1])
+    diffAlist_error = np.sqrt(Alist_error[0]**2. + Alist_error[len(thetalist)-1]**2.)
+    diffmodel = np.zeros(len(Alist[0]))
+
+    diffchi2 = np.sum( (diffAlist - diffmodel)**2. / diffAlist_error**2. )
+    diffprob = chi2.cdf(diffchi2, len(diffAlist)-1)
+    diffsigma = norm.ppf( diffprob + (1.-diffprob)/2. )
+
+    print('chi^2:', 'Prob:', 'Sigma')
+    print(diffchi2, diffprob, diffsigma)
 
 ## AMPLITUDE (Percentile)
 fig = plt.figure(figsize=(5,4))
@@ -210,15 +239,17 @@ plt.axvline(x=0.5, ls=':', color='black', zorder=2)
 
 # Define the labels for the plot
 if 'pc' in Runit:
-    plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
+    plt.ylabel(r'Comoving ESD Amplitude [h$_{%g}^{1/2}$ M$_{\odot}$/pc$^{3/2}$]'%(h*100))
     plt.axis([0.,1.,-3.,9.])
     if 'miceZ' in selection_name:
-        plt.axis([0.,1.,-5.,9.])        
+        plt.axis([0.,1.,-5.,9.])
+    if 'slics' in selection_name:
+        plt.axis([0.,1.,-3.,5.])
 if 'arcmin' in Runit:
-    plt.ylabel(r'Shear Amplitude')
+    plt.ylabel(r'Shear Amplitude [${\rm arcmin}^{1/2}$]')
     plt.axis([0.,1.,-0.008,0.012])
     
-plt.xlabel(r"Density percentile $P(\theta_{\rm A})$")
+plt.xlabel(r"Density percentile rank $P(\theta_{\rm A})$")
 
 plt.legend(loc='best')
 
@@ -306,8 +337,8 @@ if ('kids' in selection_name) or ('gama' in selection_name):
     plt.axvline(x=0.5, ls=':', color='black', zorder=2)
 
     # Define the labels for the plot
-    plt.ylabel(r'Shear signal to noise ($A/\delta A$)')
-    plt.xlabel(r"Density percentile $P(\theta_{\rm A})$")
+    plt.ylabel(r'Shear signal to noise ($A/\sigma_{\rm A}$)')
+    plt.xlabel(r"Density percentile rank $P(\theta_{\rm A})$")
 
     plt.legend(loc='best')
 
@@ -357,12 +388,12 @@ plt.axvline(x=0., ls=':', color='black', zorder=2)
 
 # Define the labels for the plot
 if 'pc' in Runit:
-    plt.ylabel(r'ESD Amplitude [h$_{%g}$ M$_{\odot}$/pc$^2$]'%(h*100))
-    plt.axis([-1.,1.7,-3.,10.])
+    plt.ylabel(r'Comoving ESD Amplitude [h$_{%g}^{1/2}$ M$_{\odot}$/pc$^{3/2}$]'%(h*100))
+    plt.axis([-1.,1.7,-3.,9.])
     if 'miceZ' in selection_name:
-        plt.axis([-1.2,1.9,-5.,13.])
+        plt.axis([-1.2,1.7,-3.,7.])
 if 'arcmin' in Runit:
-    plt.ylabel(r'Shear Amplitude')
+    plt.ylabel(r'Shear Amplitude [${\rm arcmin}^{1/2}]$')
     plt.axis([-0.8,1.5,-0.007,0.012])
 
 plt.xlabel(r"Overdensity $\delta(\theta_{\rm A})$")
