@@ -32,7 +32,7 @@ micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 
 # Select catalog and redshift binning
-cat = 'gama'
+cat = 'kids'
 zmax = 0.3
 Nbins = 2
 
@@ -40,7 +40,7 @@ Nbins = 2
 # Defining the circle size and redshift bins
 thetalist = np.array([5., 10., 15., 20.]) # in arcmin
 if ('kids' in cat) or ('gama' in cat):
-    thetalow = np.array([thetalist[3]]) # in arcmin
+    thetalow = np.array([thetalist[1]]) # in arcmin
 if 'mice' in cat:
     thetalow = np.array([thetalist[3]]) # in arcmin
 
@@ -154,36 +154,22 @@ Alow = 20.*40.
 thetahigh = [thetalow * (Dclow / Dchigh[N]) for N in range(Nbins)]
 Ahigh = np.array([Alow * (Dclow / Dchigh[N])**2 for N in range(Nbins)])
 
-Rlow = (thetalow*am_to_rad) * Dclow
 Rhigh = [(thetahigh[N]*am_to_rad) * Dchigh[N] for N in range(Nbins)]
 Rphys = [(thetahigh[N]*am_to_rad) * Dahigh[N] for N in range(Nbins)]
+
+Vhigh = [1./3. * np.pi * np.tan(thetahigh[N]*am_to_rad)**2. * (Dclims[N+1]**3. - Dclims[N]**3.) for N in range(Nbins)]
+Nhigh = [len(galZ[(zlims[N]<galZ)&(galZ<=zlims[N+1])]) for N in range(Nbins)]
 
 print('mean Z:', Zhigh)
 print('mean Dc:', Dchigh, 'Mpc')
 print('mean Da:', Dahigh, 'Mpc')
 print()
-print('theta(low):', thetalow, 'arcmin')
-print('theta(high):', thetahigh, 'arcmin')
-print('R(low):', Rlow, 'Mpc')
+print('theta:', thetahigh, 'arcmin')
 print('R(comoving):', Rhigh, 'Mpc')
 print('R(physical):', Rphys, 'Mpc')
-print('A(high):', Ahigh, 'degree^2')
-print('W(high):', Ahigh/20., 'degree')
+print('Area:', Ahigh, 'degree^2')
+print('Volume:', Vhigh)
+print('Ngal:', Nhigh)
+print('Density:' )
 print()
 print('R(min,max):', (thetamin*am_to_rad) * Dcmean, (thetamax*am_to_rad) * Dcmean, 'Mpc')
-
-
-quit()
-for N in range(Nbins):
-    Vlow = 1./3.*np.pi * Dclims[0]**3. * (thetalow*am_to_rad)**2.
-    Vhigh = 1./3.*np.pi * Dclims[1]**3. * (thetahigh*am_to_rad)**2.
-
-    Vlow = V2low - V1low
-    Vhigh = V3high - V2high
-
-    print('Cone volume(low):', Vlow, 'Mpc^3')
-    print('Cone volume(high):', Vhigh, 'Mpc^3')
-    print()
-    print('Galaxy number(low,high):', Nlow, Nhigh)
-    print('Volume(low,high):', Vclow, Vchigh, 'Mpc^3')
-    print('Density(low):', Nlow/Vclow, Nhigh/Vchigh, 'Mpc^-3')

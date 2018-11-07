@@ -28,9 +28,9 @@ cosmo = LambdaCDM(H0=h*100, Om0=O_matter, Ode0=O_lambda)
 micecor = 5*np.log10(h) # Correction on MICE absmag_r (= -0.7745)
 
 # Radii theta of circular regions (in deg)
-#thetalist = np.array([5., 10., 15., 20.])/60.
+thetalist = np.array([5., 10., 15., 20.])/60.
 #thetalist = np.array([5., 10., 15., 20., 6.303])/60.
-thetalist = np.array([5., 10., 6.303])/60.
+#thetalist = np.array([5., 10., 6.303])/60.
 #thetalist = np.array([20., 12.85, 9.45, 7.44, 6.14])/60.
 #thetalist = np.array([15., 9.554, 7.283, 5.770])/60.
 #thetalist = np.array([5.])/60.
@@ -56,15 +56,15 @@ for ij in np.arange(0, Nruns):
     ## 1a) Importing the galaxy catalogue.
 
     # Select the galaxy catalogue for trough selection (kids, gama or mice)
-    #cat = 'gama'
-    cat = 'kids'
+    cat = 'gama'
+    #cat = 'kids'
     #cat = 'mice'
 
     # Name of the pre-defined galaxy selection
-    #selection = 'all'
+    selection = 'all'
     #selection = 'mice'
     #selection = 'slics'
-    selection = 'lowZ'
+    #selection = 'lowZ'
     #selection = 'highZ'
     #selection = 'miceZ-%g'%(ijnum)
     #selection = 'gama_all'

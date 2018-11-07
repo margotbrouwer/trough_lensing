@@ -41,7 +41,7 @@ def trough_model(x, A):
     model_y = A*x**-0.5
     return model_y
 
-show = False
+show = True
 
 ijlist = np.array([ [ [i, j] for i in range(4) ] for j in range(4) ])
 ijlist = np.reshape(ijlist, [16,2])
@@ -62,7 +62,7 @@ for ij in np.arange(0, Nruns):
     # Defining the paths to the data
     blind = 'A'
 
-    selection = 'kids_mice_complex'
+    #selection = 'kids_mice_complex'
     #selection = 'kids_absmag_complex'
     #selection = 'kids_highZ_complex'
     #selection = 'mice_all_nomask-%i'%ijnum
@@ -70,7 +70,7 @@ for ij in np.arange(0, Nruns):
     #selection = 'mice_lowZ_nomask-%i'%ijnum
     #selection = 'mice_miceZ-%i_nomask-Z'%ijnum
     #selection = 'mice_miceZa_nomask-Za-%i'%ijnum
-    #selection = 'slics_mocks_nomask'
+    selection = 'slics_mocks_nomask'
     #selection = 'slics_mockZ_nomask'
     
     mocksel = 'mice_all_nomask'
@@ -257,12 +257,12 @@ for ij in np.arange(0, Nruns):
         random_data_x, random_data_y, random_error_h, random_error_l = utils.read_esdfiles(random_esdfile)
         random_data_x, random_data_y, random_error_h, random_error_l = random_data_x[0], random_data_y[0], random_error_h[0], random_error_l[0]
 
+        random_covfile = np.array([e.replace('bins_%s.txt'%blind, 'matrix_%s.txt'%blind) for e in random_esdfile])
+        random_covariance_tot = np.array([ np.loadtxt(random_covfile[c]).T for c in range(len(random_covfile)) ])
+      
         # Subtract random signal
         data_y = data_y-random_data_y
-        error_h = np.sqrt(error_h**2. + random_error_h**2)
-        error_l = np.sqrt(error_l**2. + random_error_l**2)
-
-    
+        
     ######
     #"""
     # Temporary addition of SLICS
@@ -330,33 +330,42 @@ for ij in np.arange(0, Nruns):
                 covmatrix = np.reshape(covariance[4][ind], [len(data_x), len(data_x)])
                 covmatrix = covmatrix[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
                 
+                """
+                # With covariance
                 A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
                 sigma=covmatrix, absolute_sigma=True)
+                """
+                # Without covariance
+                A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+                sigma=(error_h[N])[xmask], absolute_sigma=True)
+                #"""
                 
             else:
                 if 'slics' in selection:
                     covariance = np.array(covariance_tot[N])
                     covmatrix = covariance[int(xwhere[0]):int(xwhere[-1]+1), int(xwhere[0]):int(xwhere[-1]+1)]
                     
+                    """
+                    # With covariance
                     A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
                     sigma=covmatrix, absolute_sigma=True)
-                    
-                    #A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
-                    #sigma=(error_h[N])[xmask], absolute_sigma=True)
-                    
-                    #A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
+                    """
+                    # Without covariance
+                    A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+                    sigma=(error_h[N])[xmask], absolute_sigma=True)
+                    #"""
                     
                 else:
                     # Without covariance
-                    A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.])
-                    #sigma=(error_h[N])[xmask], absolute_sigma=True)
+                    A, Acov = optimization.curve_fit(f=trough_model, xdata=data_x[xmask], ydata=(data_y[N])[xmask], p0=[0.], \
+                    sigma=(error_h[N])[xmask], absolute_sigma=True)
             A = A[0]
                 
             print('%g < P(x) < %g: Amplitude = %g'%(perclist[N], perclist[N+1], A))
             
             Alist = np.append(Alist, A)
             Alist_error = np.append(Alist_error, np.sqrt(Acov[0,0]))
-
+            
             model_x = np.linspace(xmin, xmax, 10)
             model_y = trough_model(model_x, A)
 
@@ -437,8 +446,10 @@ for ij in np.arange(0, Nruns):
     print('Written plot:', plotname)
     if show:
         plt.show()
-
-
+        
+    print('Amplitudes:', Alist)
+    print('Errors:', Alist_error)
+    
     # Import trough catalog
     path_troughcat = '/data2/brouwer/MergedCatalogues/trough_catalogs'
     troughcatname = 'trough_catalog_%s_%s_%s.fits'%(selection.split('_')[0], selection.split('_')[1], selection.split('_')[2])
@@ -451,15 +462,15 @@ for ij in np.arange(0, Nruns):
     Ptheta = troughcat['Ptheta%g'%theta]
     delta = troughcat['delta%g'%theta]
     Pmasktheta = troughcat['Pmasktheta%g'%theta]
-
-
+    
+    
     # Calculate the mean delta for each percentile bin
     deltacenters = np.zeros(len(perccenters))
     for p in range(len(perccenters)):
         percmask = (perclist[p] < Ptheta) & (Ptheta <= perclist[p+1]) & (0.8 < Pmasktheta)
         deltacenters[p] = np.mean(delta[percmask])
-
-
+    
+    
     # Write amplitude text-file
     Afilename = '/%s/Plots/trough_amplitudes_%s_%g%s.txt'%(path_sheardata, selection, theta, Runit)
     np.savetxt(Afilename, np.array([perccenters, deltacenters, Alist, Alist_error]).T, header = 'Trough Percentile     Delta     Amplitude     Error(Amplitude)')

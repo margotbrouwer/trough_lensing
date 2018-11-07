@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-"Module to determine the local overdensity delta_r within a sphere of radius r."
-
 # Import the necessary libraries
 import astropy.io.fits as pyfits
 import gc

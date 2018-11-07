@@ -18,7 +18,7 @@ from collections import Counter
 import trough_modules_all as utils
 
 cat = 'kids'
-gridspace_mask = 0.04 # in degree
+gridspace_mask = 0.01 # in degree
 
 
 if cat == 'kids':

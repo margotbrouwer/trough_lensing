@@ -1,3 +1,5 @@
+MICE v1:
+
 GAMA galaxies:
 SELECT `id`, `ra`, `dec`, `z`, `d_c`, `abs_mag_r`, `r_sdss_true`, `gamma1`, `gamma2` 
 FROM micecatv1_0_hpix 
@@ -13,3 +15,20 @@ HighZ galaxies:
 SELECT `id`, `ra`, `dec`, `z`, `d_c`, `abs_mag_r`, `r_sdss_true`, `log_m`, `gr_restframe` 
 FROM micecatv1_0_hpix 
 WHERE (`z` < 0.6)
+
+
+MICE v2:
+
+GAMA galaxies:
+SELECT `ra_gal`, `dec_gal`, `z_cgal`, `cgal`, `flag_central`, `lmhalo`, `lmstellar`, 
+`bulge_fraction`, `bulge_length`, `disk_length`, `sdss_r_true`, `sdss_r_abs_mag`
+FROM micecatv2_0_view
+WHERE `z_cgal` < 0.5 AND `sdss_r_true` < 20.2
+
+Source galaxies:
+SELECT `ra_gal`, `dec_gal`, `z_cgal`, `cgal`, `sdss_r_abs_mag`, `sdss_r_true`, `gamma1`, `gamma2`
+FROM micecatv2_0_view
+WHERE `z_cgal` > 0.1 AND `z_cgal` < 0.9 AND `sdss_r_true` > 20 AND `sdss_r_abs_mag` > -18.5
+
+Smaller area:
+AND 0. < `ra_gal` AND `ra_gal` < 20. AND 0. < `dec_gal` AND `dec_gal` < 20.
